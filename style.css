@@ -11,17 +11,7 @@ input, textarea, [contenteditable], ::selection { user-select: text; } /* allow 
 img, svg, video { -webkit-user-drag: none; }
 * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
-/* Scroll wrapper: strict vertical, no chaining */
-.scroll-wrapper {
-  overflow-y: auto;
-  overflow-x: hidden;
-  touch-action: pan-y;
-  overscroll-behavior: contain;
-  height: 100dvh;
-}
-
 /* Snap/Parallax stability */
-.scroll-wrapper{ scrollbar-gutter: stable both-edges; }
 .slide{ contain: layout paint; }
 
 /* Lightbox baseline (starts closed) */
@@ -33,7 +23,8 @@ img, svg, video { -webkit-user-drag: none; }
 
 /* Lock page when overlays are open */
 body.modal-open { overflow: hidden; }
-body.modal-open .scroll-wrapper { overflow: hidden; touch-action: none; pointer-events: none; }
+/* If a dedicated scroll wrapper existed, it would be locked here.
+   Now slides are direct children of body, so the fixed-body lock is sufficient. */
 
 /* Small BEM utilities we can reuse anywhere */
 .u-visually-hidden { position:absolute !important; clip:rect(1px,1px,1px,1px); padding:0; border:0; height:1px; width:1px; overflow:hidden; }

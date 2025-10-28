@@ -21,7 +21,7 @@ export function initLightbox({ root = '#project-lightbox', closeDelayMs = 1000 }
 
   const inner = lb.querySelector('.project-lightbox__inner');
   const videoArea = lb.querySelector('.video-area');
-  const slides = document.querySelectorAll('.scroll-wrapper .slide');
+  const slides = document.querySelectorAll('.slide');
   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let openGuard = false;
