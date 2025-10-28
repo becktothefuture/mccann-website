@@ -1,0 +1,42 @@
+/* Global hardening */
+html, body { height: 100%; }
+html { overscroll-behavior: none; }               /* kill rubber-banding chain */
+body {
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  user-select: none;                               /* prevent accidental select */
+}
+input, textarea, [contenteditable], ::selection { user-select: text; } /* allow text where needed */
+img, svg, video { -webkit-user-drag: none; }
+* { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Scroll wrapper: strict vertical, no chaining */
+.scroll-wrapper {
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  height: 100dvh;
+}
+
+/* Snap/Parallax stability */
+.scroll-wrapper{ scrollbar-gutter: stable both-edges; }
+.slide{ contain: layout paint; }
+
+/* Lightbox baseline (starts closed) */
+.project-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  opacity: 0; visibility: hidden; pointer-events: none;
+}
+.project-lightbox.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
+
+/* Lock page when overlays are open */
+body.modal-open { overflow: hidden; }
+body.modal-open .scroll-wrapper { overflow: hidden; touch-action: none; pointer-events: none; }
+
+/* Small BEM utilities we can reuse anywhere */
+.u-visually-hidden { position:absolute !important; clip:rect(1px,1px,1px,1px); padding:0; border:0; height:1px; width:1px; overflow:hidden; }
+
+/* Accordion smoothness */
+.accordeon__list{ overflow:hidden; transition:max-height .28s cubic-bezier(.25,.8,.25,1); will-change:max-height; }

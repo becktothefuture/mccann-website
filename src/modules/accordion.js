@@ -1,0 +1,132 @@
+/**
+ * ==================================================
+ *  McCann Website — Accordion Module
+ *  Purpose: ARIA, smooth transitions, RO image safety
+ *  Date: 2025-10-28
+ * ==================================================
+ */
+
+import { emit } from '../core/events.js';
+
+export function initAccordion(rootSel = '.accordeon'){
+  const root = document.querySelector(rootSel);
+  if (!root){ console.log('[ACCORDION] root not found'); return; }
+
+  const isL1 = el => el.classList.contains('accordeon-item--level1');
+  const isL2 = el => el.classList.contains('accordeon-item--level2');
+  const panelOf = item => item?.querySelector(':scope > .accordeon__list');
+  const groupOf = item => isL1(item) ? root : item.closest('.accordeon__list');
+
+  // ARIA bootstrap
+  root.querySelectorAll('.accordeon__trigger').forEach((t, i) => {
+    t.setAttribute('role', 'button');
+    t.setAttribute('tabindex', '0');
+    const item = t.closest('.accordeon-item--level1, .accordeon-item--level2');
+    const p = panelOf(item);
+    if (p){
+      const pid = p.id || `acc-panel-${i}`;
+      p.id = pid;
+      t.setAttribute('aria-controls', pid);
+      t.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  function expand(p){
+    p.style.maxHeight = p.scrollHeight + 'px';
+    p.dataset.state = 'opening';
+    const onEnd = (e) => {
+      if (e.propertyName !== 'max-height') return;
+      p.removeEventListener('transitionend', onEnd);
+      if (p.dataset.state === 'opening'){
+        p.style.maxHeight = 'none';
+        p.dataset.state = 'open';
+      }
+    };
+    p.addEventListener('transitionend', onEnd);
+  }
+
+  function collapse(p){
+    const h = p.style.maxHeight === 'none' ? p.scrollHeight : parseFloat(p.style.maxHeight || 0);
+    p.style.maxHeight = (h || p.scrollHeight) + 'px';
+    p.offsetHeight; // reflow
+    p.style.maxHeight = '0px';
+    p.dataset.state = 'closing';
+    const onEnd = (e) => {
+      if (e.propertyName !== 'max-height') return;
+      p.removeEventListener('transitionend', onEnd);
+      p.dataset.state = 'collapsed';
+    };
+    p.addEventListener('transitionend', onEnd);
+  }
+
+  function closeSiblings(item){
+    const group = groupOf(item); if (!group) return;
+    const want = isL1(item) ? 'accordeon-item--level1' : 'accordeon-item--level2';
+    Array.from(group.children).forEach(sib => {
+      if (sib === item || !sib.classList?.contains(want)) return;
+      const p = panelOf(sib);
+      if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
+        collapse(p);
+        const trig = sib.querySelector('.accordeon__trigger');
+        trig?.setAttribute('aria-expanded', 'false');
+        emit(isL1(item) ? 'ACC_L1_CLOSE' : 'ACC_L2_CLOSE', sib, { source: 'sibling' });
+      }
+    });
+  }
+
+  function resetAllL2(){
+    root.querySelectorAll('.accordeon-item--level2 .accordeon__list').forEach(p => {
+      if (p.dataset.state === 'open' || p.dataset.state === 'opening'){
+        collapse(p);
+        const it = p.closest('.accordeon-item--level2');
+        it?.querySelector('.accordeon__trigger')?.setAttribute('aria-expanded', 'false');
+        emit('ACC_L2_CLOSE', it, { source: 'reset-all' });
+      }
+    });
+  }
+
+  function toggle(item){
+    const p = panelOf(item); if (!p) return;
+    const trig = item.querySelector('.accordeon__trigger');
+    const opening = !(p.dataset.state === 'open' || p.dataset.state === 'opening');
+    closeSiblings(item);
+    if (opening && isL1(item)) resetAllL2();
+
+    if (opening){
+      expand(p); trig?.setAttribute('aria-expanded', 'true');
+      emit(isL1(item) ? 'ACC_L1_OPEN' : 'ACC_L2_OPEN', item, { opening: true });
+    } else {
+      collapse(p); trig?.setAttribute('aria-expanded', 'false');
+      if (isL1(item)) resetAllL2();
+      emit(isL1(item) ? 'ACC_L1_CLOSE' : 'ACC_L2_CLOSE', item, { opening: false });
+    }
+  }
+
+  document.body.classList.add('js-prep');
+  root.querySelectorAll('.accordeon__list').forEach(p => { p.style.maxHeight = '0px'; p.dataset.state = 'collapsed'; });
+  requestAnimationFrame(() => document.body.classList.remove('js-prep'));
+
+  root.addEventListener('click', e => {
+    const t = e.target.closest('.accordeon__trigger'); if (!t || !root.contains(t)) return;
+    e.preventDefault();
+    const item = t.closest('.accordeon-item--level1, .accordeon-item--level2');
+    item && toggle(item);
+  });
+  root.addEventListener('keydown', e => {
+    const t = e.target.closest('.accordeon__trigger'); if (!t || !root.contains(t)) return;
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    const item = t.closest('.accordeon-item--level1, .accordeon-item--level2');
+    item && toggle(item);
+  });
+
+  const ro = new ResizeObserver(entries => {
+    entries.forEach(({ target: p }) => {
+      if (p.dataset.state === 'open'){ p.style.maxHeight = 'none'; }
+      else if (p.dataset.state === 'opening'){ p.style.maxHeight = p.scrollHeight + 'px'; }
+    });
+  });
+  root.querySelectorAll('.accordeon__list').forEach(p => ro.observe(p));
+}
+
+

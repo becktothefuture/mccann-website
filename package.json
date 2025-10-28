@@ -1,0 +1,17 @@
+{
+  "name": "mccann-website",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs --dev",
+    "build": "node esbuild.config.mjs",
+    "test": "echo \"(placeholder)\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "esbuild": "^0.25.11"
+  }
+}
