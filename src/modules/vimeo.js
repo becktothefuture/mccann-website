@@ -6,6 +6,8 @@
  * ==================================================
  */
 
+console.log('[VIMEO] module loaded');
+
 function parseVimeoId(input){
   if (!input) return '';
   const str = String(input).trim();

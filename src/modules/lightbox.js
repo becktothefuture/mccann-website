@@ -9,6 +9,7 @@
 import { emit } from '../core/events.js';
 import { lockScroll, unlockScroll } from '../core/scrolllock.js';
 import { mountVimeo } from './vimeo.js';
+console.log('[LIGHTBOX] module loaded');
 
 export function initLightbox({ root = '#project-lightbox', closeDelayMs = 1000 } = {}){
   const lb = document.querySelector(root);

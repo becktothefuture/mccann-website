@@ -7,6 +7,7 @@
  */
 
 import { emit } from '../core/events.js';
+console.log('[ACCORDION] module loaded');
 
 export function initAccordion(rootSel = '.accordeon'){
   const root = document.querySelector(rootSel);
