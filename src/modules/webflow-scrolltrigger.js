@@ -19,8 +19,14 @@ console.log('[WEBFLOW] module loaded');
  *
  * Requirements in Webflow:
  *  - logo-start (optional): Uses the same timeline as logo-shrink. Control → Jump to 0s, then Stop.
- *                          Only needed if logo doesn't naturally start in big state via CSS.
- *                          If omitted, logo-start event is still emitted but ignored if not configured.
+ *                          IMPORTANT: "Jump to 0s" may not work until the timeline has been initialized
+ *                          (i.e., after shrink/grow has been played at least once). Therefore:
+ *                          - Set your logo CSS to display in the "big" state initially (initial state should
+ *                            match frame 0 of the shrink timeline).
+ *                          - logo-start is primarily used when returning to top (onEnterBack); it should work
+ *                            there because the timeline will have been initialized by user scrolling.
+ *                          - If logo-start doesn't work on initial page load, that's OK - CSS handles initial state.
+ *                          - If omitted, logo-start event is still emitted but safely ignored if not configured.
  *  - logo-shrink: Control → Play from start (big → small animation)
  *  - logo-grow: Control → Play from start (small → big animation)
  *
@@ -171,39 +177,18 @@ export function initWebflowScrollTriggers(options = {}){
         }
       };
       
-      // Wait for ScrollTrigger to refresh, then initialize logo-start state
-      // Strategy: If "Jump to 0s" doesn't work, we can try initializing the timeline first
+      // Wait for ScrollTrigger to refresh, then emit logo-start
+      // Note: "Jump to 0s" may not work until timeline has been initialized by playing shrink/grow at least once.
+      // Since we can't safely initialize without a visible flash, we'll only emit on initial load.
+      // The logo should start in the "big" state via CSS initially.
+      // logo-start is primarily used when returning to top (onEnterBack handles that).
       requestAnimationFrame(() => {
         ScrollTrigger.refresh();
         
-        // Attempt 1: Direct emit (works if timeline is already initialized via shrink/grow)
-        setTimeout(() => {
-          console.log('[WEBFLOW] Attempt 1: Direct logo-start emit');
-          verifyAndEmit(initEventName, 'Initial load');
-        }, 100);
-        
-        // Attempt 2: If "Jump to 0s" requires timeline initialization, try this workaround:
-        // Brief play of shrink (forces timeline to exist), then immediately jump to start
-        setTimeout(() => {
-          console.log('[WEBFLOW] Attempt 2: Timeline init workaround - playing shrink briefly then jumping to start');
-          try {
-            if (wfIx && typeof wfIx.emit === 'function') {
-              // Play shrink for 1 frame (forces timeline initialization)
-              wfIx.emit(shrinkEventName);
-              // Immediately jump to start (should be fast enough to avoid visible animation)
-              setTimeout(() => {
-                wfIx.emit(initEventName);
-                console.log('[WEBFLOW] ✓ Timeline init workaround completed');
-              }, 16); // ~1 frame at 60fps
-            }
-          } catch(err) {
-            console.error('[WEBFLOW] Error in timeline init workaround:', err);
-          }
-        }, 500);
-        
-        // Attempt 3-4: Additional delayed attempts (in case Webflow interactions load late)
-        setTimeout(() => verifyAndEmit(initEventName, 'Delayed attempt 1'), 1000);
-        setTimeout(() => verifyAndEmit(initEventName, 'Delayed attempt 2'), 1500);
+        // Emit logo-start on initial load (may not work if timeline isn't initialized yet, but no harm)
+        // Best practice: Ensure your logo element has CSS that sets it to the "big" state initially
+        setTimeout(() => verifyAndEmit(initEventName, 'Initial load'), 100);
+        setTimeout(() => verifyAndEmit(initEventName, 'Initial load (delayed)'), 800);
       });
     });
   });

@@ -95,7 +95,7 @@ npx localtunnel --port 3000
 ```
 
 4) **Create the custom Interactions in Webflow** (Interactions → New → Custom):
-   - **`logo-start`** (Critical setup steps):
+   - **`logo-start`** (Important setup notes):
      1. Event name must be exactly: `logo-start` (case-sensitive)
      2. Trigger: Custom Event (`logo-start`)
      3. Target: Select your logo element (the one that should animate)
@@ -103,18 +103,19 @@ npx localtunnel --port 3000
      5. Control: **Jump to 0s, then Stop** (NOT "No Action", NOT "Play")
      6. Verify: Timeline at 0s shows logo in "big" state
      
+     **Critical: Initial state handling**:
+     - **"Jump to 0s" may not work until the timeline has been initialized** (i.e., after the user has scrolled and triggered `logo-shrink` or `logo-grow` at least once).
+     - **Solution**: Set your logo's CSS to display in the "big" state initially (the same state as frame 0 of your shrink timeline).
+     - `logo-start` is primarily used when returning to the top after scrolling (this works because the timeline has been initialized by then).
+     - If `logo-start` doesn't work on initial page load, that's fine - CSS handles the initial state, and it will work when the user scrolls back to top.
+     
      **Troubleshooting `logo-start`**:
-     - If nothing happens when event emits, check:
+     - If nothing happens on initial load: This is expected if "Jump to 0s" requires initialization. Ensure CSS sets logo to big state initially.
+     - If nothing happens when returning to top: Check:
        1. Event name spelling (must match exactly: `logo-start`)
        2. Control is NOT "No Action" (common mistake)
        3. Target element is correct (the logo that should animate)
        4. Timeline at frame 0/0s shows logo in "big" state
-       5. Try testing manually in browser console:
-          ```js
-          const wfIx = Webflow.require("ix3") || Webflow.require("ix2");
-          wfIx.emit("logo-start");
-          ```
-       6. If manual emit also does nothing → Webflow config issue, not code issue
    
    - **`logo-shrink`**:
      1. Event name: `logo-shrink` (case-sensitive)
