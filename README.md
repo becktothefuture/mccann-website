@@ -95,27 +95,14 @@ npx localtunnel --port 3000
 ```
 
 4) **Create the custom Interactions in Webflow** (Interactions → New → Custom):
-   - **`logo-start`** (Important setup notes):
+   - **`logo-start`**:
      1. Event name must be exactly: `logo-start` (case-sensitive)
      2. Trigger: Custom Event (`logo-start`)
      3. Target: Select your logo element (the one that should animate)
      4. Animation: Use the SAME timeline as `logo-shrink`
      5. Control: **Jump to 0s, then Stop** (NOT "No Action", NOT "Play")
      6. Verify: Timeline at 0s shows logo in "big" state
-     
-     **Critical: Initial state handling**:
-     - **"Jump to 0s" may not work until the timeline has been initialized** (i.e., after the user has scrolled and triggered `logo-shrink` or `logo-grow` at least once).
-     - **Solution**: Set your logo's CSS to display in the "big" state initially (the same state as frame 0 of your shrink timeline).
-     - `logo-start` is primarily used when returning to the top after scrolling (this works because the timeline has been initialized by then).
-     - If `logo-start` doesn't work on initial page load, that's fine - CSS handles the initial state, and it will work when the user scrolls back to top.
-     
-     **Troubleshooting `logo-start`**:
-     - If nothing happens on initial load: This is expected if "Jump to 0s" requires initialization. Ensure CSS sets logo to big state initially.
-     - If nothing happens when returning to top: Check:
-       1. Event name spelling (must match exactly: `logo-start`)
-       2. Control is NOT "No Action" (common mistake)
-       3. Target element is correct (the logo that should animate)
-       4. Timeline at frame 0/0s shows logo in "big" state
+     7. **Usage**: Only triggered when returning to top after scrolling (works because timeline is initialized by then)
    
    - **`logo-shrink`**:
      1. Event name: `logo-shrink` (case-sensitive)
@@ -124,12 +111,14 @@ npx localtunnel --port 3000
      4. Animation: Timeline from big → small
      5. Control: **Play from start**
    
-   - **`logo-grow`**:
+   - **`logo-grow`** (Important for initial load):
      1. Event name: `logo-grow` (case-sensitive)
      2. Trigger: Custom Event (`logo-grow`)
      3. Target: Same logo element
      4. Animation: Timeline from small → big
      5. Control: **Play from start**
+     6. **Critical**: This is triggered on initial page load to animate the logo from small → big
+     7. **CSS requirement**: Ensure your logo CSS shows it in the "small" state initially (matching the start state of the grow animation), so the grow animation has somewhere to animate from.
 
 ---
 

@@ -12,23 +12,20 @@ console.log('[WEBFLOW] module loaded');
  * Initialize GSAP ScrollTrigger → Webflow IX bridge.
  *
  * Behavior:
- *  1. On load: emit logo-start to set logo to big static state
+ *  1. On load: emit logo-grow to animate logo from small → big (ensures logo starts in big state)
  *  2. Scroll down past first slide: emit logo-shrink (big → small)
  *  3. Start scrolling up: emit logo-grow immediately (small → big)
- *  4. Return to top: emit logo-start again (back to big static state)
+ *  4. Return to top: emit logo-start (jump to 0s, back to big static state)
  *
  * Requirements in Webflow:
- *  - logo-start (optional): Uses the same timeline as logo-shrink. Control → Jump to 0s, then Stop.
- *                          IMPORTANT: "Jump to 0s" may not work until the timeline has been initialized
- *                          (i.e., after shrink/grow has been played at least once). Therefore:
- *                          - Set your logo CSS to display in the "big" state initially (initial state should
- *                            match frame 0 of the shrink timeline).
- *                          - logo-start is primarily used when returning to top (onEnterBack); it should work
- *                            there because the timeline will have been initialized by user scrolling.
- *                          - If logo-start doesn't work on initial page load, that's OK - CSS handles initial state.
- *                          - If omitted, logo-start event is still emitted but safely ignored if not configured.
+ *  - logo-start: Uses the same timeline as logo-shrink. Control → Jump to 0s, then Stop.
+ *               Used when returning to top (onEnterBack); works because timeline is initialized by then.
+ *               If omitted, event is still emitted but safely ignored if not configured.
  *  - logo-shrink: Control → Play from start (big → small animation)
  *  - logo-grow: Control → Play from start (small → big animation)
+ *               This is triggered on initial page load to animate logo from small → big.
+ *               Ensure your logo CSS shows it in the "small" state initially (matching the end state
+ *               of shrink or start state of grow), so the grow animation has somewhere to animate from.
  *
  * @param {Object} options
  * @param {string} [options.scrollerSelector='.perspective-wrapper']
@@ -177,18 +174,14 @@ export function initWebflowScrollTriggers(options = {}){
         }
       };
       
-      // Wait for ScrollTrigger to refresh, then emit logo-start
-      // Note: "Jump to 0s" may not work until timeline has been initialized by playing shrink/grow at least once.
-      // Since we can't safely initialize without a visible flash, we'll only emit on initial load.
-      // The logo should start in the "big" state via CSS initially.
-      // logo-start is primarily used when returning to top (onEnterBack handles that).
+      // Wait for ScrollTrigger to refresh, then trigger logo-grow on initial load
+      // This animates the logo from small → big on page load, ensuring it starts in the big state
       requestAnimationFrame(() => {
         ScrollTrigger.refresh();
         
-        // Emit logo-start on initial load (may not work if timeline isn't initialized yet, but no harm)
-        // Best practice: Ensure your logo element has CSS that sets it to the "big" state initially
-        setTimeout(() => verifyAndEmit(initEventName, 'Initial load'), 100);
-        setTimeout(() => verifyAndEmit(initEventName, 'Initial load (delayed)'), 800);
+        // Emit logo-grow on initial load (animates logo to big state)
+        setTimeout(() => verifyAndEmit(growEventName, 'Initial load - grow'), 100);
+        setTimeout(() => verifyAndEmit(growEventName, 'Initial load - grow (delayed)'), 800);
       });
     });
   });
