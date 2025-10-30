@@ -30,7 +30,8 @@ console.log('[WF-IX] module loaded');
  */
 export function initWebflowScrollTriggers(options = {}){
   const scrollerSelector = options.scrollerSelector || '.perspective-wrapper';
-  const driverSelector = options.driverSelector || '.slide--scroll-driver';
+  // Use the first `.slide` in the document (prefer within `.slides`)
+  const driverSelector = options.driverSelector || '.slides .slide, .slide';
   // Events: init pauses/sets start on load; play fires on first scroll; reset pauses on scroll back
   const initEventName = options.initEventName || 'logo-start';
   const playEventName = options.playEventName || 'logo-shrink';
@@ -58,7 +59,7 @@ export function initWebflowScrollTriggers(options = {}){
       if (!wfIx || !ScrollTrigger) { return; }
 
       const scroller = document.querySelector(scrollerSelector);
-      let driver = document.querySelector(driverSelector) || document.querySelector('.parallax-group:first-child');
+      let driver = document.querySelector(driverSelector) || document.querySelector('.slide') || document.querySelector('.parallax-group:first-child');
       if (!scroller || !driver) { return; }
 
       // Ensure the animation is at its start and paused on load
@@ -98,7 +99,7 @@ export function initWebflowScrollTriggers(options = {}){
           } catch(_) {}
         },
       });
-      try { console.log('[WF-IX] ScrollTrigger created', { trigger: driver, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
+      try { console.log('[WF-IX] ScrollTrigger created', { trigger: driver, driverSelector, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
     };
 
     try { Webflow.push(mount); }

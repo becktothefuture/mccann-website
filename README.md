@@ -179,7 +179,7 @@ Example markup:
 - **Behavior**: Ties `ScrollTrigger` to `.perspective-wrapper`. Emits an init event on load to set the animation to its start/paused state. As soon as the user begins scrolling down from the top of the first slide, emits a play event. When scrolling back above the driver, emits the reset event again so it’s paused at the top.
 - **Defaults**:
   - scroller: `.perspective-wrapper`
-  - driver: `.slide--scroll-driver`
+  - driver: first `.slide` (prefers `.slides .slide`)
   - init/reset event: `logo-start`
   - play event: `logo-shrink`
   - start `top top`, end `top -10%`, `markers: false`

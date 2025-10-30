@@ -35,11 +35,11 @@ function init(options = {}){
   try {
     initWebflowScrollTriggers({
       scrollerSelector: '.perspective-wrapper',
-      driverSelector: '.slide--scroll-driver',
+      // driverSelector defaults to first .slide; override not needed
       initEventName: 'logo-start',     // pause at start on load
       playEventName: 'logo-shrink',    // play as soon as user starts scrolling down
       resetEventName: 'logo-start',    // reset/pause when scrolling back above the driver
-      playThreshold: 0.02,
+      // threshold not used in minimal version
     });
   } catch(_) {}
 
