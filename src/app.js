@@ -31,16 +31,13 @@ function init(options = {}){
   initLightbox({ root: lightboxRoot, closeDelayMs: 1000 });
   // Rely on CSS scroll-snap in `.perspective-wrapper`; do not attach JS paging
 
-  // Bridge GSAP ScrollTrigger → Webflow IX using the provided structure
+  // Bridge GSAP ScrollTrigger → Webflow IX
   try {
     initWebflowScrollTriggers({
       scrollerSelector: '.perspective-wrapper',
-      // driverSelector defaults to first .slide; override not needed
-      initEventName: 'logo-start',     // pause at start on load
-      playEventName: 'logo-shrink',    // play as soon as user starts scrolling down
-      resetEventName: 'logo-start',    // optional restart state
-      growEventName: 'logo-grow',      // play forward grow on scroll up
-      // threshold not used in minimal version
+      initEventName: 'logo-start',
+      shrinkEventName: 'logo-shrink',
+      growEventName: 'logo-grow'
     });
   } catch(_) {}
 
