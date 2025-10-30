@@ -62,11 +62,16 @@ export function initWebflowScrollTriggers(options = {}){
       if (!scroller || !driver) { return; }
 
       // Ensure the animation is at its start and paused on load
-      try { initEventName && wfIx.emit(initEventName); } catch(_) {}
+      try {
+        if (initEventName) {
+          console.log('[WF-IX] emit init:', initEventName);
+          wfIx.emit(initEventName);
+        }
+      } catch(_) {}
 
       let fired = false;
 
-      ScrollTrigger.create({
+      const st = ScrollTrigger.create({
         trigger: driver,
         scroller: scroller,
         start: 'top top',
@@ -74,15 +79,26 @@ export function initWebflowScrollTriggers(options = {}){
         markers: markers,
         onLeave: () => {
           if (!fired) {
-            try { playEventName && wfIx.emit(playEventName); } catch(_) {}
+            try {
+              if (playEventName) {
+                console.log('[WF-IX] emit play/onLeave:', playEventName);
+                wfIx.emit(playEventName);
+              }
+            } catch(_) {}
             fired = true;
           }
         },
         onEnterBack: () => {
           fired = false;
-          try { resetEventName && wfIx.emit(resetEventName); } catch(_) {}
+          try {
+            if (resetEventName) {
+              console.log('[WF-IX] emit reset/onEnterBack:', resetEventName);
+              wfIx.emit(resetEventName);
+            }
+          } catch(_) {}
         },
       });
+      try { console.log('[WF-IX] ScrollTrigger created', { trigger: driver, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
     };
 
     try { Webflow.push(mount); }
