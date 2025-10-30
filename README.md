@@ -26,6 +26,7 @@ The bundle auto‑initializes on DOM ready and also exposes a tiny global `windo
 - `src/modules/lightbox.js`: Accessible lightbox that traps focus, locks page scroll, closes on outside click/Escape, and mounts Vimeo videos.
 - `src/modules/vimeo.js`: Parses Vimeo IDs/URLs and mounts a privacy‑respecting iframe.
 - `src/modules/slides.js`: Optional GSAP ScrollTrigger snap‑to‑nearest `.slide` sections (no scrubbing timelines created).
+- `src/modules/webflow-scrolltrigger.js`: GSAP ScrollTrigger → Webflow IX2 bridge for `.perspective-wrapper` + `.slide--scroll-driver`.
 - `style.css`: Small hardening and module‑adjacent CSS (lightbox baseline, accordion transition).
 - `esbuild.config.mjs`: Build/watch config that outputs a single IIFE to `dist/app.js` and serves it in dev.
 - `dist/app.js`: Built bundle (minified in prod, inline sourcemap in dev).
@@ -162,6 +163,12 @@ Example markup:
   …
 </section>
 ```
+
+#### Webflow ScrollTrigger → IX2 bridge (`src/modules/webflow-scrolltrigger.js`)
+
+- **Behavior**: Creates a `ScrollTrigger` tied to the custom scroller `.perspective-wrapper` and emits a Webflow IX2 interaction when the driver slide `.slide--scroll-driver` leaves the top of the scroller, and again on enter‑back (for automatic reverse).
+- **Defaults**: scroller `.perspective-wrapper`, driver `.slide--scroll-driver`, interaction `logo-shrink`, start `top top`, end `bottom top`, `markers: false`.
+- **Safety**: No‑ops if Webflow/IX2 or ScrollTrigger are unavailable, or if elements are missing.
 
 #### Vimeo helper (`src/modules/vimeo.js`)
 

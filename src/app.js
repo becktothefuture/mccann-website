@@ -8,6 +8,9 @@
 
 import { initAccordion } from './modules/accordion.js';
 import { initLightbox } from './modules/lightbox.js';
+import { initSlidesSnap } from './modules/slides.js';
+import { initSlidePager } from './modules/slide-pager.js';
+import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
 
 function patchYouTubeAllowTokens(){
   const tokens = ['accelerometer','autoplay','clipboard-write','encrypted-media','gyroscope','picture-in-picture','web-share'];
@@ -27,6 +30,15 @@ function init(options = {}){
   const lightboxRoot = options.lightboxRoot || '#project-lightbox';
   initAccordion('.accordeon');
   initLightbox({ root: lightboxRoot, closeDelayMs: 1000 });
+  // Enforce page-by-page navigation for all `.slide` elements
+  try { initSlidePager({ selector: '.slide', duration: 0.5, ease: 'expo.out', anchorRatio: 0.5, cooldownMs: 420 }); } catch(_) {}
+
+  // Bridge GSAP ScrollTrigger → Webflow IX2 using the provided structure
+  try { initWebflowScrollTriggers({ scrollerSelector: '.perspective-wrapper', driverSelector: '.slide--scroll-driver' }); } catch(_) {}
+
+  // Optional: retain a subtle snap as a safety net if paging is disabled
+  // Disabled here to avoid double movement
+  // try { initSlidesSnap({ selector: '.slide', duration: 0.22, ease: 'power4.out', anchorRatio: 0.55, delay: 0, directional: true }); } catch(_) {}
 }
 
 // Expose a tiny global for Webflow/Designer hooks
