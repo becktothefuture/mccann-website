@@ -6,7 +6,7 @@
  * ==================================================
  */
 
-console.log('[WF-IX] module loaded');
+console.log('[WEBFLOW] module loaded');
 
 /**
  * Initialize GSAP ScrollTrigger → Webflow IX2 bridge.
@@ -65,7 +65,7 @@ export function initWebflowScrollTriggers(options = {}){
       // Ensure the animation is at its start and paused on load
       try {
         if (initEventName) {
-          console.log('[WF-IX] emit init:', initEventName);
+          console.log('[WEBFLOW] emit init:', initEventName);
           wfIx.emit(initEventName);
         }
       } catch(_) {}
@@ -82,7 +82,7 @@ export function initWebflowScrollTriggers(options = {}){
           if (!fired) {
             try {
               if (playEventName) {
-                console.log('[WF-IX] emit play/onLeave:', playEventName);
+                console.log('[WEBFLOW] emit play/onLeave:', playEventName);
                 wfIx.emit(playEventName);
               }
             } catch(_) {}
@@ -94,13 +94,13 @@ export function initWebflowScrollTriggers(options = {}){
           fired = false; // allow next downward pass to fire again
           try {
             if (playEventName) {
-              console.log('[WF-IX] emit reverse/onEnterBack:', playEventName);
+              console.log('[WEBFLOW] emit reverse/onEnterBack:', playEventName);
               wfIx.emit(playEventName);
             }
           } catch(_) {}
         },
       });
-      try { console.log('[WF-IX] ScrollTrigger created', { trigger: driver, driverSelector, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
+      try { console.log('[WEBFLOW] ScrollTrigger created', { trigger: driver, driverSelector, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
     };
 
     try { Webflow.push(mount); }
