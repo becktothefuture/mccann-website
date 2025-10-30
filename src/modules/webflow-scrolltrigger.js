@@ -164,22 +164,36 @@ export function initWebflowScrollTriggers(options = {}){
         }
       };
       
-      // Emit logo-start after ScrollTrigger setup, with multiple delayed attempts
-      // Some Webflow interactions need extra time after ScrollTrigger initialization
-      const emitStartFinal = () => {
-        emitStart();
+      // Workaround: "Jump to 0s" may require the timeline to be initialized first.
+      // Strategy: Initialize timeline by playing shrink for 0ms, then immediately jump to start.
+      // Use setTimeout(0) for minimal delay - should be imperceptible.
+      const initializeTimelineAndSetStart = () => {
+        try {
+          if (wfIx && typeof wfIx.emit === 'function') {
+            console.log('[WEBFLOW] Attempting timeline init sequence...');
+            
+            // Step 1: Initialize timeline by emitting shrink (forces timeline to exist)
+            wfIx.emit(shrinkEventName);
+            
+            // Step 2: Immediately jump to start (minimal delay - should be <1ms)
+            setTimeout(() => {
+              wfIx.emit(initEventName);
+              console.log('[WEBFLOW] ✓ Timeline init + jump completed');
+            }, 0);
+          }
+        } catch(err) {
+          console.error('[WEBFLOW] ✗ Error in timeline init sequence:', err);
+        }
       };
       
-      // Wait for ScrollTrigger to refresh, then emit
+      // Wait for ScrollTrigger to refresh, then initialize
       requestAnimationFrame(() => {
         ScrollTrigger.refresh();
         
-        // Multiple attempts with increasing delays to catch Webflow initialization
-        emitStartFinal();
-        setTimeout(emitStartFinal, 150);
-        setTimeout(emitStartFinal, 400);
-        setTimeout(emitStartFinal, 700);
-        setTimeout(emitStartFinal, 1200);
+        // Try the init sequence multiple times with delays
+        initializeTimelineAndSetStart();
+        setTimeout(initializeTimelineAndSetStart, 200);
+        setTimeout(initializeTimelineAndSetStart, 600);
       });
     });
   });
