@@ -93,7 +93,8 @@ export function initWebflowScrollTriggers(options = {}){
           }
         },
         onEnterBack: () => {
-          // Emit a distinct reverse event so the Webflow timeline can be authored separately
+          // Fallback: only emit if direction watcher didn't already fire
+          if (!reverseArmed) return;
           fired = false; // allow next downward pass to fire again
           try {
             if (reverseEventName) {
