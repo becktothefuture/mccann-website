@@ -71,8 +71,12 @@ export function initWebflowScrollTriggers(options = {}){
         }
       } catch(_) {}
 
-      let fired = false; // forward emitted
+      let fired = false; // forward emitted for current pass below the band
       let reversed = false; // reverse emitted since last forward
+      let lastPlayTs = 0;
+      let lastReverseTs = 0;
+      const minDeltaPx = 6; // ignore micro jitter
+      const cooldownMs = 250; // debounce emits against snap bounces
 
       const st = ScrollTrigger.create({
         trigger: driver,
@@ -90,11 +94,16 @@ export function initWebflowScrollTriggers(options = {}){
             } catch(_) {}
             fired = true;
             reversed = false;
+            lastPlayTs = performance.now();
           }
         },
         onEnterBack: () => {
-          // Crossing back near the top band → just reset gating
+          // Do nothing here; we reset gating only once we cross the START going up
+        },
+        onLeaveBack: () => {
+          // Fully back above the start band → allow next forward cycle
           fired = false;
+          reversed = false;
         },
       });
       try { console.log('[WEBFLOW] ScrollTrigger created', { trigger: driver, driverSelector, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
@@ -104,7 +113,9 @@ export function initWebflowScrollTriggers(options = {}){
       const onScroll = () => {
         const y = (scroller === window ? window.scrollY : scroller.scrollTop) || 0;
         const delta = lastY - y; // positive when moving up
-        if (delta > 1 && fired && !reversed) {
+        if (delta > minDeltaPx && fired && !reversed) {
+          const now = performance.now();
+          if (now - lastReverseTs < cooldownMs) { lastY = y; return; }
           try {
             if (reverseEventName) {
               console.log('[WEBFLOW] emit reverse/scroll-start:', reverseEventName);
@@ -112,6 +123,7 @@ export function initWebflowScrollTriggers(options = {}){
             }
           } catch(_) {}
           reversed = true;
+          lastReverseTs = now;
         }
         lastY = y;
       };
