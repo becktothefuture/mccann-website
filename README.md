@@ -1,6 +1,6 @@
 ### McCann Website — Webflow Single‑Bundle Integration
 
-This project ships a single, self‑contained JavaScript bundle designed to drop into a running Webflow site. It wires a11y‑friendly UI behaviors (accordion, lightbox with Vimeo, optional GSAP slide snapping) with minimal surface area and careful fallbacks.
+This project ships a single, self‑contained JavaScript bundle designed to drop into a running Webflow site. It wires a11y‑friendly UI behaviors (accordion, lightbox with Vimeo) and native scroll snapping (no JS slide snapping module) with minimal surface area and careful fallbacks.
 
 The bundle auto‑initializes on DOM ready and also exposes a tiny global `window.App.init(options)` for manual re‑init or customization.
 
@@ -13,7 +13,7 @@ The bundle auto‑initializes on DOM ready and also exposes a tiny global `windo
 - **Progressive enhancement**: Modules no‑op if their required DOM isn’t present. That keeps pages resilient across templates and CMS variations.
 - **A11y and UX by default**: ARIA roles/keyboard support on accordion, focus trap + inert/aria fallbacks for modals, and `prefers-reduced-motion` respected for motion.
 - **Privacy‑conscious media**: Vimeo is mounted with `dnt=1`; YouTube iframes are patched to include safe `allow` tokens.
-- **Optional GSAP Snap**: Adds smooth section snapping without imposing scrubbing timelines; if GSAP/ScrollTrigger aren’t present, it safely does nothing.
+- **Native scroll**: Uses CSS scroll snapping; no JS slide snapping module.
 
 ---
 
@@ -25,8 +25,7 @@ The bundle auto‑initializes on DOM ready and also exposes a tiny global `windo
 - `src/modules/accordion.js`: Two‑level accordion with ARIA, keyboard support, smooth height transitions, and sibling closing.
 - `src/modules/lightbox.js`: Accessible lightbox that traps focus, locks page scroll, closes on outside click/Escape, and mounts Vimeo videos.
 - `src/modules/vimeo.js`: Parses Vimeo IDs/URLs and mounts a privacy‑respecting iframe.
-- `src/modules/slides.js`: Optional GSAP ScrollTrigger snap‑to‑nearest `.slide` sections (no scrubbing timelines created).
-- `src/modules/webflow-scrolltrigger.js`: GSAP ScrollTrigger → Webflow IX2 bridge for `.perspective-wrapper` + `.slide--scroll-driver`.
+- `src/modules/webflow-scrolltrigger.js`: GSAP ScrollTrigger → Webflow IX bridge for `.perspective-wrapper` + first `.slide`.
 - `style.css`: Small hardening and module‑adjacent CSS (lightbox baseline, accordion transition).
 - `esbuild.config.mjs`: Build/watch config that outputs a single IIFE to `dist/app.js` and serves it in dev.
 - `dist/app.js`: Built bundle (minified in prod, inline sourcemap in dev).
@@ -83,14 +82,7 @@ npx localtunnel --port 3000
 # Use the printed HTTPS URL, e.g. https://<subdomain>.loca.lt/app.js
 ```
 
-3) **Optional GSAP snapping**: If you want `.slide` snapping, load GSAP + ScrollTrigger. If not loaded, the code safely no‑ops.
-```html
-<script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
-<script src="https://unpkg.com/gsap@3/dist/ScrollTrigger.min.js"></script>
-<script>window.ScrollTrigger = window.ScrollTrigger || ScrollTrigger; gsap.registerPlugin(ScrollTrigger);</script>
-```
-
-4) **Initialization**: The bundle auto‑runs on `DOMContentLoaded`. You can also initialize (or re‑initialize) manually:
+3) **Initialization**: The bundle auto‑runs on `DOMContentLoaded`. You can also initialize (or re‑initialize) manually:
 ```html
 <script>
   // Optional: customize where the lightbox container lives
@@ -98,14 +90,14 @@ npx localtunnel --port 3000
   // If omitted, defaults are used and missing elements are safely ignored
   // initAccordion is called for '.accordeon'
   // initLightbox is called for '#project-lightbox'
-  // initSlidesSnap is attempted for '.slide' if GSAP/ScrollTrigger are present
   // YouTube iframes have their allow-tokens patched automatically
   </script>
 ```
 
-5) **Create the two custom Interactions in Webflow** (Interactions → New → Custom):
-- `logo-start`: Control → Stop at 0s (ensures paused at start).
-- `logo-shrink`: Control → Play from start. Enable “Play in reverse” for automatic reverse when scrolling back.
+4) **Create the custom Interactions in Webflow** (Interactions → New → Custom):
+- `logo-start`: Control → Stop at 0s. Include 0s Set steps that apply the big/logo-at-start state.
+- `logo-shrink`: Control → Play from start. Forward timeline from big → small.
+- `logo-grow`: Control → Play from start. Forward timeline from small → big.
 
 ---
 
@@ -161,18 +153,6 @@ Baseline CSS (in `style.css`):
 body.modal-open { overflow:hidden; }
 ```
 
-#### Slides + GSAP snap (`src/modules/slides.js`)
-
-- **Behavior**: Adds a single page‑wide `ScrollTrigger` with `snapTo` that moves to the nearest `.slide` center; does not create scrubbing timelines. Respects `prefers-reduced-motion`.
-- **Requirements**: GSAP and ScrollTrigger loaded globally (see snippet above). No registration needed for `ScrollTrigger.create`, but `gsap.registerPlugin(ScrollTrigger)` is recommended.
-- **Options**: `{ selector = '.slide', duration = 0.35, ease = 'power2.out' }`.
-
-Example markup:
-```html
-<section class="slide" data-video="123456789" data-title="Project" data-text="Description">
-  …
-</section>
-```
 
 #### Webflow ScrollTrigger → IX bridge (`src/modules/webflow-scrolltrigger.js`)
 
@@ -182,6 +162,7 @@ Example markup:
   - driver: first `.slide` (prefers `.slides .slide`)
   - init/reset event: `logo-start`
   - play event: `logo-shrink`
+  - grow event (scroll up): `logo-grow`
   - start `top top`, end `top -10%`, `markers: false`
 - **Safety**: No‑ops if Webflow IX (ix2/ix3) or ScrollTrigger are unavailable, or if elements are missing.
 
@@ -216,7 +197,6 @@ window.App && window.App.init({
 `init()` will:
 - call `initAccordion('.accordeon')`
 - call `initLightbox({ root: lightboxRoot, closeDelayMs: 1000 })`
-- attempt `initSlidesSnap()` if GSAP/ScrollTrigger are present
 - patch YouTube `iframe[allow]` capabilities to include common tokens
 
 ---
@@ -246,7 +226,6 @@ Accordion events bubble from the specific item as well as emit on `window` (see 
 
 ### Troubleshooting
 
-- **Slide snapping doesn’t work**: Ensure GSAP and ScrollTrigger are loaded, and there are elements matching `.slide`. Verify `prefers-reduced-motion` isn’t set.
 - **Lightbox doesn’t open**: Verify `#project-lightbox` exists and slides have `data-video` (Vimeo ID/URL). The `.video-area` container must be present inside the lightbox.
 - **Accordion doesn’t animate**: Ensure the CSS transition from `style.css` is included. Triggers must be `.accordeon__trigger` and panels `.accordeon__list`.
 - **Page still scrolls when lightbox open**: Check that your page isn’t using a custom scroll container; the lock targets `body`.
@@ -266,7 +245,7 @@ Accordion events bubble from the specific item as well as emit on `window` (see 
 - **Dev**: `npm run dev` → open the printed URL, optionally tunnel to Webflow.
 - **Build**: `npm run build` → deploy `dist/app.js` to your CDN.
 - **Init**: auto on DOM ready; optional `window.App.init({ lightboxRoot: '#project-lightbox' })`.
-- **Required markup**: `.accordeon` (accordion), `#project-lightbox` with `.project-lightbox__inner` and `.video-area`, `.slide` sections (for snapping and as lightbox triggers).
+- **Required markup**: `.accordeon` (accordion), `#project-lightbox` with `.project-lightbox__inner` and `.video-area`, `.slide` sections (as lightbox triggers).
 
 ---
 

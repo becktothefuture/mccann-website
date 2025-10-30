@@ -36,7 +36,8 @@ export function initWebflowScrollTriggers(options = {}){
   const initEventName = options.initEventName || 'logo-start';
   const playEventName = options.playEventName || 'logo-shrink';
   const resetEventName = options.resetEventName || initEventName || 'logo-start';
-  const reverseEventName = options.reverseEventName || 'logo-grow';
+  // Forward grow animation when scrolling up; keep backwards-compatible alias
+  const growEventName = options.growEventName || options.reverseEventName || 'logo-grow';
   const start = options.start || 'top top';
   const end = options.end || 'bottom top';
   const markers = !!options.markers;
@@ -72,7 +73,7 @@ export function initWebflowScrollTriggers(options = {}){
       } catch(_) {}
 
       let fired = false;
-      let reverseArmed = false;
+      let growArmed = false;
 
       const st = ScrollTrigger.create({
         trigger: driver,
@@ -89,38 +90,38 @@ export function initWebflowScrollTriggers(options = {}){
               }
             } catch(_) {}
             fired = true;
-            reverseArmed = true; // arm immediate reverse on upward direction
+            growArmed = true; // arm immediate grow on upward direction
           }
         },
         onEnterBack: () => {
           // Fallback: only emit if direction watcher didn't already fire
-          if (!reverseArmed) return;
+          if (!growArmed) return;
           fired = false; // allow next downward pass to fire again
           try {
-            if (reverseEventName) {
-              console.log('[WEBFLOW] emit reverse/onEnterBack:', reverseEventName);
-              wfIx.emit(reverseEventName);
+            if (growEventName) {
+              console.log('[WEBFLOW] emit grow/onEnterBack:', growEventName);
+              wfIx.emit(growEventName);
             }
           } catch(_) {}
-          reverseArmed = false;
+          growArmed = false;
         },
       });
       try { console.log('[WEBFLOW] ScrollTrigger created', { trigger: driver, driverSelector, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
 
-      // Direction watcher: fire reverse as soon as user starts scrolling up after shrink
+      // Direction watcher: fire grow as soon as user starts scrolling up after shrink
       ScrollTrigger.create({
         scroller: scroller,
         start: 0,
         end: () => ScrollTrigger.maxScroll(scroller),
         onUpdate: (s) => {
-          if (reverseArmed && s.direction < 0) {
+          if (growArmed && s.direction < 0) {
             try {
-              if (reverseEventName) {
-                console.log('[WEBFLOW] emit reverse/onUpdate:', reverseEventName);
-                wfIx.emit(reverseEventName);
+              if (growEventName) {
+                console.log('[WEBFLOW] emit grow/onUpdate:', growEventName);
+                wfIx.emit(growEventName);
               }
             } catch(_) {}
-            reverseArmed = false;
+            growArmed = false;
             fired = false;
           }
         }
