@@ -95,7 +95,7 @@ npx localtunnel --port 3000
 ```
 
 4) **Create the custom Interactions in Webflow** (Interactions → New → Custom):
-- `logo-start`: Control → Stop at 0s. Include 0s Set steps that apply the big/logo-at-start state.
+- `logo-start`: Uses the same timeline as `logo-shrink`. Control → Jump to 0s, then Stop. This positions the shrink timeline at its start (big state) without playing.
 - `logo-shrink`: Control → Play from start. Forward timeline from big → small.
 - `logo-grow`: Control → Play from start. Forward timeline from small → big.
 

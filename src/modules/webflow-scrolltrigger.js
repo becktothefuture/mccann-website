@@ -18,7 +18,8 @@ console.log('[WEBFLOW] module loaded');
  *  4. Return to top: emit logo-start again (back to big static state)
  *
  * Requirements in Webflow:
- *  - logo-start: Control → Stop at 0s, include 0s Set steps for big state
+ *  - logo-start: Uses the same timeline as logo-shrink. Control → Jump to 0s, then Stop.
+ *               This positions the shrink timeline at its start (big state) without playing.
  *  - logo-shrink: Control → Play from start (big → small animation)
  *  - logo-grow: Control → Play from start (small → big animation)
  *
@@ -61,7 +62,7 @@ export function initWebflowScrollTriggers(options = {}){
       const driver = scroller.querySelector('.slide') || document.querySelector('.slide');
       if (!driver) { return; }
 
-      // Emit logo-start on load to set initial big state
+      // Emit logo-start on load: jumps shrink timeline to 0s (big state) and stops
       try {
         console.log('[WEBFLOW] emit init:', initEventName);
         wfIx.emit(initEventName);
@@ -92,7 +93,7 @@ export function initWebflowScrollTriggers(options = {}){
         },
         
         onEnterBack: () => {
-          // Scrolled back up to top → reset to big static state
+          // Scrolled back up to top → jump shrink timeline to 0s (big state) and stop
           isBelowTop = false;
           hasShrunk = false;
           try {
