@@ -71,31 +71,59 @@ export function initWebflowScrollTriggers(options = {}){
         }
       } catch(_) {}
 
-      // Simple two-state gate: atTop vs belowFirst
-      let atTop = true;
+      let fired = false;
+      let reverseArmed = false;
 
       const st = ScrollTrigger.create({
         trigger: driver,
         scroller: scroller,
         start: 'top top',
-        end: 'bottom top',
+        end: 'top -10%',
         markers: markers,
         onLeave: () => {
-          if (atTop) {
-            try { if (playEventName) { console.log('[WEBFLOW] emit play/onLeave:', playEventName); wfIx.emit(playEventName); } } catch(_) {}
-            atTop = false;
+          if (!fired) {
+            try {
+              if (playEventName) {
+                console.log('[WEBFLOW] emit play/onLeave:', playEventName);
+                wfIx.emit(playEventName);
+              }
+            } catch(_) {}
+            fired = true;
+            reverseArmed = true; // arm immediate reverse on upward direction
           }
         },
         onEnterBack: () => {
-          if (!atTop) {
-            try { if (reverseEventName) { console.log('[WEBFLOW] emit reverse/onEnterBack:', reverseEventName); wfIx.emit(reverseEventName); } } catch(_) {}
-            atTop = true;
-          }
+          // Emit a distinct reverse event so the Webflow timeline can be authored separately
+          fired = false; // allow next downward pass to fire again
+          try {
+            if (reverseEventName) {
+              console.log('[WEBFLOW] emit reverse/onEnterBack:', reverseEventName);
+              wfIx.emit(reverseEventName);
+            }
+          } catch(_) {}
+          reverseArmed = false;
         },
       });
       try { console.log('[WEBFLOW] ScrollTrigger created', { trigger: driver, driverSelector, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
 
-      // No extra scroll listeners — rely only on onLeave/onEnterBack with the simple gate
+      // Direction watcher: fire reverse as soon as user starts scrolling up after shrink
+      ScrollTrigger.create({
+        scroller: scroller,
+        start: 0,
+        end: () => ScrollTrigger.maxScroll(scroller),
+        onUpdate: (s) => {
+          if (reverseArmed && s.direction < 0) {
+            try {
+              if (reverseEventName) {
+                console.log('[WEBFLOW] emit reverse/onUpdate:', reverseEventName);
+                wfIx.emit(reverseEventName);
+              }
+            } catch(_) {}
+            reverseArmed = false;
+            fired = false;
+          }
+        }
+      });
     };
 
     try { Webflow.push(mount); }
