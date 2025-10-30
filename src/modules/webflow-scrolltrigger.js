@@ -90,11 +90,12 @@ export function initWebflowScrollTriggers(options = {}){
           }
         },
         onEnterBack: () => {
-          fired = false;
+          // Re-emit the play event so Webflow can reverse (enable "Play in reverse" in the interaction)
+          fired = false; // allow next downward pass to fire again
           try {
-            if (resetEventName) {
-              console.log('[WF-IX] emit reset/onEnterBack:', resetEventName);
-              wfIx.emit(resetEventName);
+            if (playEventName) {
+              console.log('[WF-IX] emit reverse/onEnterBack:', playEventName);
+              wfIx.emit(playEventName);
             }
           } catch(_) {}
         },
