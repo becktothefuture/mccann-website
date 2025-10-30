@@ -13,8 +13,8 @@ console.log('[WEBFLOW] module loaded');
  *
  * Defaults are aligned to the provided Webflow structure:
  *  - scroller: `.perspective-wrapper`
- *  - driver slide: `.slide--scroll-driver` (inside `.slides`)
- *  - interaction: `logo-shrink` on leave and enter-back
+ *  - driver: first `.slide` inside `.perspective-wrapper`
+ *  - events: `logo-start` (static big), `logo-shrink` (down), `logo-grow` (up)
  *
  * This safely no-ops when Webflow/GSAP/ScrollTrigger or target elements
  * are unavailable. Runs after window 'load' and inside Webflow.push.
@@ -30,8 +30,8 @@ console.log('[WEBFLOW] module loaded');
  */
 export function initWebflowScrollTriggers(options = {}){
   const scrollerSelector = options.scrollerSelector || '.perspective-wrapper';
-  // Use the first `.slide` in the document (prefer within `.slides`)
-  const driverSelector = options.driverSelector || '.slides .slide, .slide';
+  // Use the first `.slide` inside the scroller
+  const driverSelector = options.driverSelector || '.slide';
   // Events: init pauses/sets start on load; play fires on first scroll; reset pauses on scroll back
   const initEventName = options.initEventName || 'logo-start';
   const playEventName = options.playEventName || 'logo-shrink';
@@ -61,7 +61,9 @@ export function initWebflowScrollTriggers(options = {}){
       if (!wfIx || !ScrollTrigger) { return; }
 
       const scroller = document.querySelector(scrollerSelector);
-      let driver = document.querySelector(driverSelector) || document.querySelector('.slide') || document.querySelector('.parallax-group:first-child');
+      // Find first .slide inside scroller (fallback to standalone .slide, then .parallax-group)
+      let driver = scroller ? scroller.querySelector('.slide') : null;
+      if (!driver) driver = document.querySelector('.slide') || document.querySelector('.parallax-group:first-child');
       if (!scroller || !driver) { return; }
 
       // Ensure the animation is at its start and paused on load.

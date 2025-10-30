@@ -159,7 +159,7 @@ body.modal-open { overflow:hidden; }
 - **Behavior**: Ties `ScrollTrigger` to `.perspective-wrapper`. Emits an init event on load to set the animation to its start/paused state. As soon as the user begins scrolling down from the top of the first slide, emits a play event. When scrolling back above the driver, emits the reset event again so it’s paused at the top.
 - **Defaults**:
   - scroller: `.perspective-wrapper`
-  - driver: first `.slide` (prefers `.slides .slide`)
+  - driver: first `.slide` inside `.perspective-wrapper`
   - init/reset event: `logo-start`
   - play event: `logo-shrink`
   - grow event (scroll up): `logo-grow`
