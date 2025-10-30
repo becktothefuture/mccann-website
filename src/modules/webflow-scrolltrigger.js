@@ -36,6 +36,7 @@ export function initWebflowScrollTriggers(options = {}){
   const initEventName = options.initEventName || 'logo-start';
   const playEventName = options.playEventName || 'logo-shrink';
   const resetEventName = options.resetEventName || initEventName || 'logo-start';
+  const reverseEventName = options.reverseEventName || 'logo-grow';
   const start = options.start || 'top top';
   const end = options.end || 'bottom top';
   const markers = !!options.markers;
@@ -90,12 +91,12 @@ export function initWebflowScrollTriggers(options = {}){
           }
         },
         onEnterBack: () => {
-          // Re-emit the play event so Webflow can reverse (enable "Play in reverse" in the interaction)
+          // Emit a distinct reverse event so the Webflow timeline can be authored separately
           fired = false; // allow next downward pass to fire again
           try {
-            if (playEventName) {
-              console.log('[WEBFLOW] emit reverse/onEnterBack:', playEventName);
-              wfIx.emit(playEventName);
+            if (reverseEventName) {
+              console.log('[WEBFLOW] emit reverse/onEnterBack:', reverseEventName);
+              wfIx.emit(reverseEventName);
             }
           } catch(_) {}
         },

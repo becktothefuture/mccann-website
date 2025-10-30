@@ -38,7 +38,8 @@ function init(options = {}){
       // driverSelector defaults to first .slide; override not needed
       initEventName: 'logo-start',     // pause at start on load
       playEventName: 'logo-shrink',    // play as soon as user starts scrolling down
-      resetEventName: 'logo-start',    // reset/pause when scrolling back above the driver
+      resetEventName: 'logo-start',    // optional
+      reverseEventName: 'logo-grow',   // play reverse on scroll up
       // threshold not used in minimal version
     });
   } catch(_) {}
