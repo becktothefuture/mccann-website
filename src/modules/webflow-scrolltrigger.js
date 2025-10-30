@@ -194,12 +194,19 @@ export function initWebflowScrollTriggers(options = {}){
       
       // Wait for ScrollTrigger to refresh, then trigger logo-grow on initial load
       // This animates the logo from small → big on page load, ensuring it starts in the big state
+      // We only emit once - use a flag to prevent multiple initial emits
+      let initialGrowEmitted = false;
       requestAnimationFrame(() => {
         ScrollTrigger.refresh();
         
         // Emit logo-grow on initial load (animates logo to big state)
-        setTimeout(() => verifyAndEmit(growEventName, 'Initial load - grow'), 100);
-        setTimeout(() => verifyAndEmit(growEventName, 'Initial load - grow (delayed)'), 800);
+        // Only emit once, with a single delayed attempt to catch Webflow initialization
+        setTimeout(() => {
+          if (!initialGrowEmitted) {
+            verifyAndEmit(growEventName, 'Initial load - grow');
+            initialGrowEmitted = true;
+          }
+        }, 200);
       });
     });
   });
