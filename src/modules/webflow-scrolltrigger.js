@@ -76,28 +76,32 @@ export function initWebflowScrollTriggers(options = {}){
         growEvent: growEventName
       });
 
-      // Emit logo-start: Try immediately and with small delay to cover both cases
-      const emitStart = () => {
+      // Emit logo-start: Try multiple times with delays to ensure Webflow is ready
+      // Webflow interactions sometimes need the DOM to be fully painted
+      const emitStart = (attempt = 1) => {
         try {
-          console.log('[WEBFLOW] Attempting to emit init:', initEventName);
-          console.log('[WEBFLOW] wfIx available:', !!wfIx, 'type:', typeof wfIx);
-          console.log('[WEBFLOW] wfIx.emit available:', typeof wfIx?.emit);
+          console.log(`[WEBFLOW] Attempting to emit init (attempt ${attempt}):`, initEventName);
           if (wfIx && typeof wfIx.emit === 'function') {
             wfIx.emit(initEventName);
-            console.log('[WEBFLOW] ✓ init event emitted:', initEventName);
+            console.log(`[WEBFLOW] ✓ init event emitted (attempt ${attempt}):`, initEventName);
+            // Retry if this is first attempt and we're early
+            if (attempt === 1 && document.readyState !== 'complete') {
+              setTimeout(() => emitStart(2), 200);
+            }
           } else {
-            console.error('[WEBFLOW] ✗ wfIx.emit is not a function', wfIx);
+            console.error('[WEBFLOW] ✗ wfIx.emit is not a function');
           }
         } catch(err) {
-          console.error('[WEBFLOW] ✗ Error emitting init event:', err);
+          console.error(`[WEBFLOW] ✗ Error emitting init event (attempt ${attempt}):`, err);
         }
       };
 
-      // Try immediately (in case everything is ready)
-      emitStart();
+      // Try immediately
+      emitStart(1);
       
-      // Also try after a small delay to ensure Webflow IX is fully initialized
-      setTimeout(emitStart, 100);
+      // Also try after delays to catch different Webflow initialization phases
+      setTimeout(() => emitStart(3), 100);
+      setTimeout(() => emitStart(4), 300);
 
       // Track scroll state: are we below the top zone? did we shrink already?
       let isBelowTop = false;
