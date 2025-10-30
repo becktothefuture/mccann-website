@@ -77,6 +77,12 @@ npm run build
 <script src="https://your.cdn.example.com/mccann/dist/app.js" defer></script>
 ```
 
+  - In Designer, do not load `http://127.0.0.1:3000/app.js` directly (cross‑origin). For live dev inside Designer, expose your local server via:
+```bash
+npx localtunnel --port 3000
+# Use the printed HTTPS URL, e.g. https://<subdomain>.loca.lt/app.js
+```
+
 3) **Optional GSAP snapping**: If you want `.slide` snapping, load GSAP + ScrollTrigger. If not loaded, the code safely no‑ops.
 ```html
 <script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
@@ -96,6 +102,10 @@ npm run build
   // YouTube iframes have their allow-tokens patched automatically
   </script>
 ```
+
+5) **Create the two custom Interactions in Webflow** (Interactions → New → Custom):
+- `logo-start`: Control → Stop at 0s (ensures paused at start).
+- `logo-shrink`: Control → Play from start. Enable “Play in reverse” for automatic reverse when scrolling back.
 
 ---
 
@@ -164,18 +174,18 @@ Example markup:
 </section>
 ```
 
-#### Webflow ScrollTrigger → IX2 bridge (`src/modules/webflow-scrolltrigger.js`)
+#### Webflow ScrollTrigger → IX bridge (`src/modules/webflow-scrolltrigger.js`)
 
-- **Behavior**: Ties `ScrollTrigger` to `.perspective-wrapper`. Emits an init event on load to set the animation to its start/paused state. As soon as the user begins scrolling down from the top of the first slide (very small threshold), emits a play event. When scrolling back above the driver, emits the reset event again so it’s paused at the top.
+- **Behavior**: Ties `ScrollTrigger` to `.perspective-wrapper`. Emits an init event on load to set the animation to its start/paused state. As soon as the user begins scrolling down from the top of the first slide, emits a play event. When scrolling back above the driver, emits the reset event again so it’s paused at the top.
 - **Defaults**:
   - scroller: `.perspective-wrapper`
   - driver: `.slide--scroll-driver`
   - init/reset event: `logo-start`
   - play event: `logo-shrink`
-  - start `top top`, end `bottom top`, `markers: false`, playThreshold `0.02`
+  - start `top top`, end `top -10%`, `markers: false`
 - **Safety**: No‑ops if Webflow IX (ix2/ix3) or ScrollTrigger are unavailable, or if elements are missing.
 
-Note: If a custom scroller is detected (`.perspective-wrapper` scrollable), the window‑based slide pager is disabled to avoid conflicts with your native/CSS snap.
+Note: JS slide paging is disabled; rely on CSS `scroll-snap` in `.perspective-wrapper`.
 
 #### Vimeo helper (`src/modules/vimeo.js`)
 

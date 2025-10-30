@@ -58,36 +58,29 @@ export function initWebflowScrollTriggers(options = {}){
       if (!wfIx || !ScrollTrigger) { return; }
 
       const scroller = document.querySelector(scrollerSelector);
-      const driver = document.querySelector(driverSelector);
+      let driver = document.querySelector(driverSelector) || document.querySelector('.parallax-group:first-child');
       if (!scroller || !driver) { return; }
 
       // Ensure the animation is at its start and paused on load
       try { initEventName && wfIx.emit(initEventName); } catch(_) {}
 
-      let hasPlayed = false;
-      let hasReset = false;
+      let fired = false;
 
       ScrollTrigger.create({
         trigger: driver,
         scroller: scroller,
-        start: start,
-        end: end,
+        start: 'top top',
+        end: 'top -10%',
         markers: markers,
-        onUpdate: (self) => {
-          // Play as soon as user starts scrolling down from the top
-          if (!hasPlayed && self.direction > 0 && self.progress > playThreshold) {
+        onLeave: () => {
+          if (!fired) {
             try { playEventName && wfIx.emit(playEventName); } catch(_) {}
-            hasPlayed = true;
-            hasReset = false;
+            fired = true;
           }
         },
         onEnterBack: () => {
-          // Scrolling back above the driver slide → reset to start/paused
-          if (!hasReset) {
-            try { resetEventName && wfIx.emit(resetEventName); } catch(_) {}
-            hasReset = true;
-            hasPlayed = false;
-          }
+          fired = false;
+          try { resetEventName && wfIx.emit(resetEventName); } catch(_) {}
         },
       });
     };

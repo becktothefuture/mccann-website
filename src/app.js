@@ -9,7 +9,6 @@
 import { initAccordion } from './modules/accordion.js';
 import { initLightbox } from './modules/lightbox.js';
 import { initSlidesSnap } from './modules/slides.js';
-import { initSlidePager } from './modules/slide-pager.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
 
 function patchYouTubeAllowTokens(){
@@ -30,19 +29,7 @@ function init(options = {}){
   const lightboxRoot = options.lightboxRoot || '#project-lightbox';
   initAccordion('.accordeon');
   initLightbox({ root: lightboxRoot, closeDelayMs: 1000 });
-  // If a custom scroller exists (e.g., .perspective-wrapper), avoid paging window to prevent conflicts
-  try {
-    const customScroller = document.querySelector('.perspective-wrapper');
-    const hasCustomScroll = !!customScroller && (function(el){
-      const cs = getComputedStyle(el);
-      const oy = cs.overflowY;
-      return (oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight;
-    })(customScroller);
-    if (!hasCustomScroll){
-      // Enforce page-by-page navigation for `.slide` sections when using window scroll
-      initSlidePager({ selector: '.slide', duration: 0.5, ease: 'expo.out', anchorRatio: 0.5, cooldownMs: 420 });
-    }
-  } catch(_) {}
+  // Rely on CSS scroll-snap in `.perspective-wrapper`; do not attach JS paging
 
   // Bridge GSAP ScrollTrigger → Webflow IX using the provided structure
   try {
