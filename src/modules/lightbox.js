@@ -62,7 +62,9 @@ export function initLightbox({ root = '#project-lightbox', closeDelayMs = 1000 }
     const title = slide?.dataset?.title || '';
     const text  = slide?.dataset?.text  || '';
 
-    if (videoArea) mountVimeo(videoArea, video, { autoplay: 1, muted: 1, controls: 0, background: 1, playsinline: 1, dnt: 1 });
+    const isDesigner = /\.webflow\.com$/.test(location.hostname) || /canvas\.webflow\.com$/.test(location.hostname);
+    const autoplay = isDesigner ? 0 : 1; // avoid autoplay warnings inside Webflow Designer
+    if (videoArea) mountVimeo(videoArea, video, { autoplay, muted: 1, controls: 0, background: 1, playsinline: 1, dnt: 1 });
     lb.setAttribute('aria-hidden', 'false');
     lb.setAttribute('data-open', 'true');
     setPageInert(true);

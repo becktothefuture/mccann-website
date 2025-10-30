@@ -36,7 +36,8 @@ export function mountVimeo(container, inputId, params = {}){
   const src = `https://player.vimeo.com/video/${id}?${query}`;
   const iframe = document.createElement('iframe');
   iframe.src = src;
-  iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope; clipboard-write; web-share';
+  // Minimal allow-list to reduce permission policy warnings in Designer
+  iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
   iframe.setAttribute('frameborder', '0');
   iframe.style.width = '100%';
   iframe.style.height = '100%';

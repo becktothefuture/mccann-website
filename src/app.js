@@ -8,11 +8,11 @@
 
 import { initAccordion } from './modules/accordion.js';
 import { initLightbox } from './modules/lightbox.js';
-import { initSlidesSnap } from './modules/slides.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
 
 function patchYouTubeAllowTokens(){
-  const tokens = ['accelerometer','autoplay','clipboard-write','encrypted-media','gyroscope','picture-in-picture','web-share'];
+  // Minimal set to reduce permission policy warnings inside Designer
+  const tokens = ['autoplay','encrypted-media','picture-in-picture'];
   const sel = [
     'iframe[src*="youtube.com"]',
     'iframe[src*="youtu.be"]',
@@ -43,9 +43,7 @@ function init(options = {}){
     });
   } catch(_) {}
 
-  // Optional: retain a subtle snap as a safety net if paging is disabled
-  // Disabled here to avoid double movement
-  // try { initSlidesSnap({ selector: '.slide', duration: 0.22, ease: 'power4.out', anchorRatio: 0.55, delay: 0, directional: true }); } catch(_) {}
+  // Note: no JS slide snapping; rely on CSS scroll-snap in `.perspective-wrapper`
 }
 
 // Expose a tiny global for Webflow/Designer hooks
