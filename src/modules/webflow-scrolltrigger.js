@@ -148,52 +148,37 @@ export function initWebflowScrollTriggers(options = {}){
       
       console.log('[WEBFLOW] ScrollTrigger initialized');
       
-      // Emit logo-start AFTER ScrollTrigger is set up to avoid initialization conflicts
-      // Try multiple times with delays to ensure Webflow interactions are ready
-      const emitStart = () => {
+      // Verify that all events exist in Webflow by checking if emit succeeds
+      // Note: Webflow emit doesn't throw errors for missing events, but we can log attempts
+      const verifyAndEmit = (eventName, description) => {
         try {
-          console.log('[WEBFLOW] Attempting to emit init:', initEventName);
+          console.log(`[WEBFLOW] ${description}:`, eventName);
           if (wfIx && typeof wfIx.emit === 'function') {
-            wfIx.emit(initEventName);
-            console.log('[WEBFLOW] ✓ init event emitted:', initEventName);
+            wfIx.emit(eventName);
+            console.log(`[WEBFLOW] ✓ Emitted ${eventName} - If nothing happens, check Webflow config:`);
+            console.log(`[WEBFLOW]   1. Event name must be exactly: "${eventName}"`);
+            console.log(`[WEBFLOW]   2. Control must NOT be "No Action"`);
+            console.log(`[WEBFLOW]   3. Must target the logo element`);
+            console.log(`[WEBFLOW]   4. Timeline must be set correctly`);
+            return true;
           } else {
-            console.error('[WEBFLOW] ✗ wfIx.emit is not a function');
+            console.error(`[WEBFLOW] ✗ wfIx.emit not available`);
+            return false;
           }
         } catch(err) {
-          console.error('[WEBFLOW] ✗ Error emitting init event:', err);
+          console.error(`[WEBFLOW] ✗ Error emitting ${eventName}:`, err);
+          return false;
         }
       };
       
-      // Workaround: "Jump to 0s" may require the timeline to be initialized first.
-      // Strategy: Initialize timeline by playing shrink for 0ms, then immediately jump to start.
-      // Use setTimeout(0) for minimal delay - should be imperceptible.
-      const initializeTimelineAndSetStart = () => {
-        try {
-          if (wfIx && typeof wfIx.emit === 'function') {
-            console.log('[WEBFLOW] Attempting timeline init sequence...');
-            
-            // Step 1: Initialize timeline by emitting shrink (forces timeline to exist)
-            wfIx.emit(shrinkEventName);
-            
-            // Step 2: Immediately jump to start (minimal delay - should be <1ms)
-            setTimeout(() => {
-              wfIx.emit(initEventName);
-              console.log('[WEBFLOW] ✓ Timeline init + jump completed');
-            }, 0);
-          }
-        } catch(err) {
-          console.error('[WEBFLOW] ✗ Error in timeline init sequence:', err);
-        }
-      };
-      
-      // Wait for ScrollTrigger to refresh, then initialize
+      // Wait for ScrollTrigger to refresh, then emit start with verification
       requestAnimationFrame(() => {
         ScrollTrigger.refresh();
         
-        // Try the init sequence multiple times with delays
-        initializeTimelineAndSetStart();
-        setTimeout(initializeTimelineAndSetStart, 200);
-        setTimeout(initializeTimelineAndSetStart, 600);
+        // Try emitting start multiple times with verification logs
+        setTimeout(() => verifyAndEmit(initEventName, 'Initial load - attempt 1'), 100);
+        setTimeout(() => verifyAndEmit(initEventName, 'Initial load - attempt 2'), 400);
+        setTimeout(() => verifyAndEmit(initEventName, 'Initial load - attempt 3'), 800);
       });
     });
   });

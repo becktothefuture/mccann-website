@@ -95,9 +95,40 @@ npx localtunnel --port 3000
 ```
 
 4) **Create the custom Interactions in Webflow** (Interactions → New → Custom):
-- `logo-start`: Uses the same timeline as `logo-shrink`. Control → Jump to 0s, then Stop. This positions the shrink timeline at its start (big state) without playing.
-- `logo-shrink`: Control → Play from start. Forward timeline from big → small.
-- `logo-grow`: Control → Play from start. Forward timeline from small → big.
+   - **`logo-start`** (Critical setup steps):
+     1. Event name must be exactly: `logo-start` (case-sensitive)
+     2. Trigger: Custom Event (`logo-start`)
+     3. Target: Select your logo element (the one that should animate)
+     4. Animation: Use the SAME timeline as `logo-shrink`
+     5. Control: **Jump to 0s, then Stop** (NOT "No Action", NOT "Play")
+     6. Verify: Timeline at 0s shows logo in "big" state
+     
+     **Troubleshooting `logo-start`**:
+     - If nothing happens when event emits, check:
+       1. Event name spelling (must match exactly: `logo-start`)
+       2. Control is NOT "No Action" (common mistake)
+       3. Target element is correct (the logo that should animate)
+       4. Timeline at frame 0/0s shows logo in "big" state
+       5. Try testing manually in browser console:
+          ```js
+          const wfIx = Webflow.require("ix3") || Webflow.require("ix2");
+          wfIx.emit("logo-start");
+          ```
+       6. If manual emit also does nothing → Webflow config issue, not code issue
+   
+   - **`logo-shrink`**:
+     1. Event name: `logo-shrink` (case-sensitive)
+     2. Trigger: Custom Event (`logo-shrink`)
+     3. Target: Same logo element
+     4. Animation: Timeline from big → small
+     5. Control: **Play from start**
+   
+   - **`logo-grow`**:
+     1. Event name: `logo-grow` (case-sensitive)
+     2. Trigger: Custom Event (`logo-grow`)
+     3. Target: Same logo element
+     4. Animation: Timeline from small → big
+     5. Control: **Play from start**
 
 ---
 
