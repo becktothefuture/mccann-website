@@ -71,7 +71,8 @@ export function initWebflowScrollTriggers(options = {}){
         }
       } catch(_) {}
 
-      let fired = false;
+      let fired = false; // forward emitted
+      let reversed = false; // reverse emitted since last forward
 
       const st = ScrollTrigger.create({
         trigger: driver,
@@ -88,20 +89,33 @@ export function initWebflowScrollTriggers(options = {}){
               }
             } catch(_) {}
             fired = true;
+            reversed = false;
           }
         },
         onEnterBack: () => {
-          // Emit a distinct reverse event so the Webflow timeline can be authored separately
-          fired = false; // allow next downward pass to fire again
-          try {
-            if (reverseEventName) {
-              console.log('[WEBFLOW] emit reverse/onEnterBack:', reverseEventName);
-              wfIx.emit(reverseEventName);
-            }
-          } catch(_) {}
+          // Crossing back near the top band → just reset gating
+          fired = false;
         },
       });
       try { console.log('[WEBFLOW] ScrollTrigger created', { trigger: driver, driverSelector, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
+
+      // Immediate reverse when user starts scrolling up anywhere below the top band
+      let lastY = (scroller === window ? window.scrollY : scroller.scrollTop) || 0;
+      const onScroll = () => {
+        const y = (scroller === window ? window.scrollY : scroller.scrollTop) || 0;
+        const delta = lastY - y; // positive when moving up
+        if (delta > 1 && fired && !reversed) {
+          try {
+            if (reverseEventName) {
+              console.log('[WEBFLOW] emit reverse/scroll-start:', reverseEventName);
+              wfIx.emit(reverseEventName);
+            }
+          } catch(_) {}
+          reversed = true;
+        }
+        lastY = y;
+      };
+      try { scroller.addEventListener('scroll', onScroll, { passive: true }); } catch(_) {}
     };
 
     try { Webflow.push(mount); }
