@@ -30,11 +30,31 @@ function init(options = {}){
   const lightboxRoot = options.lightboxRoot || '#project-lightbox';
   initAccordion('.accordeon');
   initLightbox({ root: lightboxRoot, closeDelayMs: 1000 });
-  // Enforce page-by-page navigation for all `.slide` elements
-  try { initSlidePager({ selector: '.slide', duration: 0.5, ease: 'expo.out', anchorRatio: 0.5, cooldownMs: 420 }); } catch(_) {}
+  // If a custom scroller exists (e.g., .perspective-wrapper), avoid paging window to prevent conflicts
+  try {
+    const customScroller = document.querySelector('.perspective-wrapper');
+    const hasCustomScroll = !!customScroller && (function(el){
+      const cs = getComputedStyle(el);
+      const oy = cs.overflowY;
+      return (oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight;
+    })(customScroller);
+    if (!hasCustomScroll){
+      // Enforce page-by-page navigation for `.slide` sections when using window scroll
+      initSlidePager({ selector: '.slide', duration: 0.5, ease: 'expo.out', anchorRatio: 0.5, cooldownMs: 420 });
+    }
+  } catch(_) {}
 
-  // Bridge GSAP ScrollTrigger → Webflow IX2 using the provided structure
-  try { initWebflowScrollTriggers({ scrollerSelector: '.perspective-wrapper', driverSelector: '.slide--scroll-driver' }); } catch(_) {}
+  // Bridge GSAP ScrollTrigger → Webflow IX using the provided structure
+  try {
+    initWebflowScrollTriggers({
+      scrollerSelector: '.perspective-wrapper',
+      driverSelector: '.slide--scroll-driver',
+      initEventName: 'logo-start',     // pause at start on load
+      playEventName: 'logo-shrink',    // play as soon as user starts scrolling down
+      resetEventName: 'logo-start',    // reset/pause when scrolling back above the driver
+      playThreshold: 0.02,
+    });
+  } catch(_) {}
 
   // Optional: retain a subtle snap as a safety net if paging is disabled
   // Disabled here to avoid double movement

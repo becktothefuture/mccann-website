@@ -166,9 +166,16 @@ Example markup:
 
 #### Webflow ScrollTrigger → IX2 bridge (`src/modules/webflow-scrolltrigger.js`)
 
-- **Behavior**: Creates a `ScrollTrigger` tied to the custom scroller `.perspective-wrapper` and emits a Webflow IX2 interaction when the driver slide `.slide--scroll-driver` leaves the top of the scroller, and again on enter‑back (for automatic reverse).
-- **Defaults**: scroller `.perspective-wrapper`, driver `.slide--scroll-driver`, interaction `logo-shrink`, start `top top`, end `bottom top`, `markers: false`.
-- **Safety**: No‑ops if Webflow/IX2 or ScrollTrigger are unavailable, or if elements are missing.
+- **Behavior**: Ties `ScrollTrigger` to `.perspective-wrapper`. Emits an init event on load to set the animation to its start/paused state. As soon as the user begins scrolling down from the top of the first slide (very small threshold), emits a play event. When scrolling back above the driver, emits the reset event again so it’s paused at the top.
+- **Defaults**:
+  - scroller: `.perspective-wrapper`
+  - driver: `.slide--scroll-driver`
+  - init/reset event: `logo-start`
+  - play event: `logo-shrink`
+  - start `top top`, end `bottom top`, `markers: false`, playThreshold `0.02`
+- **Safety**: No‑ops if Webflow IX (ix2/ix3) or ScrollTrigger are unavailable, or if elements are missing.
+
+Note: If a custom scroller is detected (`.perspective-wrapper` scrollable), the window‑based slide pager is disabled to avoid conflicts with your native/CSS snap.
 
 #### Vimeo helper (`src/modules/vimeo.js`)
 
