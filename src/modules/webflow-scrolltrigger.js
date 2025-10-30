@@ -14,8 +14,10 @@ console.log('[WEBFLOW] module loaded');
  * Behavior:
  *  1. On load: emit logo-grow to animate logo from small → big (ensures logo starts in big state)
  *  2. Scroll down past first slide: emit logo-shrink (big → small)
- *  3. Start scrolling up: emit logo-grow immediately (small → big)
- *  4. Return to top: emit logo-start (jump to 0s, back to big static state)
+ *  3. Start scrolling up (middle section): emit logo-grow immediately (small → big)
+ *  4. Reach last slide: emit logo-grow (small → big, logo grows at bottom)
+ *  5. Scroll up from last slide: emit logo-shrink (big → small)
+ *  6. Return to top: emit logo-start (jump to 0s, back to big static state)
  *
  * Requirements in Webflow:
  *  - logo-start: Uses the same timeline as logo-shrink. Control → Jump to 0s, then Stop.
@@ -62,16 +64,25 @@ export function initWebflowScrollTriggers(options = {}){
       const scroller = document.querySelector(scrollerSelector);
       if (!scroller) { return; }
 
-      // Find first .slide inside the scroller
+      // Find first .slide inside the scroller (for top detection)
       const driver = scroller.querySelector('.slide') || document.querySelector('.slide');
       if (!driver) { 
         console.error('[WEBFLOW] Driver slide not found');
         return; 
       }
 
+      // Find last .slide inside the scroller (for bottom detection)
+      const slides = Array.from(scroller.querySelectorAll('.slide'));
+      const lastSlide = slides.length > 0 ? slides[slides.length - 1] : null;
+      if (!lastSlide) {
+        console.warn('[WEBFLOW] No slides found, last slide detection disabled');
+      }
+
       console.log('[WEBFLOW] Setup complete:', { 
         scroller: !!scroller, 
-        driver: !!driver, 
+        driver: !!driver,
+        lastSlide: !!lastSlide,
+        totalSlides: slides.length,
         wfIx: !!wfIx, 
         ScrollTrigger: !!ScrollTrigger,
         initEvent: initEventName,
@@ -80,9 +91,12 @@ export function initWebflowScrollTriggers(options = {}){
       });
 
       // Track scroll state: are we below the top zone? did we shrink already? did we grow already?
+      // Also track last slide state
       let isBelowTop = false;
       let hasShrunk = false;
       let hasGrown = false;
+      let isAtLastSlide = false;
+      let hasGrownAtLast = false;
 
       // Main ScrollTrigger: watches when first slide leaves/enters top zone
       ScrollTrigger.create({
@@ -111,6 +125,8 @@ export function initWebflowScrollTriggers(options = {}){
           isBelowTop = false;
           hasShrunk = false;
           hasGrown = false;
+          isAtLastSlide = false;
+          hasGrownAtLast = false;
           try {
             console.log('[WEBFLOW] emit start (return to top):', initEventName);
             console.log('[WEBFLOW] wfIx available:', !!wfIx, 'emit available:', typeof wfIx?.emit);
@@ -125,6 +141,46 @@ export function initWebflowScrollTriggers(options = {}){
           }
         }
       });
+
+      // Last slide ScrollTrigger: watches when last slide enters/leaves viewport
+      if (lastSlide) {
+        ScrollTrigger.create({
+          trigger: lastSlide,
+          scroller: scroller,
+          start: 'top bottom', // Last slide enters from bottom of viewport
+          end: 'bottom top', // Last slide leaves top of viewport
+          markers: markers,
+          
+          onEnter: () => {
+            // Scrolled DOWN to last slide → grow once (only when entering, not when already there)
+            if (!isAtLastSlide && !hasGrownAtLast) {
+              isAtLastSlide = true;
+              try {
+                console.log('[WEBFLOW] emit grow (reached last slide):', growEventName);
+                wfIx.emit(growEventName);
+                hasGrownAtLast = true;
+                // Reset middle section flags since we're at the last slide
+                hasShrunk = false;
+                hasGrown = false;
+              } catch(_) {}
+            }
+          },
+          
+          onLeaveBack: () => {
+            // Scrolled UP from last slide (leaving backward) → shrink once
+            if (isAtLastSlide && hasGrownAtLast) {
+              isAtLastSlide = false;
+              try {
+                console.log('[WEBFLOW] emit shrink (scrolling up from last slide):', shrinkEventName);
+                wfIx.emit(shrinkEventName);
+                hasGrownAtLast = false;
+                hasShrunk = true; // We're now in the middle section with logo small
+                hasGrown = false;
+              } catch(_) {}
+            }
+          }
+        });
+      }
 
       // Simple scroll direction watcher for immediate grow on upward scroll
       // Only triggers grow when:
@@ -144,18 +200,19 @@ export function initWebflowScrollTriggers(options = {}){
           const currentScrollTop = scroller.scrollTop;
           const direction = currentScrollTop > lastScrollTop ? 1 : currentScrollTop < lastScrollTop ? -1 : lastDirection;
           
-          // Grow only when scrolling up from below top, and we've shrunk, and we haven't grown yet
-          if (isBelowTop && hasShrunk && !hasGrown && direction === -1 && lastDirection !== -1) {
+          // Grow only when scrolling up from below top (middle section), and we've shrunk, and we haven't grown yet
+          // Don't trigger if we're at the last slide (that's handled separately)
+          if (isBelowTop && !isAtLastSlide && hasShrunk && !hasGrown && direction === -1 && lastDirection !== -1) {
             try {
-              console.log('[WEBFLOW] emit grow (scroll up):', growEventName);
+              console.log('[WEBFLOW] emit grow (scroll up in middle section):', growEventName);
               wfIx.emit(growEventName);
               hasGrown = true; // Set flag so we don't grow again until we shrink
               hasShrunk = false; // Reset shrink flag after growing
             } catch(_) {}
           }
           
-          // Reset grow flag if we start scrolling down again (but only if we're still below top)
-          if (isBelowTop && hasGrown && direction === 1 && lastDirection !== 1) {
+          // Reset grow flag if we start scrolling down again (but only if we're still below top and not at last slide)
+          if (isBelowTop && !isAtLastSlide && hasGrown && direction === 1 && lastDirection !== 1) {
             // User started scrolling down again - reset so we can shrink again
             hasShrunk = false;
             hasGrown = false;
