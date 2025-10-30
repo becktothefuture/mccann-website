@@ -76,33 +76,6 @@ export function initWebflowScrollTriggers(options = {}){
         growEvent: growEventName
       });
 
-      // Emit logo-start: Try multiple times with delays to ensure Webflow is ready
-      // Webflow interactions sometimes need the DOM to be fully painted
-      const emitStart = (attempt = 1) => {
-        try {
-          console.log(`[WEBFLOW] Attempting to emit init (attempt ${attempt}):`, initEventName);
-          if (wfIx && typeof wfIx.emit === 'function') {
-            wfIx.emit(initEventName);
-            console.log(`[WEBFLOW] ✓ init event emitted (attempt ${attempt}):`, initEventName);
-            // Retry if this is first attempt and we're early
-            if (attempt === 1 && document.readyState !== 'complete') {
-              setTimeout(() => emitStart(2), 200);
-            }
-          } else {
-            console.error('[WEBFLOW] ✗ wfIx.emit is not a function');
-          }
-        } catch(err) {
-          console.error(`[WEBFLOW] ✗ Error emitting init event (attempt ${attempt}):`, err);
-        }
-      };
-
-      // Try immediately
-      emitStart(1);
-      
-      // Also try after delays to catch different Webflow initialization phases
-      setTimeout(() => emitStart(3), 100);
-      setTimeout(() => emitStart(4), 300);
-
       // Track scroll state: are we below the top zone? did we shrink already?
       let isBelowTop = false;
       let hasShrunk = false;
@@ -174,6 +147,40 @@ export function initWebflowScrollTriggers(options = {}){
       });
       
       console.log('[WEBFLOW] ScrollTrigger initialized');
+      
+      // Emit logo-start AFTER ScrollTrigger is set up to avoid initialization conflicts
+      // Try multiple times with delays to ensure Webflow interactions are ready
+      const emitStart = () => {
+        try {
+          console.log('[WEBFLOW] Attempting to emit init:', initEventName);
+          if (wfIx && typeof wfIx.emit === 'function') {
+            wfIx.emit(initEventName);
+            console.log('[WEBFLOW] ✓ init event emitted:', initEventName);
+          } else {
+            console.error('[WEBFLOW] ✗ wfIx.emit is not a function');
+          }
+        } catch(err) {
+          console.error('[WEBFLOW] ✗ Error emitting init event:', err);
+        }
+      };
+      
+      // Emit logo-start after ScrollTrigger setup, with multiple delayed attempts
+      // Some Webflow interactions need extra time after ScrollTrigger initialization
+      const emitStartFinal = () => {
+        emitStart();
+      };
+      
+      // Wait for ScrollTrigger to refresh, then emit
+      requestAnimationFrame(() => {
+        ScrollTrigger.refresh();
+        
+        // Multiple attempts with increasing delays to catch Webflow initialization
+        emitStartFinal();
+        setTimeout(emitStartFinal, 150);
+        setTimeout(emitStartFinal, 400);
+        setTimeout(emitStartFinal, 700);
+        setTimeout(emitStartFinal, 1200);
+      });
     });
   });
 }
