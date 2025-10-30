@@ -71,39 +71,31 @@ export function initWebflowScrollTriggers(options = {}){
         }
       } catch(_) {}
 
-      let fired = false; // forward emitted for current pass
+      // Simple two-state gate: atTop vs belowFirst
+      let atTop = true;
 
       const st = ScrollTrigger.create({
         trigger: driver,
         scroller: scroller,
         start: 'top top',
-        end: 'top -10%',
+        end: 'bottom top',
         markers: markers,
         onLeave: () => {
-          if (!fired) {
-            try {
-              if (playEventName) {
-                console.log('[WEBFLOW] emit play/onLeave:', playEventName);
-                wfIx.emit(playEventName);
-              }
-            } catch(_) {}
-            fired = true;
+          if (atTop) {
+            try { if (playEventName) { console.log('[WEBFLOW] emit play/onLeave:', playEventName); wfIx.emit(playEventName); } } catch(_) {}
+            atTop = false;
           }
         },
         onEnterBack: () => {
-          // Scrolling back above the trigger band → fire reverse event once and allow next forward
-          try {
-            if (reverseEventName) {
-              console.log('[WEBFLOW] emit reverse/onEnterBack:', reverseEventName);
-              wfIx.emit(reverseEventName);
-            }
-          } catch(_) {}
-          fired = false;
+          if (!atTop) {
+            try { if (reverseEventName) { console.log('[WEBFLOW] emit reverse/onEnterBack:', reverseEventName); wfIx.emit(reverseEventName); } } catch(_) {}
+            atTop = true;
+          }
         },
       });
       try { console.log('[WEBFLOW] ScrollTrigger created', { trigger: driver, driverSelector, scroller, start: 'top top', end: 'top -10%' }); } catch(_) {}
 
-      // No extra scroll listeners — rely on ScrollTrigger's onEnterBack for stability
+      // No extra scroll listeners — rely only on onLeave/onEnterBack with the simple gate
     };
 
     try { Webflow.push(mount); }
