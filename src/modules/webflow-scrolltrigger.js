@@ -79,9 +79,10 @@ export function initWebflowScrollTriggers(options = {}){
         growEvent: growEventName
       });
 
-      // Track scroll state: are we below the top zone? did we shrink already?
+      // Track scroll state: are we below the top zone? did we shrink already? did we grow already?
       let isBelowTop = false;
       let hasShrunk = false;
+      let hasGrown = false;
 
       // Main ScrollTrigger: watches when first slide leaves/enters top zone
       ScrollTrigger.create({
@@ -92,13 +93,15 @@ export function initWebflowScrollTriggers(options = {}){
         markers: markers,
         
         onLeave: () => {
-          // Scrolled down past top → shrink once
-          isBelowTop = true;
-          if (!hasShrunk) {
+          // Scrolled DOWN past top → shrink once (only when leaving, not when already below)
+          // This should only fire when crossing from "at top" to "below top"
+          if (!isBelowTop && !hasShrunk) {
+            isBelowTop = true;
             try {
-              console.log('[WEBFLOW] emit shrink:', shrinkEventName);
+              console.log('[WEBFLOW] emit shrink (scrolled down past first slide):', shrinkEventName);
               wfIx.emit(shrinkEventName);
               hasShrunk = true;
+              hasGrown = false; // Reset grow flag when we shrink
             } catch(_) {}
           }
         },
@@ -107,6 +110,7 @@ export function initWebflowScrollTriggers(options = {}){
           // Scrolled back up to top → jump shrink timeline to 0s (big state) and stop
           isBelowTop = false;
           hasShrunk = false;
+          hasGrown = false;
           try {
             console.log('[WEBFLOW] emit start (return to top):', initEventName);
             console.log('[WEBFLOW] wfIx available:', !!wfIx, 'emit available:', typeof wfIx?.emit);
@@ -123,7 +127,12 @@ export function initWebflowScrollTriggers(options = {}){
       });
 
       // Simple scroll direction watcher for immediate grow on upward scroll
-      // Only needed because onEnterBack only fires at top; user wants grow mid-scroll
+      // Only triggers grow when:
+      // - We're below the top zone (isBelowTop)
+      // - We've shrunk (hasShrunk)
+      // - We're scrolling up (direction === -1)
+      // - We just started scrolling up (lastDirection !== -1, meaning we weren't already scrolling up)
+      // - We haven't already grown (hasGrown)
       let lastScrollTop = scroller.scrollTop;
       let lastDirection = 0; // -1 = up, 1 = down, 0 = unknown
       
@@ -135,13 +144,22 @@ export function initWebflowScrollTriggers(options = {}){
           const currentScrollTop = scroller.scrollTop;
           const direction = currentScrollTop > lastScrollTop ? 1 : currentScrollTop < lastScrollTop ? -1 : lastDirection;
           
-          // First upward tick after shrinking → grow immediately
-          if (isBelowTop && hasShrunk && direction === -1 && lastDirection !== -1) {
+          // Grow only when scrolling up from below top, and we've shrunk, and we haven't grown yet
+          if (isBelowTop && hasShrunk && !hasGrown && direction === -1 && lastDirection !== -1) {
             try {
               console.log('[WEBFLOW] emit grow (scroll up):', growEventName);
               wfIx.emit(growEventName);
-              hasShrunk = false; // Reset so we can shrink again on next down scroll
+              hasGrown = true; // Set flag so we don't grow again until we shrink
+              hasShrunk = false; // Reset shrink flag after growing
             } catch(_) {}
+          }
+          
+          // Reset grow flag if we start scrolling down again (but only if we're still below top)
+          if (isBelowTop && hasGrown && direction === 1 && lastDirection !== 1) {
+            // User started scrolling down again - reset so we can shrink again
+            hasShrunk = false;
+            hasGrown = false;
+            console.log('[WEBFLOW] Reset flags - ready to shrink again');
           }
           
           lastScrollTop = currentScrollTop;
