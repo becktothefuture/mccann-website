@@ -171,14 +171,39 @@ export function initWebflowScrollTriggers(options = {}){
         }
       };
       
-      // Wait for ScrollTrigger to refresh, then emit start with verification
+      // Wait for ScrollTrigger to refresh, then initialize logo-start state
+      // Strategy: If "Jump to 0s" doesn't work, we can try initializing the timeline first
       requestAnimationFrame(() => {
         ScrollTrigger.refresh();
         
-        // Try emitting start multiple times with verification logs
-        setTimeout(() => verifyAndEmit(initEventName, 'Initial load - attempt 1'), 100);
-        setTimeout(() => verifyAndEmit(initEventName, 'Initial load - attempt 2'), 400);
-        setTimeout(() => verifyAndEmit(initEventName, 'Initial load - attempt 3'), 800);
+        // Attempt 1: Direct emit (works if timeline is already initialized via shrink/grow)
+        setTimeout(() => {
+          console.log('[WEBFLOW] Attempt 1: Direct logo-start emit');
+          verifyAndEmit(initEventName, 'Initial load');
+        }, 100);
+        
+        // Attempt 2: If "Jump to 0s" requires timeline initialization, try this workaround:
+        // Brief play of shrink (forces timeline to exist), then immediately jump to start
+        setTimeout(() => {
+          console.log('[WEBFLOW] Attempt 2: Timeline init workaround - playing shrink briefly then jumping to start');
+          try {
+            if (wfIx && typeof wfIx.emit === 'function') {
+              // Play shrink for 1 frame (forces timeline initialization)
+              wfIx.emit(shrinkEventName);
+              // Immediately jump to start (should be fast enough to avoid visible animation)
+              setTimeout(() => {
+                wfIx.emit(initEventName);
+                console.log('[WEBFLOW] ✓ Timeline init workaround completed');
+              }, 16); // ~1 frame at 60fps
+            }
+          } catch(err) {
+            console.error('[WEBFLOW] Error in timeline init workaround:', err);
+          }
+        }, 500);
+        
+        // Attempt 3-4: Additional delayed attempts (in case Webflow interactions load late)
+        setTimeout(() => verifyAndEmit(initEventName, 'Delayed attempt 1'), 1000);
+        setTimeout(() => verifyAndEmit(initEventName, 'Delayed attempt 2'), 1500);
       });
     });
   });
