@@ -18,8 +18,9 @@ console.log('[WEBFLOW] module loaded');
  *  4. Return to top: emit logo-start again (back to big static state)
  *
  * Requirements in Webflow:
- *  - logo-start: Uses the same timeline as logo-shrink. Control → Jump to 0s, then Stop.
- *               This positions the shrink timeline at its start (big state) without playing.
+ *  - logo-start (optional): Uses the same timeline as logo-shrink. Control → Jump to 0s, then Stop.
+ *                          Only needed if logo doesn't naturally start in big state via CSS.
+ *                          If omitted, logo-start event is still emitted but ignored if not configured.
  *  - logo-shrink: Control → Play from start (big → small animation)
  *  - logo-grow: Control → Play from start (small → big animation)
  *
@@ -60,13 +61,43 @@ export function initWebflowScrollTriggers(options = {}){
 
       // Find first .slide inside the scroller
       const driver = scroller.querySelector('.slide') || document.querySelector('.slide');
-      if (!driver) { return; }
+      if (!driver) { 
+        console.error('[WEBFLOW] Driver slide not found');
+        return; 
+      }
 
-      // Emit logo-start on load: jumps shrink timeline to 0s (big state) and stops
-      try {
-        console.log('[WEBFLOW] emit init:', initEventName);
-        wfIx.emit(initEventName);
-      } catch(_) {}
+      console.log('[WEBFLOW] Setup complete:', { 
+        scroller: !!scroller, 
+        driver: !!driver, 
+        wfIx: !!wfIx, 
+        ScrollTrigger: !!ScrollTrigger,
+        initEvent: initEventName,
+        shrinkEvent: shrinkEventName,
+        growEvent: growEventName
+      });
+
+      // Emit logo-start: Try immediately and with small delay to cover both cases
+      const emitStart = () => {
+        try {
+          console.log('[WEBFLOW] Attempting to emit init:', initEventName);
+          console.log('[WEBFLOW] wfIx available:', !!wfIx, 'type:', typeof wfIx);
+          console.log('[WEBFLOW] wfIx.emit available:', typeof wfIx?.emit);
+          if (wfIx && typeof wfIx.emit === 'function') {
+            wfIx.emit(initEventName);
+            console.log('[WEBFLOW] ✓ init event emitted:', initEventName);
+          } else {
+            console.error('[WEBFLOW] ✗ wfIx.emit is not a function', wfIx);
+          }
+        } catch(err) {
+          console.error('[WEBFLOW] ✗ Error emitting init event:', err);
+        }
+      };
+
+      // Try immediately (in case everything is ready)
+      emitStart();
+      
+      // Also try after a small delay to ensure Webflow IX is fully initialized
+      setTimeout(emitStart, 100);
 
       // Track scroll state: are we below the top zone? did we shrink already?
       let isBelowTop = false;
@@ -98,8 +129,16 @@ export function initWebflowScrollTriggers(options = {}){
           hasShrunk = false;
           try {
             console.log('[WEBFLOW] emit start (return to top):', initEventName);
-            wfIx.emit(initEventName);
-          } catch(_) {}
+            console.log('[WEBFLOW] wfIx available:', !!wfIx, 'emit available:', typeof wfIx?.emit);
+            if (wfIx && typeof wfIx.emit === 'function') {
+              wfIx.emit(initEventName);
+              console.log('[WEBFLOW] return-to-top event emitted successfully');
+            } else {
+              console.error('[WEBFLOW] Cannot emit return-to-top: wfIx.emit not available');
+            }
+          } catch(err) {
+            console.error('[WEBFLOW] Error emitting return-to-top:', err);
+          }
         }
       });
 
