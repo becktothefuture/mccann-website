@@ -100,6 +100,12 @@ export function initAccordion(rootSel = '.accordeon'){
   document.body.classList.add('js-prep');
   // Collapse all panels; top-level items remain visible (not inside panels)
   root.querySelectorAll('.acc-list').forEach(p => { p.style.maxHeight = '0px'; p.dataset.state = 'collapsed'; });
+  // Safety: ensure top-level rows are visible even if a GSAP timeline set inline styles globally
+  Array.from(root.querySelectorAll(':scope > .acc-item')).forEach((row) => {
+    row.style.removeProperty('opacity');
+    row.style.removeProperty('visibility');
+    row.style.removeProperty('transform');
+  });
   requestAnimationFrame(() => document.body.classList.remove('js-prep'));
 
   root.addEventListener('click', e => {
