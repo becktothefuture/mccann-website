@@ -128,8 +128,12 @@ npx localtunnel --port 3000
 
 - **Behavior**: ARIA bootstrapping, keyboard support (Enter/Space), smooth height transitions with `ResizeObserver`. Only one open per group; opening a level‑1 item collapses all level‑2.
 - **Selectors**: Root `.accordeon`; items `.accordeon-item--level1`, `.accordeon-item--level2`; trigger `.accordeon__trigger`; panel/list `.accordeon__list`.
-- **States**: `aria-expanded` on triggers; panel `data-state` in `{collapsed, opening, open, closing}`.
+- **States**: `aria-expanded` on triggers; panel `data-state` in `{collapsed, opening, open, closing}`; panel gets `.is-active` while opening/open/closing (removed after collapse) — use this as GSAP scope.
 - **Events**: `ACC_L1_OPEN`, `ACC_L1_CLOSE`, `ACC_L2_OPEN`, `ACC_L2_CLOSE` (bubbling `CustomEvent`s with `detail`).
+  - **GSAP hooks (new)** — emitted on the panel element and on `window`:
+    - `ACC_L1_ITEMS_IN` / `ACC_L1_ITEMS_OUT`
+    - `ACC_L2_ITEMS_IN` / `ACC_L2_ITEMS_OUT`
+    Detail includes `{ level, direction, itemsLength }`.
 
 Minimal markup example:
 ```html
@@ -150,6 +154,16 @@ CSS requirement (already in `style.css`):
 ```css
 .accordeon__list{ overflow:hidden; transition:max-height .28s cubic-bezier(.25,.8,.25,1); will-change:max-height; }
 ```
+
+GSAP with Webflow (staggered items):
+1. Create four Custom Event animations in the Webflow GSAP panel (or IX if you use a GSAP UI wrapper):
+   - `ACC_L1_ITEMS_IN` → target: inside element `.is-active > *` (or `.is-active > .accordeon-item--level2`), animate from `{ autoAlpha:0, y:16 }` to `{ autoAlpha:1, y:0 }`, duration ~0.35s, ease `power2.out`, stagger `0.06`.
+   - `ACC_L1_ITEMS_OUT` → same target, animate to `{ autoAlpha:0, y:16 }`, ease `power2.in`, stagger `-0.06` (reverse order optional).
+   - `ACC_L2_ITEMS_IN` → target: `.is-active > *` inside level‑2 panel (e.g., your level‑3 items), same timings/ease.
+   - `ACC_L2_ITEMS_OUT` → matching out animation.
+2. Ensure the trigger is set to **Custom Event** with the exact event name above (case‑sensitive).
+3. Because events are dispatched on the panel element, keep target selection scoped to **Within element** (the event target) or use the `.is-active` class as a selector to affect only the opened panel.
+4. No IDs are required; the animations automatically apply to all accordion panels.
 
 #### Lightbox (`src/modules/lightbox.js`)
 

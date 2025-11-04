@@ -17,6 +17,18 @@ export function initAccordion(rootSel = '.accordeon'){
   const isL2 = el => el.classList.contains('accordeon-item--level2');
   const panelOf = item => item?.querySelector(':scope > .accordeon__list');
   const groupOf = item => isL1(item) ? root : item.closest('.accordeon__list');
+  const itemsInPanel = (panel) => Array.from(panel ? panel.children : []);
+
+  // Fire GSAP UI (Webflow) item animations via CustomEvents scoped to the panel element
+  function emitItemsAnimation(item, direction){ // direction: 'in' | 'out'
+    const panel = panelOf(item); if (!panel) return;
+    const level = isL1(item) ? 1 : 2;
+    const name = level === 1
+      ? (direction === 'in' ? 'ACC_L1_ITEMS_IN' : 'ACC_L1_ITEMS_OUT')
+      : (direction === 'in' ? 'ACC_L2_ITEMS_IN' : 'ACC_L2_ITEMS_OUT');
+    const items = itemsInPanel(panel);
+    emit(name, panel, { level, direction, itemsLength: items.length });
+  }
 
   // ARIA bootstrap
   root.querySelectorAll('.accordeon__trigger').forEach((t, i) => {
@@ -33,6 +45,7 @@ export function initAccordion(rootSel = '.accordeon'){
   });
 
   function expand(p){
+    p.classList.add('is-active');
     p.style.maxHeight = p.scrollHeight + 'px';
     p.dataset.state = 'opening';
     const onEnd = (e) => {
@@ -56,6 +69,7 @@ export function initAccordion(rootSel = '.accordeon'){
       if (e.propertyName !== 'max-height') return;
       p.removeEventListener('transitionend', onEnd);
       p.dataset.state = 'collapsed';
+      p.classList.remove('is-active');
     };
     p.addEventListener('transitionend', onEnd);
   }
@@ -67,6 +81,7 @@ export function initAccordion(rootSel = '.accordeon'){
       if (sib === item || !sib.classList?.contains(want)) return;
       const p = panelOf(sib);
       if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
+        emitItemsAnimation(sib, 'out'); // animate items out in the closing sibling
         collapse(p);
         const trig = sib.querySelector('.accordeon__trigger');
         trig?.setAttribute('aria-expanded', 'false');
@@ -95,8 +110,10 @@ export function initAccordion(rootSel = '.accordeon'){
 
     if (opening){
       expand(p); trig?.setAttribute('aria-expanded', 'true');
+      emitItemsAnimation(item, 'in');
       emit(isL1(item) ? 'ACC_L1_OPEN' : 'ACC_L2_OPEN', item, { opening: true });
     } else {
+      emitItemsAnimation(item, 'out');
       collapse(p); trig?.setAttribute('aria-expanded', 'false');
       if (isL1(item)) resetAllL2();
       emit(isL1(item) ? 'ACC_L1_CLOSE' : 'ACC_L2_CLOSE', item, { opening: false });
