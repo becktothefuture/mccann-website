@@ -24,6 +24,28 @@ export function initAccordion(rootSel = '.accordeon'){
     const t = el?.querySelector(':scope > .acc-trigger');
     return (t?.textContent || '').trim().replace(/\s+/g,' ').slice(0,80);
   };
+  // Webflow IX (ix3 preferred, fallback ix2). If not present, we still dispatch window CustomEvent
+  const wfIx = (window.Webflow && window.Webflow.require)
+    ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
+    : null;
+  dbg('Webflow IX available:', !!wfIx);
+  function emitIx(name){
+    try {
+      if (wfIx && typeof wfIx.emit === 'function') {
+        dbg('wfIx.emit', name);
+        wfIx.emit(name);
+        return true;
+      }
+    } catch(err) {
+      dbg('wfIx.emit error', err && err.message);
+    }
+    try {
+      // Fallback: bubble a CustomEvent on window for any listeners
+      window.dispatchEvent(new CustomEvent(name));
+      dbg('window.dispatchEvent', name);
+      return false;
+    } catch(_) { return false; }
+  }
 
   // ARIA bootstrap
   const triggers = root.querySelectorAll('.acc-trigger');
@@ -110,10 +132,10 @@ export function initAccordion(rootSel = '.accordeon'){
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
       dbg('emit acc-open', { id: p.id });
-      emit('acc-open', p);
+      emitIx('acc-open');
     } else {
       dbg('emit acc-close', { id: p.id });
-      emit('acc-close', p);
+      emitIx('acc-close');
       collapse(p);
       trig?.setAttribute('aria-expanded', 'false');
     }
