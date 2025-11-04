@@ -110,6 +110,9 @@ export function initAccordion(rootSel = '.accordeon'){
       const p = panelOf(sib);
       if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
         dbg('close sibling', { kind: want, label: labelOf(sib), id: p.id });
+        // Remove active marker BEFORE emitting/animating so GSAP selector .is-active > .acc-item
+        // cannot accidentally target the closing panel during the transition.
+        p.classList.remove('is-active');
         emit('acc-close', p);
         collapse(p);
         const trig = sib.querySelector(':scope > .acc-trigger');
