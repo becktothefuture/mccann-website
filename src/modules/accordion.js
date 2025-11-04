@@ -18,9 +18,16 @@ export function initAccordion(rootSel = '.accordeon'){
     const parent = item.parentElement;
     return parent?.classList.contains('acc-list') ? parent : root;
   };
+  const dbg = (...args) => { try { console.log('[ACCORDION]', ...args); } catch(_) {} };
+  const itemKind = (el) => el?.classList?.contains('acc-section') ? 'section' : 'item';
+  const labelOf = (el) => {
+    const t = el?.querySelector(':scope > .acc-trigger');
+    return (t?.textContent || '').trim().replace(/\s+/g,' ').slice(0,80);
+  };
 
   // ARIA bootstrap
-  root.querySelectorAll('.acc-trigger').forEach((t, i) => {
+  const triggers = root.querySelectorAll('.acc-trigger');
+  triggers.forEach((t, i) => {
     const item = t.closest('.acc-section, .acc-item');
     const p = panelOf(item);
     if (p){
@@ -30,8 +37,10 @@ export function initAccordion(rootSel = '.accordeon'){
       t.setAttribute('aria-expanded', 'false');
     }
   });
+  dbg('bootstrapped', triggers.length, 'triggers');
 
   function expand(p){
+    dbg('expand start', { id: p.id, children: p.children?.length, h: p.scrollHeight });
     p.classList.add('is-active');
     // Ensure direct child rows are not stuck hidden by any global GSAP initial state
     Array.from(p.querySelectorAll(':scope > .acc-item')).forEach((row) => {
@@ -47,6 +56,7 @@ export function initAccordion(rootSel = '.accordeon'){
       if (p.dataset.state === 'opening'){
         p.style.maxHeight = 'none';
         p.dataset.state = 'open';
+        dbg('expanded', { id: p.id });
       }
     };
     p.addEventListener('transitionend', onEnd);
@@ -63,6 +73,7 @@ export function initAccordion(rootSel = '.accordeon'){
       p.removeEventListener('transitionend', onEnd);
       p.dataset.state = 'collapsed';
       p.classList.remove('is-active');
+      dbg('collapsed', { id: p.id });
     };
     p.addEventListener('transitionend', onEnd);
   }
@@ -75,6 +86,7 @@ export function initAccordion(rootSel = '.accordeon'){
       if (sib === item || !sib.classList.contains(want)) return;
       const p = panelOf(sib);
       if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
+        dbg('close sibling', { kind: want, label: labelOf(sib), id: p.id });
         emit('acc-close', p);
         collapse(p);
         const trig = sib.querySelector(':scope > .acc-trigger');
@@ -90,14 +102,17 @@ export function initAccordion(rootSel = '.accordeon'){
     if (!p) return;
     const trig = item.querySelector(':scope > .acc-trigger');
     const opening = !(p.dataset.state === 'open' || p.dataset.state === 'opening');
+    dbg('toggle', { kind: itemKind(item), opening, label: labelOf(item), id: p.id });
     
     closeSiblings(item);
 
     if (opening){
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
+      dbg('emit acc-open', { id: p.id });
       emit('acc-open', p);
     } else {
+      dbg('emit acc-close', { id: p.id });
       emit('acc-close', p);
       collapse(p);
       trig?.setAttribute('aria-expanded', 'false');
@@ -120,6 +135,7 @@ export function initAccordion(rootSel = '.accordeon'){
     if (!t || !root.contains(t)) return;
     e.preventDefault();
     const item = t.closest('.acc-section, .acc-item');
+    dbg('click', { label: (t.textContent || '').trim().replace(/\s+/g,' ').slice(0,80) });
     item && toggle(item);
   });
   root.addEventListener('keydown', e => {
@@ -128,6 +144,7 @@ export function initAccordion(rootSel = '.accordeon'){
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
     const item = t.closest('.acc-section, .acc-item');
+    dbg('keydown', { key: e.key, label: (t.textContent || '').trim().replace(/\s+/g,' ').slice(0,80) });
     item && toggle(item);
   });
 
