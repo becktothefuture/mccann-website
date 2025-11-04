@@ -25,6 +25,13 @@ export function initAccordion(rootSel = '.accordeon'){
     return (t?.textContent || '').trim().replace(/\s+/g,' ').slice(0,80);
   };
   const ACTIVE_TRIGGER_CLASS = 'acc-trigger--active';
+  const ANIM_PANEL_CLASS = 'acc-anim';
+
+  function setAnimPanel(targetPanel){
+    // Remove marker from all, then add to the current target
+    root.querySelectorAll('.acc-list.' + ANIM_PANEL_CLASS).forEach(x => x.classList.remove(ANIM_PANEL_CLASS));
+    if (targetPanel) targetPanel.classList.add(ANIM_PANEL_CLASS);
+  }
   // Webflow IX (ix3 preferred, fallback ix2). If not present, we still dispatch window CustomEvent
   const wfIx = (window.Webflow && window.Webflow.require)
     ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
@@ -96,6 +103,7 @@ export function initAccordion(rootSel = '.accordeon'){
       p.removeEventListener('transitionend', onEnd);
       p.dataset.state = 'collapsed';
       p.classList.remove('is-active');
+      p.classList.remove(ANIM_PANEL_CLASS);
       dbg('collapsed', { id: p.id });
     };
     p.addEventListener('transitionend', onEnd);
@@ -110,10 +118,9 @@ export function initAccordion(rootSel = '.accordeon'){
       const p = panelOf(sib);
       if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
         dbg('close sibling', { kind: want, label: labelOf(sib), id: p.id });
-        // Remove active marker BEFORE emitting/animating so GSAP selector .is-active > .acc-item
-        // cannot accidentally target the closing panel during the transition.
-        p.classList.remove('is-active');
-        emit('acc-close', p);
+        // Tag the closing panel so reverse targets only it
+        p.classList.add(ANIM_PANEL_CLASS);
+        emitIx('acc-close');
         collapse(p);
         const trig = sib.querySelector(':scope > .acc-trigger');
         trig?.setAttribute('aria-expanded', 'false');
@@ -131,15 +138,19 @@ export function initAccordion(rootSel = '.accordeon'){
     const opening = !(p.dataset.state === 'open' || p.dataset.state === 'opening');
     dbg('toggle', { kind: itemKind(item), opening, label: labelOf(item), id: p.id });
     
-    closeSiblings(item);
+    if (opening) closeSiblings(item);
 
     if (opening){
+      // Mark only this panel for animation, then emit open and expand height
+      setAnimPanel(p);
+      dbg('emit acc-open', { id: p.id });
+      emitIx('acc-open');
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
       trig?.classList?.add(ACTIVE_TRIGGER_CLASS);
-      dbg('emit acc-open', { id: p.id });
-      emitIx('acc-open');
     } else {
+      // Tag this panel so reverse targets only it
+      p.classList.add(ANIM_PANEL_CLASS);
       dbg('emit acc-close', { id: p.id });
       emitIx('acc-close');
       collapse(p);
