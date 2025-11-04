@@ -24,6 +24,7 @@ export function initAccordion(rootSel = '.accordeon'){
     const t = el?.querySelector(':scope > .acc-trigger');
     return (t?.textContent || '').trim().replace(/\s+/g,' ').slice(0,80);
   };
+  const ACTIVE_TRIGGER_CLASS = 'acc-trigger--active';
   // Webflow IX (ix3 preferred, fallback ix2). If not present, we still dispatch window CustomEvent
   const wfIx = (window.Webflow && window.Webflow.require)
     ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
@@ -113,6 +114,7 @@ export function initAccordion(rootSel = '.accordeon'){
         collapse(p);
         const trig = sib.querySelector(':scope > .acc-trigger');
         trig?.setAttribute('aria-expanded', 'false');
+        trig?.classList?.remove(ACTIVE_TRIGGER_CLASS);
       }
     });
   }
@@ -131,6 +133,7 @@ export function initAccordion(rootSel = '.accordeon'){
     if (opening){
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
+      trig?.classList?.add(ACTIVE_TRIGGER_CLASS);
       dbg('emit acc-open', { id: p.id });
       emitIx('acc-open');
     } else {
@@ -138,6 +141,7 @@ export function initAccordion(rootSel = '.accordeon'){
       emitIx('acc-close');
       collapse(p);
       trig?.setAttribute('aria-expanded', 'false');
+      trig?.classList?.remove(ACTIVE_TRIGGER_CLASS);
     }
   }
 
