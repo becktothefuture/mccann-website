@@ -13,6 +13,10 @@ export function initAccordion(rootSel = '.accordeon'){
   const root = document.querySelector(rootSel);
   if (!root){ console.log('[ACCORDION] ❌ root not found for selector:', rootSel); return; }
   console.log('[ACCORDION] ✅ Initializing accordion on:', rootSel);
+  
+  // Store reference globally for debugging
+  window._accordionRoot = root;
+  window._accordionDebug = true;
 
   const panelOf = item => item?.querySelector(':scope > .acc-list');
   const groupOf = item => {
@@ -259,6 +263,38 @@ export function initAccordion(rootSel = '.accordeon'){
     });
   });
   root.querySelectorAll('.acc-list').forEach(p => ro.observe(p));
+  
+  // Expose debugging functions globally
+  window._accordionTest = {
+    markItems: (panelId) => {
+      const panel = document.getElementById(panelId) || root.querySelector('.acc-list');
+      if (panel) {
+        markItemsForAnimation(panel, true);
+        console.log('Marked items in panel:', panel);
+      }
+    },
+    clearMarks: () => {
+      clearAllAnimationMarkers();
+      console.log('Cleared all marks');
+    },
+    emitOpen: () => {
+      emitAll('acc-open');
+      console.log('Emitted acc-open');
+    },
+    emitClose: () => {
+      emitAll('acc-close');
+      console.log('Emitted acc-close');
+    },
+    checkWebflow: () => {
+      console.log('Webflow object:', window.Webflow);
+      console.log('wfIx:', wfIx);
+    },
+    getMarkedItems: () => {
+      return root.querySelectorAll('[data-acc-animate]');
+    }
+  };
+  
+  console.log('[ACCORDION] Debug functions available at window._accordionTest');
 }
 
 
