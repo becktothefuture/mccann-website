@@ -25,12 +25,25 @@ export function initAccordion(rootSel = '.accordeon'){
     return (t?.textContent || '').trim().replace(/\s+/g,' ').slice(0,80);
   };
   const ACTIVE_TRIGGER_CLASS = 'acc-trigger--active';
-  const ANIM_PANEL_CLASS = 'acc-anim';
-
-  function setAnimPanel(targetPanel){
-    // Remove marker from all, then add to the current target
-    root.querySelectorAll('.acc-list.' + ANIM_PANEL_CLASS).forEach(x => x.classList.remove(ANIM_PANEL_CLASS));
-    if (targetPanel) targetPanel.classList.add(ANIM_PANEL_CLASS);
+  
+  // Instead of using a class, we'll use data attributes on the items themselves
+  function markItemsForAnimation(panel, show = true) {
+    // Mark direct child items of this panel for animation
+    const items = panel.querySelectorAll(':scope > .acc-item');
+    items.forEach(item => {
+      if (show) {
+        item.setAttribute('data-acc-animate', 'true');
+      } else {
+        item.removeAttribute('data-acc-animate');
+      }
+    });
+    dbg(`Marked ${items.length} items for ${show ? 'show' : 'hide'} animation in panel ${panel.id}`);
+  }
+  
+  function clearAllAnimationMarkers() {
+    root.querySelectorAll('[data-acc-animate]').forEach(el => {
+      el.removeAttribute('data-acc-animate');
+    });
   }
   // Webflow IX (ix3 preferred, fallback ix2). If not present, we still dispatch window CustomEvent
   const wfIx = (window.Webflow && window.Webflow.require)
@@ -111,7 +124,8 @@ export function initAccordion(rootSel = '.accordeon'){
       p.removeEventListener('transitionend', onEnd);
       p.dataset.state = 'collapsed';
       p.classList.remove('is-active');
-      p.classList.remove(ANIM_PANEL_CLASS);
+      // Clear animation markers when collapse completes
+      markItemsForAnimation(p, false);
       dbg('collapsed', { id: p.id });
     };
     p.addEventListener('transitionend', onEnd);
@@ -126,8 +140,9 @@ export function initAccordion(rootSel = '.accordeon'){
       const p = panelOf(sib);
       if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
         dbg('close sibling', { kind: want, label: labelOf(sib), id: p.id });
-        // Tag the closing panel so reverse targets only it
-        setAnimPanel(p);
+        // Clear all markers first, then mark only the closing panel's items
+        clearAllAnimationMarkers();
+        markItemsForAnimation(p, true); // Mark for hide animation
         setTimeout(() => emitAll('acc-close'), 10);
         collapse(p);
         const trig = sib.querySelector(':scope > .acc-trigger');
@@ -168,21 +183,25 @@ export function initAccordion(rootSel = '.accordeon'){
     }
 
     if (opening){
-      // Mark only this panel for animation, then emit open and expand height
-      setAnimPanel(p);
+      // Clear all markers first, then mark only this panel's items
+      clearAllAnimationMarkers();
+      markItemsForAnimation(p, true);
       // Small delay to ensure DOM updates before GSAP reads it
       setTimeout(() => {
-        dbg('emit acc-open', { id: p.id, animPanel: p.classList.contains(ANIM_PANEL_CLASS), items: p.querySelectorAll(':scope > .acc-item').length });
+        const markedItems = p.querySelectorAll(':scope > .acc-item[data-acc-animate]');
+        dbg('emit acc-open', { id: p.id, markedItems: markedItems.length, totalItems: p.querySelectorAll(':scope > .acc-item').length });
         emitAll('acc-open');
       }, 10);
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
       trig?.classList?.add(ACTIVE_TRIGGER_CLASS);
     } else {
-      // Tag this panel so reverse targets only it
-      setAnimPanel(p);
+      // Clear all markers first, then mark only this panel's items
+      clearAllAnimationMarkers();
+      markItemsForAnimation(p, true);
       setTimeout(() => {
-        dbg('emit acc-close', { id: p.id, animPanel: p.classList.contains(ANIM_PANEL_CLASS), items: p.querySelectorAll(':scope > .acc-item').length });
+        const markedItems = p.querySelectorAll(':scope > .acc-item[data-acc-animate]');
+        dbg('emit acc-close', { id: p.id, markedItems: markedItems.length, totalItems: p.querySelectorAll(':scope > .acc-item').length });
         emitAll('acc-close');
       }, 10);
       collapse(p);

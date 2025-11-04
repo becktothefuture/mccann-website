@@ -129,6 +129,7 @@ npx localtunnel --port 3000
 - **Behavior**: ARIA bootstrapping, keyboard support (Enter/Space), smooth height transitions with `ResizeObserver`. Only one item open per group (siblings auto-close).
 - **Selectors**: Universal classes — root `.accordeon`; items `.acc-item`; trigger `.acc-trigger` (Webflow Link); panel/list `.acc-list`.
 - **States**: `aria-expanded` on triggers; panel `data-state` in `{collapsed, opening, open, closing}`; panel gets `.is-active` while opening/open/closing (removed after collapse).
+- **Animation Targeting**: The module adds `data-acc-animate="true"` to items that should animate. Configure GSAP to target `.acc-item[data-acc-animate]`.
 - **Events**: Simple custom events emitted on the panel element:
   - `acc-open` — fired when panel opens (trigger GSAP animation to play)
   - `acc-close` — fired when panel closes (trigger GSAP animation to reverse)
@@ -276,8 +277,11 @@ Accordion events bubble from the panel element and also emit on `window`; names:
 
 - **Lightbox doesn’t open**: Verify `#project-lightbox` exists and slides have `data-video` (Vimeo ID/URL). The `.video-area` container must be present inside the lightbox.
 - **Accordion doesn't animate**:
-  - Verify your Interactions listen to `acc-open` and `acc-close` (or legacy `accordeon-toggle`).
-  - Ensure the interaction is attached to a `.acc-list` element, and actions target `.acc-item` with scope "Children of selected element". The module adds a transient `.acc-anim` class to the active panel to scope animations.
+  - Verify your Interactions listen to `acc-open` and `acc-close` custom events.
+  - **Webflow GSAP Configuration**: The module adds a `data-acc-animate="true"` attribute to items that should animate. Configure your GSAP animation in Webflow to:
+    - **Trigger**: Custom event → `acc-open` (for opening) and `acc-close` (for closing)
+    - **Target**: Use selector `.acc-item[data-acc-animate]` to only animate marked items
+    - **Animation**: Create your staggered animation (opacity, transform, etc.)
   - In Designer, avoid loading `http://127.0.0.1:3000/app.js` directly (CORS). Use an HTTPS tunnel (see Build and dev workflow) or test on the published/staging site.
 - **Page still scrolls when lightbox open**: Check that your page isn’t using a custom scroll container; the lock targets `body`.
 
