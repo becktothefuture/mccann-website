@@ -21,7 +21,7 @@ export function initAccordion(rootSel = '.accordeon'){
 
   // ARIA bootstrap
   root.querySelectorAll('.acc-trigger').forEach((t, i) => {
-    const item = t.closest('.acc-item');
+    const item = t.closest('.acc-section, .acc-item');
     const p = panelOf(item);
     if (p){
       const pid = p.id || `acc-panel-${i}`;
@@ -64,8 +64,9 @@ export function initAccordion(rootSel = '.accordeon'){
   function closeSiblings(item){
     const group = groupOf(item);
     if (!group) return;
+    const want = item.matches('.acc-section') ? 'acc-section' : 'acc-item';
     Array.from(group.children).forEach(sib => {
-      if (sib === item || !sib.classList.contains('acc-item')) return;
+      if (sib === item || !sib.classList.contains(want)) return;
       const p = panelOf(sib);
       if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
         emit('acc-close', p);
@@ -112,7 +113,7 @@ export function initAccordion(rootSel = '.accordeon'){
     const t = e.target.closest('.acc-trigger');
     if (!t || !root.contains(t)) return;
     e.preventDefault();
-    const item = t.closest('.acc-item');
+    const item = t.closest('.acc-section, .acc-item');
     item && toggle(item);
   });
   root.addEventListener('keydown', e => {
@@ -120,7 +121,7 @@ export function initAccordion(rootSel = '.accordeon'){
     if (!t || !root.contains(t)) return;
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
-    const item = t.closest('.acc-item');
+    const item = t.closest('.acc-section, .acc-item');
     item && toggle(item);
   });
 
