@@ -9,7 +9,9 @@
 import { emit } from '../core/events.js';
 console.log('[ACCORDION] module loaded');
 
-export function initAccordion(rootSel = '.accordeon'){
+export function initAccordion(rootOrOptions = '.accordeon'){
+  const rootSel = typeof rootOrOptions === 'string' ? rootOrOptions : (rootOrOptions && rootOrOptions.rootSel) || '.accordeon';
+  const useInlineGsapOpt = typeof rootOrOptions === 'object' && !!rootOrOptions.useInlineGsap;
   const root = document.querySelector(rootSel);
   if (!root){ console.log('[ACCORDION] root not found'); return; }
 
@@ -18,6 +20,27 @@ export function initAccordion(rootSel = '.accordeon'){
   const panelOf = item => item?.querySelector(':scope > .accordeon__list');
   const groupOf = item => isL1(item) ? root : item.closest('.accordeon__list');
   const itemsInPanel = (panel) => Array.from(panel ? panel.children : []);
+
+  // Optional single-timeline GSAP mode (simpler): play on open, reverse on close
+  const wantsInlineGsap = useInlineGsapOpt || root.dataset.accGsap === 'inline';
+  const hasGsap = !!(window && window.gsap);
+  const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canInlineGsap = wantsInlineGsap && hasGsap && !reducedMotion;
+  const tlStore = new WeakMap();
+
+  function getTimeline(panel){
+    if (!canInlineGsap) return null;
+    let tl = tlStore.get(panel);
+    if (tl) return tl;
+    const items = itemsInPanel(panel);
+    if (!items.length) return null;
+    const gsap = window.gsap;
+    tl = gsap.timeline({ paused: true, defaults: { duration: 0.35, ease: 'power2.out' } });
+    // Stagger IN timeline; reversing will create the OUT
+    tl.fromTo(items, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, stagger: 0.06, duration: 0.35, ease: 'power2.out', immediateRender: false }, 0);
+    tlStore.set(panel, tl);
+    return tl;
+  }
 
   // Fire GSAP UI (Webflow) item animations via CustomEvents scoped to the panel element
   function emitItemsAnimation(item, direction){ // direction: 'in' | 'out'
@@ -81,7 +104,11 @@ export function initAccordion(rootSel = '.accordeon'){
       if (sib === item || !sib.classList?.contains(want)) return;
       const p = panelOf(sib);
       if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
-        emitItemsAnimation(sib, 'out'); // animate items out in the closing sibling
+        if (canInlineGsap) {
+          const tl = getTimeline(p); tl && tl.time(tl.duration()).reverse();
+        } else {
+          emitItemsAnimation(sib, 'out'); // animate items out in the closing sibling
+        }
         collapse(p);
         const trig = sib.querySelector('.accordeon__trigger');
         trig?.setAttribute('aria-expanded', 'false');
@@ -93,6 +120,7 @@ export function initAccordion(rootSel = '.accordeon'){
   function resetAllL2(){
     root.querySelectorAll('.accordeon-item--level2 .accordeon__list').forEach(p => {
       if (p.dataset.state === 'open' || p.dataset.state === 'opening'){
+        if (canInlineGsap) { const tl = getTimeline(p); tl && tl.time(tl.duration()).reverse(); }
         collapse(p);
         const it = p.closest('.accordeon-item--level2');
         it?.querySelector('.accordeon__trigger')?.setAttribute('aria-expanded', 'false');
@@ -110,10 +138,12 @@ export function initAccordion(rootSel = '.accordeon'){
 
     if (opening){
       expand(p); trig?.setAttribute('aria-expanded', 'true');
-      emitItemsAnimation(item, 'in');
+      if (canInlineGsap) { const tl = getTimeline(p); tl && tl.time(0).play(); }
+      else { emitItemsAnimation(item, 'in'); }
       emit(isL1(item) ? 'ACC_L1_OPEN' : 'ACC_L2_OPEN', item, { opening: true });
     } else {
-      emitItemsAnimation(item, 'out');
+      if (canInlineGsap) { const tl = getTimeline(p); tl && tl.time((tl.duration && tl.duration()) || 0).reverse(); }
+      else { emitItemsAnimation(item, 'out'); }
       collapse(p); trig?.setAttribute('aria-expanded', 'false');
       if (isL1(item)) resetAllL2();
       emit(isL1(item) ? 'ACC_L1_CLOSE' : 'ACC_L2_CLOSE', item, { opening: false });

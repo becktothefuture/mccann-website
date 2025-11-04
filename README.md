@@ -135,6 +135,15 @@ npx localtunnel --port 3000
     - `ACC_L2_ITEMS_IN` / `ACC_L2_ITEMS_OUT`
     Detail includes `{ level, direction, itemsLength }`.
 
+Single‑timeline GSAP (simpler, code‑driven):
+- Enable by either:
+  - Adding `data-acc-gsap="inline"` to the root `.accordeon`, or
+  - Initializing with `window.App.init({ accordionInlineGsap: true })`.
+- The module builds one GSAP timeline per panel (stagger on its direct children) and will:
+  - `play(0)` on open
+  - `reverse()` on close (and when siblings close/reset)
+- When inline GSAP is enabled, the Webflow custom events above are NOT emitted for items to avoid double animations. If you prefer the Webflow GSAP panel, leave inline GSAP disabled and use the events instead.
+
 Minimal markup example:
 ```html
 <div class="accordeon">
