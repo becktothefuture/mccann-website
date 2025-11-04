@@ -86,10 +86,10 @@ npx localtunnel --port 3000
 ```html
 <script>
   // Optional: customize where the lightbox container lives
-  window.App && window.App.init({ lightboxRoot: '#project-lightbox' });
+  window.App && window.App.init({ lightboxRoot: '#lightbox' });
   // If omitted, defaults are used and missing elements are safely ignored
   // initAccordion is called for '.accordeon'
-  // initLightbox is called for '#project-lightbox'
+  // initLightbox is called for '#lightbox'
   // YouTube iframes have their allow-tokens patched automatically
   </script>
 ```
@@ -182,13 +182,13 @@ GSAP with Webflow (single reusable timeline):
 #### Lightbox (`src/modules/lightbox.js`)
 
 - **Behavior**: Focus trap, inert/aria fallback, outside‑click and Escape to close, scroll lock, reduced‑motion support. Opens when a `.slide` is clicked and the slide carries dataset like `data-video`, `data-title`, `data-text`.
-- **Config**: `initLightbox({ root: '#project-lightbox', closeDelayMs: 1000 })`.
+- **Config**: `initLightbox({ root: '#lightbox', closeDelayMs: 1000 })`.
 - **Events**: `LIGHTBOX_OPEN`, `LIGHTBOX_CLOSE`, `LIGHTBOX_CLOSED_DONE`.
 
 Suggested markup:
 ```html
-<div id="project-lightbox" class="project-lightbox" aria-hidden="true" role="dialog" aria-modal="true">
-  <div class="project-lightbox__inner" tabindex="-1">
+<div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="lightbox__inner" tabindex="-1">
     <div class="video-area"></div>
     <!-- optional: title/description elements bound by your own code using emitted detail -->
   </div>
@@ -197,8 +197,8 @@ Suggested markup:
 
 Baseline CSS (in `style.css`):
 ```css
-.project-lightbox { position:fixed; inset:0; z-index:9999; opacity:0; visibility:hidden; pointer-events:none; }
-.project-lightbox.is-open { opacity:1; visibility:visible; pointer-events:auto; }
+.lightbox { position:fixed; inset:0; z-index:9999; opacity:0; visibility:hidden; pointer-events:none; }
+.lightbox.is-open { opacity:1; visibility:visible; pointer-events:auto; }
 body.modal-open { overflow:hidden; }
 ```
 
@@ -239,7 +239,7 @@ Note: JS slide paging is disabled; rely on CSS `scroll-snap` in `.perspective-wr
 - **Manual init**:
 ```js
 window.App && window.App.init({
-  lightboxRoot: '#project-lightbox' // optional; defaults to '#project-lightbox'
+  lightboxRoot: '#lightbox' // optional; defaults to '#lightbox'
 });
 ```
 
@@ -275,7 +275,7 @@ Accordion events bubble from the panel element and also emit on `window`; names:
 
 ### Troubleshooting
 
-- **Lightbox doesn’t open**: Verify `#project-lightbox` exists and slides have `data-video` (Vimeo ID/URL). The `.video-area` container must be present inside the lightbox.
+- **Lightbox doesn't open**: Verify `#lightbox` exists and slides have `data-video` (Vimeo ID/URL). The `.video-area` container must be present inside the lightbox.
 - **Accordion doesn't animate**:
   - Verify your Interactions listen to `acc-open` and `acc-close` custom events.
   - **Webflow GSAP Configuration**: The module adds a `data-acc-animate="true"` attribute to items that should animate. Configure your GSAP animation in Webflow to:
@@ -299,8 +299,8 @@ Accordion events bubble from the panel element and also emit on `window`; names:
 
 - **Dev**: `npm run dev` → open the printed URL, optionally tunnel to Webflow.
 - **Build**: `npm run build` → deploy `dist/app.js` to your CDN.
-- **Init**: auto on DOM ready; optional `window.App.init({ lightboxRoot: '#project-lightbox' })`.
-- **Required markup**: `.accordeon` (accordion), `#project-lightbox` with `.project-lightbox__inner` and `.video-area`, `.slide` sections (as lightbox triggers).
+- **Init**: auto on DOM ready; optional `window.App.init({ lightboxRoot: '#lightbox' })`.
+- **Required markup**: `.accordeon` (accordion), `#lightbox` with `.lightbox__inner` and `.video-area`, `.slide` sections (as lightbox triggers).
 
 ---
 

@@ -7,6 +7,7 @@
  */
 
 import { emit } from '../core/events.js';
+import { gsapOpenAnimation, gsapCloseAnimation } from './accordion-direct-gsap.js';
 console.log('[ACCORDION] module loaded');
 
 export function initAccordion(rootSel = '.accordeon'){
@@ -31,30 +32,30 @@ export function initAccordion(rootSel = '.accordeon'){
   };
   const ACTIVE_TRIGGER_CLASS = 'acc-trigger--active';
   
-  // Instead of using a class, we'll use data attributes on the items themselves
+  // Use classes for Webflow compatibility
   function markItemsForAnimation(panel, show = true) {
     // Mark direct child items of this panel for animation
     const items = panel.querySelectorAll(':scope > .acc-item');
     items.forEach(item => {
       if (show) {
-        item.setAttribute('data-acc-animate', 'true');
+        item.classList.add('acc-animate-target');
       } else {
-        item.removeAttribute('data-acc-animate');
+        item.classList.remove('acc-animate-target');
       }
     });
     dbg(`Marked ${items.length} items for ${show ? 'show' : 'hide'} animation in panel ${panel.id}`);
     
-    // Debug: Log what elements have the attribute now
-    const allMarked = root.querySelectorAll('[data-acc-animate]');
-    dbg(`Total elements with data-acc-animate in DOM: ${allMarked.length}`);
+    // Debug: Log what elements have the class now
+    const allMarked = root.querySelectorAll('.acc-animate-target');
+    dbg(`Total elements with acc-animate-target class in DOM: ${allMarked.length}`);
     allMarked.forEach(el => {
       dbg(`  - ${el.className} | Text: ${(el.textContent || '').trim().slice(0, 50)}`);
     });
   }
   
   function clearAllAnimationMarkers() {
-    root.querySelectorAll('[data-acc-animate]').forEach(el => {
-      el.removeAttribute('data-acc-animate');
+    root.querySelectorAll('.acc-animate-target').forEach(el => {
+      el.classList.remove('acc-animate-target');
     });
   }
   // Webflow IX (ix3 preferred, fallback ix2). If not present, we still dispatch window CustomEvent
@@ -63,26 +64,28 @@ export function initAccordion(rootSel = '.accordeon'){
     : null;
   dbg('Webflow IX available:', !!wfIx);
   function emitIx(name){
+    // First, always try Webflow's native system for any GSAP timelines set up there
     try {
       if (wfIx && typeof wfIx.emit === 'function') {
         dbg(`🎯 EMITTING via wfIx.emit: "${name}"`);
         wfIx.emit(name);
         
-        // Also check what elements currently have the attribute
-        const marked = root.querySelectorAll('[data-acc-animate="true"]');
-        dbg(`  → ${marked.length} elements have data-acc-animate when "${name}" fires`);
-        
-        return true;
+        // Also check what elements currently have the class
+        const marked = root.querySelectorAll('.acc-animate-target');
+        dbg(`  → ${marked.length} elements have acc-animate-target class when "${name}" fires`);
       }
     } catch(err) {
       dbg('wfIx.emit error', err && err.message);
     }
+    
+    // SECOND, ALWAYS dispatch a window event for our direct GSAP listeners as a reliable fallback
     try {
       // Fallback: bubble a CustomEvent on window for any listeners
       window.dispatchEvent(new CustomEvent(name));
       dbg(`📢 EMITTING via window.dispatchEvent: "${name}"`);
-      return false;
-    } catch(_) { return false; }
+    } catch(err) { 
+      dbg('window.dispatchEvent error', err && err.message);
+    }
   }
 
   // Emit primary event plus legacy aliases (without global toggle) so existing Webflow timelines keep working
@@ -205,9 +208,10 @@ export function initAccordion(rootSel = '.accordeon'){
       markItemsForAnimation(p, true);
       // Small delay to ensure DOM updates before GSAP reads it
       setTimeout(() => {
-        const markedItems = p.querySelectorAll(':scope > .acc-item[data-acc-animate]');
+        const markedItems = p.querySelectorAll(':scope > .acc-item.acc-animate-target');
         dbg('emit acc-open', { id: p.id, markedItems: markedItems.length, totalItems: p.querySelectorAll(':scope > .acc-item').length });
-        emitAll('acc-open');
+        emitAll('acc-open'); // For Webflow IX
+        gsapOpenAnimation(); // For direct GSAP control
       }, 10);
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
@@ -217,9 +221,10 @@ export function initAccordion(rootSel = '.accordeon'){
       clearAllAnimationMarkers();
       markItemsForAnimation(p, true);
       setTimeout(() => {
-        const markedItems = p.querySelectorAll(':scope > .acc-item[data-acc-animate]');
+        const markedItems = p.querySelectorAll(':scope > .acc-item.acc-animate-target');
         dbg('emit acc-close', { id: p.id, markedItems: markedItems.length, totalItems: p.querySelectorAll(':scope > .acc-item').length });
-        emitAll('acc-close');
+        emitAll('acc-close'); // For Webflow IX
+        gsapCloseAnimation(); // For direct GSAP control
       }, 10);
       collapse(p);
       trig?.setAttribute('aria-expanded', 'false');
@@ -290,7 +295,9 @@ export function initAccordion(rootSel = '.accordeon'){
       console.log('wfIx:', wfIx);
     },
     getMarkedItems: () => {
-      return root.querySelectorAll('[data-acc-animate]');
+      const items = root.querySelectorAll('.acc-animate-target');
+      console.log(`Found ${items.length} items with .acc-animate-target class`);
+      return items;
     }
   };
   

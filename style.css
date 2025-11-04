@@ -15,11 +15,20 @@ img, svg, video { -webkit-user-drag: none; }
 .slide{ contain: layout paint; }
 
 /* Lightbox baseline (starts closed) */
-.project-lightbox {
-  position: fixed; inset: 0; z-index: 9999;
-  opacity: 0; visibility: hidden; pointer-events: none;
+.lightbox {
+  position: fixed !important; /* Keep position fixed always */
+  inset: 0; 
+  z-index: 9999;
+  opacity: 0; 
+  visibility: hidden; 
+  pointer-events: none;
+  /* Keep element in DOM so GSAP can animate, but hide with visibility/opacity */
 }
-.project-lightbox.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
+.lightbox.is-open { 
+  opacity: 1; 
+  visibility: visible; 
+  pointer-events: auto; 
+}
 
 /* Lock page when overlays are open */
 body.modal-open { overflow: hidden; }

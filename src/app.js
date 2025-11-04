@@ -6,10 +6,10 @@
  * ==================================================
  */
 
-import { initAccordion } from './modules/accordion-simple.js';
+import { initAccordion } from './modules/accordion.js';
 import { initLightbox } from './modules/lightbox.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
-import { initCustomCursor } from './modules/cursor.js';
+// No need to import the gsap file here anymore, accordion.js handles it.
 
 function patchYouTubeAllowTokens(){
   // Minimal set to reduce permission policy warnings inside Designer
@@ -27,21 +27,17 @@ function patchYouTubeAllowTokens(){
 }
 
 function init(options = {}){
-  const lightboxRoot = options.lightboxRoot || '#project-lightbox';
+  const lightboxRoot = options.lightboxRoot || '#lightbox';
   initAccordion('.accordeon');
   initLightbox({ root: lightboxRoot, closeDelayMs: 1000 });
   // Rely on CSS scroll-snap in `.perspective-wrapper`; do not attach JS paging
 
-  // Custom dark-blue cursor (disabled by default; enable via options.enableCustomCursor === true)
-  if (options.enableCustomCursor === true) {
-    try { initCustomCursor(); } catch(_) {}
-  }
+  // (Custom cursor removed)
 
   // Bridge GSAP ScrollTrigger → Webflow IX
   try {
     initWebflowScrollTriggers({
       scrollerSelector: '.perspective-wrapper',
-      initEventName: 'logo-start',
       shrinkEventName: 'logo-shrink',
       growEventName: 'logo-grow'
     });

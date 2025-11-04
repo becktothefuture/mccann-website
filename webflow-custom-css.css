@@ -1,0 +1,36 @@
+/**
+ * ==================================================
+ *  McCann Website — Webflow Custom CSS
+ *  Add this to your Webflow project's Custom Code
+ * ==================================================
+ */
+
+/* Accordion base styles */
+.acc-list {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+/* Ensure items are visible by default */
+.acc-item {
+  opacity: 1;
+  transform: none;
+  transition: none; /* Let GSAP handle animations */
+}
+
+/* Visual feedback for active triggers */
+.acc-trigger.acc-trigger--active {
+  font-weight: 600;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Ensure GSAP can animate these */
+.acc-animate-target {
+  will-change: transform, opacity;
+}
+
+/* Debug: Highlight animated items (remove in production) */
+.debug-mode .acc-animate-target {
+  outline: 2px solid orange !important;
+  background: rgba(255, 165, 0, 0.1) !important;
+}

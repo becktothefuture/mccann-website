@@ -37,17 +37,17 @@ After extensive testing, here's the most reliable way to set up accordion animat
 
 ### How It Works
 
-1. **JavaScript adds `.is-active` class** to `.acc-list` panels when they open
-2. **JavaScript removes `.is-active` class** when panels close
-3. **JavaScript emits `acc-open` and `acc-close` events**
-4. **Webflow GSAP targets `.is-active > .acc-item`** for animations
+1. **JavaScript adds `.acc-animate-target` class** to `.acc-item` elements that should animate
+2. **JavaScript emits `acc-open` and `acc-close` events** via Webflow IX3
+3. **Webflow GSAP targets `.acc-animate-target`** for animations
+4. **JavaScript removes `.acc-animate-target` class** after animation completes
 
 ### Webflow GSAP Configuration
 
 #### Opening Animation
 1. **Add GSAP Timeline**
 2. **Trigger**: Custom Event → `acc-open`
-3. **Target**: Use selector `.is-active > .acc-item`
+3. **Target**: Use selector `.acc-animate-target`
 4. **Animation**:
    - Set initial state: Opacity 0, Y transform 20px
    - Animate to: Opacity 1, Y transform 0px
@@ -57,7 +57,7 @@ After extensive testing, here's the most reliable way to set up accordion animat
 #### Closing Animation  
 1. **Add GSAP Timeline**
 2. **Trigger**: Custom Event → `acc-close`
-3. **Target**: Use selector `.is-active > .acc-item`
+3. **Target**: Use selector `.acc-animate-target`
 4. **Animation**:
    - Animate to: Opacity 0, Y transform -10px
    - Stagger: 0.05s
@@ -65,10 +65,10 @@ After extensive testing, here's the most reliable way to set up accordion animat
 
 ### Why This Works
 
-- **Static selectors**: `.is-active > .acc-item` is evaluated when the event fires
-- **No dynamic attributes**: Uses simple class presence
-- **Clear hierarchy**: Child combinator `>` ensures only direct children animate
-- **Webflow-friendly**: Works with how Webflow caches and evaluates selectors
+- **Class-based targeting**: `.acc-animate-target` is a simple class selector that Webflow handles well
+- **Dynamic class addition**: JavaScript adds the class only to items that should animate
+- **Clean separation**: Animation targets are marked explicitly, not inferred from structure
+- **Webflow-friendly**: Class selectors are the most reliable way to target elements in Webflow GSAP
 
 ### CSS Required
 
@@ -105,12 +105,13 @@ Add this to your Webflow custom CSS:
 
 ### Common Issues
 
-**Nothing animates**: Check that events are firing in console
-**All items animate**: Your selector isn't specific enough - use `.is-active > .acc-item`
+**Nothing animates**: Check that events are firing in console and `.acc-animate-target` class is being added
+**All items animate**: Make sure you're using `.acc-animate-target` selector, not `.acc-item`
 **Items stay hidden**: Remove any global GSAP initial states on `.acc-item`
+**Debug functions not available**: The accordion must initialize first - wait for page load
 
 ### The Key Insight
 
-Webflow's GSAP evaluates selectors at the moment the event fires. By using `.is-active > .acc-item`, we're targeting only the items that are children of the currently active panel. The JavaScript manages the `.is-active` class, and Webflow handles the animation.
+Webflow's GSAP works best with simple class selectors. By using `.acc-animate-target`, we're explicitly marking which items should animate at any given moment. The JavaScript manages adding/removing this class to the right items, and Webflow handles the animation. 
 
-This is simpler, more reliable, and works with Webflow's architecture rather than against it.
+This approach avoids complex selectors and dynamic attributes that Webflow struggles with, resulting in reliable, predictable animations.
