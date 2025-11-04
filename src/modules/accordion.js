@@ -11,7 +11,8 @@ console.log('[ACCORDION] module loaded');
 
 export function initAccordion(rootSel = '.accordeon'){
   const root = document.querySelector(rootSel);
-  if (!root){ console.log('[ACCORDION] root not found'); return; }
+  if (!root){ console.log('[ACCORDION] ❌ root not found for selector:', rootSel); return; }
+  console.log('[ACCORDION] ✅ Initializing accordion on:', rootSel);
 
   const panelOf = item => item?.querySelector(':scope > .acc-list');
   const groupOf = item => {
@@ -38,6 +39,13 @@ export function initAccordion(rootSel = '.accordeon'){
       }
     });
     dbg(`Marked ${items.length} items for ${show ? 'show' : 'hide'} animation in panel ${panel.id}`);
+    
+    // Debug: Log what elements have the attribute now
+    const allMarked = root.querySelectorAll('[data-acc-animate]');
+    dbg(`Total elements with data-acc-animate in DOM: ${allMarked.length}`);
+    allMarked.forEach(el => {
+      dbg(`  - ${el.className} | Text: ${(el.textContent || '').trim().slice(0, 50)}`);
+    });
   }
   
   function clearAllAnimationMarkers() {
@@ -53,8 +61,13 @@ export function initAccordion(rootSel = '.accordeon'){
   function emitIx(name){
     try {
       if (wfIx && typeof wfIx.emit === 'function') {
-        dbg('wfIx.emit', name);
+        dbg(`🎯 EMITTING via wfIx.emit: "${name}"`);
         wfIx.emit(name);
+        
+        // Also check what elements currently have the attribute
+        const marked = root.querySelectorAll('[data-acc-animate="true"]');
+        dbg(`  → ${marked.length} elements have data-acc-animate when "${name}" fires`);
+        
         return true;
       }
     } catch(err) {
@@ -63,7 +76,7 @@ export function initAccordion(rootSel = '.accordeon'){
     try {
       // Fallback: bubble a CustomEvent on window for any listeners
       window.dispatchEvent(new CustomEvent(name));
-      dbg('window.dispatchEvent', name);
+      dbg(`📢 EMITTING via window.dispatchEvent: "${name}"`);
       return false;
     } catch(_) { return false; }
   }
