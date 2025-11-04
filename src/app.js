@@ -9,6 +9,7 @@
 import { initAccordion } from './modules/accordion.js';
 import { initLightbox } from './modules/lightbox.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
+import { initCustomCursor } from './modules/cursor.js';
 
 function patchYouTubeAllowTokens(){
   // Minimal set to reduce permission policy warnings inside Designer
@@ -30,6 +31,9 @@ function init(options = {}){
   initAccordion('.accordeon');
   initLightbox({ root: lightboxRoot, closeDelayMs: 1000 });
   // Rely on CSS scroll-snap in `.perspective-wrapper`; do not attach JS paging
+
+  // Custom dark-blue cursor with snappy scale on clickable targets
+  try { initCustomCursor(); } catch(_) {}
 
   // Bridge GSAP ScrollTrigger → Webflow IX
   try {
