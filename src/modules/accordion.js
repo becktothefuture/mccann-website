@@ -33,6 +33,12 @@ export function initAccordion(rootSel = '.accordeon'){
 
   function expand(p){
     p.classList.add('is-active');
+    // Ensure direct child rows are not stuck hidden by any global GSAP initial state
+    Array.from(p.querySelectorAll(':scope > .acc-item')).forEach((row) => {
+      row.style.removeProperty('opacity');
+      row.style.removeProperty('visibility');
+      row.style.removeProperty('transform');
+    });
     p.style.maxHeight = p.scrollHeight + 'px';
     p.dataset.state = 'opening';
     const onEnd = (e) => {
