@@ -161,11 +161,17 @@ GSAP with Webflow (single reusable timeline):
    - `acc-open` → Control: **Play from beginning**
    - `acc-close` → Control: **Reverse**
    - If you previously wired `accordeon-toggle`, switch to `acc-open`/`acc-close` (or `accordeon-open`/`accordeon-close`).
-3. **CRITICAL - Target Configuration**:
+3. **CRITICAL - Target Configuration** (try both approaches):
+   **Option A (Recommended)**:
+   - Target: **Class** → `.acc-item`
+   - Scope: **Children** 
+   - **Attach the interaction to**: The `.accordeon` root element
+   - **Add a condition**: In the GSAP timeline, add "Affect: Class" → `.acc-anim` → "Children with this class"
+   
+   **Option B (If A doesn't work)**:
    - Target: **Custom selector**
-   - Enter exactly: `.acc-anim > .acc-item`
-   - Scope: **Select element** (NOT "Children")
-   - This selector targets ONLY `.acc-item` elements that are direct children of the panel marked with `.acc-anim`
+   - Enter: `.acc-anim .acc-item` (note: space, not >)
+   - Scope: **Select element**
 4. **Animation Properties**:
    - From→To: `opacity 0%`, `y 16px` → `opacity 100%`, `y 0`
    - Duration: `~0.20s`; Stagger: `0.06–0.08s`; Ease: `Power2/BackOut`

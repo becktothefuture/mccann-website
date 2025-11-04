@@ -128,7 +128,7 @@ export function initAccordion(rootSel = '.accordeon'){
         dbg('close sibling', { kind: want, label: labelOf(sib), id: p.id });
         // Tag the closing panel so reverse targets only it
         setAnimPanel(p);
-        emitAll('acc-close');
+        setTimeout(() => emitAll('acc-close'), 10);
         collapse(p);
         const trig = sib.querySelector(':scope > .acc-trigger');
         trig?.setAttribute('aria-expanded', 'false');
@@ -170,16 +170,21 @@ export function initAccordion(rootSel = '.accordeon'){
     if (opening){
       // Mark only this panel for animation, then emit open and expand height
       setAnimPanel(p);
-      dbg('emit acc-open', { id: p.id, animPanel: p.classList.contains(ANIM_PANEL_CLASS), items: p.querySelectorAll(':scope > .acc-item').length });
-      emitAll('acc-open');
+      // Small delay to ensure DOM updates before GSAP reads it
+      setTimeout(() => {
+        dbg('emit acc-open', { id: p.id, animPanel: p.classList.contains(ANIM_PANEL_CLASS), items: p.querySelectorAll(':scope > .acc-item').length });
+        emitAll('acc-open');
+      }, 10);
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
       trig?.classList?.add(ACTIVE_TRIGGER_CLASS);
     } else {
       // Tag this panel so reverse targets only it
       setAnimPanel(p);
-      dbg('emit acc-close', { id: p.id, animPanel: p.classList.contains(ANIM_PANEL_CLASS), items: p.querySelectorAll(':scope > .acc-item').length });
-      emitAll('acc-close');
+      setTimeout(() => {
+        dbg('emit acc-close', { id: p.id, animPanel: p.classList.contains(ANIM_PANEL_CLASS), items: p.querySelectorAll(':scope > .acc-item').length });
+        emitAll('acc-close');
+      }, 10);
       collapse(p);
       trig?.setAttribute('aria-expanded', 'false');
       trig?.classList?.remove(ACTIVE_TRIGGER_CLASS);
