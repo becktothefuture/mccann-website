@@ -133,6 +133,7 @@ npx localtunnel --port 3000
   - `acc-open` — fired when panel opens (trigger GSAP animation to play)
   - `acc-close` — fired when panel closes (trigger GSAP animation to reverse)
   Events bubble to `window` for global listening.
+  - Legacy aliases are also emitted for compatibility: `accordeon-open`, `accordeon-close`, and `accordeon-toggle`.
 
 Minimal markup example:
 ```html
@@ -159,9 +160,10 @@ GSAP with Webflow (single reusable timeline):
 2. **Triggers** (Custom event):
    - `acc-open` → Control: **Play from beginning**
    - `acc-close` → Control: **Reverse**
+   - If you already wired `accordeon-toggle`, keep it; aliases are emitted alongside `acc-open/acc-close`.
 3. **Action**:
    - Target: **Custom selector** `.acc-item`
-   - Scope: **Children** (the event fires on the `.acc-list`; animate only its direct child rows)
+   - Scope: **Children of selected element**. Attach the interaction to the `.acc-list` element (the panel). The module marks only the currently animating panel with `.acc-anim` so the timeline affects just its children.
    - From→To: `opacity 0%`, `y 16px` → `opacity 100%`, `y 0`
    - Duration: `~0.20s`; Stagger: `0.06–0.08s`; Ease: `Power2/BackOut`
    - **Do NOT animate height/display** (JS handles panel height)
@@ -264,7 +266,10 @@ Accordion events bubble from the panel element and also emit on `window`; names:
 ### Troubleshooting
 
 - **Lightbox doesn’t open**: Verify `#project-lightbox` exists and slides have `data-video` (Vimeo ID/URL). The `.video-area` container must be present inside the lightbox.
-- **Accordion doesn't animate**: Ensure the CSS transition from `style.css` is included. Use universal classes: `.acc-trigger` (Webflow Link), `.acc-list` (panel), `.acc-item` (rows). Verify GSAP timeline is bound to `acc-open`/`acc-close` events with Scope: Children.
+- **Accordion doesn't animate**:
+  - Verify your Interactions listen to `acc-open` and `acc-close` (or legacy `accordeon-toggle`).
+  - Ensure the interaction is attached to a `.acc-list` element, and actions target `.acc-item` with scope "Children of selected element". The module adds a transient `.acc-anim` class to the active panel to scope animations.
+  - In Designer, avoid loading `http://127.0.0.1:3000/app.js` directly (CORS). Use an HTTPS tunnel (see Build and dev workflow) or test on the published/staging site.
 - **Page still scrolls when lightbox open**: Check that your page isn’t using a custom scroll container; the lock targets `body`.
 
 ---

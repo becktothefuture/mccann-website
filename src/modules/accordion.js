@@ -55,6 +55,14 @@ export function initAccordion(rootSel = '.accordeon'){
     } catch(_) { return false; }
   }
 
+  // Emit primary event plus legacy aliases so existing Webflow timelines keep working
+  function emitAll(primary){
+    const aliases = [];
+    if (primary === 'acc-open') aliases.push('accordeon-open', 'accordeon-toggle');
+    if (primary === 'acc-close') aliases.push('accordeon-close', 'accordeon-toggle');
+    [primary, ...aliases].forEach(ev => emitIx(ev));
+  }
+
   // ARIA bootstrap
   const triggers = root.querySelectorAll('.acc-trigger');
   triggers.forEach((t, i) => {
@@ -120,7 +128,7 @@ export function initAccordion(rootSel = '.accordeon'){
         dbg('close sibling', { kind: want, label: labelOf(sib), id: p.id });
         // Tag the closing panel so reverse targets only it
         p.classList.add(ANIM_PANEL_CLASS);
-        emitIx('acc-close');
+        emitAll('acc-close');
         collapse(p);
         const trig = sib.querySelector(':scope > .acc-trigger');
         trig?.setAttribute('aria-expanded', 'false');
@@ -162,16 +170,16 @@ export function initAccordion(rootSel = '.accordeon'){
     if (opening){
       // Mark only this panel for animation, then emit open and expand height
       setAnimPanel(p);
-      dbg('emit acc-open', { id: p.id });
-      emitIx('acc-open');
+      dbg('emit acc-open', { id: p.id, animPanel: p.classList.contains(ANIM_PANEL_CLASS), items: p.querySelectorAll(':scope > .acc-item').length });
+      emitAll('acc-open');
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
       trig?.classList?.add(ACTIVE_TRIGGER_CLASS);
     } else {
       // Tag this panel so reverse targets only it
       p.classList.add(ANIM_PANEL_CLASS);
-      dbg('emit acc-close', { id: p.id });
-      emitIx('acc-close');
+      dbg('emit acc-close', { id: p.id, animPanel: p.classList.contains(ANIM_PANEL_CLASS), items: p.querySelectorAll(':scope > .acc-item').length });
+      emitAll('acc-close');
       collapse(p);
       trig?.setAttribute('aria-expanded', 'false');
       trig?.classList?.remove(ACTIVE_TRIGGER_CLASS);
