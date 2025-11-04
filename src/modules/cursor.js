@@ -39,7 +39,7 @@ export function initCustomCursor(options = {}){
       background: #0a3d91; /* dark blue */
       pointer-events: none;
       z-index: 2147483647;
-      transform: translate3d(-9999px, -9999px, 0) translate(-50%, -50%) scale(0.5);
+      transform: translate3d(-9999px, -9999px, 0) translate(-50%, -50%) scale(0.35);
       opacity: 0;
       transition: transform 120ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 80ms linear;
       will-change: transform, opacity;
@@ -66,12 +66,15 @@ export function initCustomCursor(options = {}){
   let isActive = false;
   let rafId = 0;
   let needsRender = false;
+  const prefersReduced = typeof window.matchMedia === 'function' 
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
 
   function render(){
     rafId = 0;
     if (!needsRender) return;
     needsRender = false;
-    const scale = isActive ? 1 : 0.5;
+    const scale = isActive ? 1 : 0.35;
     el.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%) scale(${scale})`;
   }
 
@@ -88,6 +91,15 @@ export function initCustomCursor(options = {}){
     const match = target && target.closest ? target.closest(clickableSelector) : null;
     const next = !!match;
     if (next !== isActive) {
+      if (!prefersReduced) {
+        if (next) {
+          // Grow: 45ms with a bounce/overshoot feel
+          el.style.transition = 'transform 45ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 80ms linear';
+        } else {
+          // Shrink: snappy but slightly longer to feel natural
+          el.style.transition = 'transform 120ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 80ms linear';
+        }
+      }
       isActive = next;
       needsRender = true;
       schedule();
