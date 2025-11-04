@@ -27,8 +27,7 @@ function patchYouTubeAllowTokens(){
 
 function init(options = {}){
   const lightboxRoot = options.lightboxRoot || '#project-lightbox';
-  // Allow enabling single-timeline GSAP mode via init options
-  initAccordion({ rootSel: '.accordeon', useInlineGsap: !!options.accordionInlineGsap });
+  initAccordion('.accordeon');
   initLightbox({ root: lightboxRoot, closeDelayMs: 1000 });
   // Rely on CSS scroll-snap in `.perspective-wrapper`; do not attach JS paging
 

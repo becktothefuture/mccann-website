@@ -30,4 +30,6 @@ body.modal-open { overflow: hidden; }
 .u-visually-hidden { position:absolute !important; clip:rect(1px,1px,1px,1px); padding:0; border:0; height:1px; width:1px; overflow:hidden; }
 
 /* Accordion smoothness */
-.accordeon__list{ overflow:hidden; transition:max-height .28s cubic-bezier(.25,.8,.25,1); will-change:max-height; }
+.acc-list{ overflow:hidden; transition:max-height .28s cubic-bezier(.25,.8,.25,1); will-change:max-height; }
+/* Ensure top-level rows are always visible (only items inside panels animate) */
+.accordeon > .acc-item{ opacity:1 !important; visibility:visible !important; }

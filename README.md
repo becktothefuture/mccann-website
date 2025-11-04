@@ -126,33 +126,23 @@ npx localtunnel --port 3000
 
 #### Accordion (`src/modules/accordion.js`)
 
-- **Behavior**: ARIA bootstrapping, keyboard support (Enter/Space), smooth height transitions with `ResizeObserver`. Only one open per group; opening a level‑1 item collapses all level‑2.
-- **Selectors**: Root `.accordeon`; items `.accordeon-item--level1`, `.accordeon-item--level2`; trigger `.accordeon__trigger`; panel/list `.accordeon__list`.
-- **States**: `aria-expanded` on triggers; panel `data-state` in `{collapsed, opening, open, closing}`; panel gets `.is-active` while opening/open/closing (removed after collapse) — use this as GSAP scope.
-- **Events**: `ACC_L1_OPEN`, `ACC_L1_CLOSE`, `ACC_L2_OPEN`, `ACC_L2_CLOSE` (bubbling `CustomEvent`s with `detail`).
-  - **GSAP hooks (new)** — emitted on the panel element and on `window`:
-    - `ACC_L1_ITEMS_IN` / `ACC_L1_ITEMS_OUT`
-    - `ACC_L2_ITEMS_IN` / `ACC_L2_ITEMS_OUT`
-    Detail includes `{ level, direction, itemsLength }`.
-
-Single‑timeline GSAP (simpler, code‑driven):
-- Enable by either:
-  - Adding `data-acc-gsap="inline"` to the root `.accordeon`, or
-  - Initializing with `window.App.init({ accordionInlineGsap: true })`.
-- The module builds one GSAP timeline per panel (stagger on its direct children) and will:
-  - `play(0)` on open
-  - `reverse()` on close (and when siblings close/reset)
-- When inline GSAP is enabled, the Webflow custom events above are NOT emitted for items to avoid double animations. If you prefer the Webflow GSAP panel, leave inline GSAP disabled and use the events instead.
+- **Behavior**: ARIA bootstrapping, keyboard support (Enter/Space), smooth height transitions with `ResizeObserver`. Only one item open per group (siblings auto-close).
+- **Selectors**: Universal classes — root `.accordeon`; items `.acc-item`; trigger `.acc-trigger` (Webflow Link); panel/list `.acc-list`.
+- **States**: `aria-expanded` on triggers; panel `data-state` in `{collapsed, opening, open, closing}`; panel gets `.is-active` while opening/open/closing (removed after collapse).
+- **Events**: Simple custom events emitted on the panel element:
+  - `acc-open` — fired when panel opens (trigger GSAP animation to play)
+  - `acc-close` — fired when panel closes (trigger GSAP animation to reverse)
+  Events bubble to `window` for global listening.
 
 Minimal markup example:
 ```html
 <div class="accordeon">
-  <div class="accordeon-item--level1">
-    <button class="accordeon__trigger">Section A</button>
-    <div class="accordeon__list">
-      <div class="accordeon-item--level2">
-        <button class="accordeon__trigger">Sub A.1</button>
-        <div class="accordeon__list">…</div>
+  <div class="acc-item">
+    <a class="acc-trigger" href="#" role="button">Section A</a>
+    <div class="acc-list">
+      <div class="acc-item">
+        <a class="acc-trigger" href="#" role="button">Sub A.1</a>
+        <div class="acc-list">…</div>
       </div>
     </div>
   </div>
@@ -161,18 +151,21 @@ Minimal markup example:
 
 CSS requirement (already in `style.css`):
 ```css
-.accordeon__list{ overflow:hidden; transition:max-height .28s cubic-bezier(.25,.8,.25,1); will-change:max-height; }
+.acc-list{ overflow:hidden; transition:max-height .28s cubic-bezier(.25,.8,.25,1); will-change:max-height; }
 ```
 
-GSAP with Webflow (staggered items):
-1. Create four Custom Event animations in the Webflow GSAP panel (or IX if you use a GSAP UI wrapper):
-   - `ACC_L1_ITEMS_IN` → target: inside element `.is-active > *` (or `.is-active > .accordeon-item--level2`), animate from `{ autoAlpha:0, y:16 }` to `{ autoAlpha:1, y:0 }`, duration ~0.35s, ease `power2.out`, stagger `0.06`.
-   - `ACC_L1_ITEMS_OUT` → same target, animate to `{ autoAlpha:0, y:16 }`, ease `power2.in`, stagger `-0.06` (reverse order optional).
-   - `ACC_L2_ITEMS_IN` → target: `.is-active > *` inside level‑2 panel (e.g., your level‑3 items), same timings/ease.
-   - `ACC_L2_ITEMS_OUT` → matching out animation.
-2. Ensure the trigger is set to **Custom Event** with the exact event name above (case‑sensitive).
-3. Because events are dispatched on the panel element, keep target selection scoped to **Within element** (the event target) or use the `.is-active` class as a selector to affect only the opened panel.
-4. No IDs are required; the animations automatically apply to all accordion panels.
+GSAP with Webflow (single reusable timeline):
+1. Create one animation timeline in the Webflow GSAP panel (name it "acc-items").
+2. **Triggers** (Custom event):
+   - `acc-open` → Control: **Play from beginning**
+   - `acc-close` → Control: **Reverse**
+3. **Action**:
+   - Target: **Custom selector** `.acc-item`
+   - Scope: **Children** (the event fires on the `.acc-list`; animate only its direct child rows)
+   - From→To: `opacity 0%`, `y 16px` → `opacity 100%`, `y 0`
+   - Duration: `~0.20s`; Stagger: `0.06–0.08s`; Ease: `Power2/BackOut`
+   - **Do NOT animate height/display** (JS handles panel height)
+4. The same timeline works for all levels because events are dispatched on the specific panel element; GSAP targets only children of that panel.
 
 #### Lightbox (`src/modules/lightbox.js`)
 
@@ -264,14 +257,14 @@ window.addEventListener('LIGHTBOX_OPEN', (e) => {
 });
 ```
 
-Accordion events bubble from the specific item as well as emit on `window` (see module notes); names: `ACC_L1_OPEN`, `ACC_L1_CLOSE`, `ACC_L2_OPEN`, `ACC_L2_CLOSE`.
+Accordion events bubble from the panel element and also emit on `window`; names: `acc-open`, `acc-close`.
 
 ---
 
 ### Troubleshooting
 
 - **Lightbox doesn’t open**: Verify `#project-lightbox` exists and slides have `data-video` (Vimeo ID/URL). The `.video-area` container must be present inside the lightbox.
-- **Accordion doesn’t animate**: Ensure the CSS transition from `style.css` is included. Triggers must be `.accordeon__trigger` and panels `.accordeon__list`.
+- **Accordion doesn't animate**: Ensure the CSS transition from `style.css` is included. Use universal classes: `.acc-trigger` (Webflow Link), `.acc-list` (panel), `.acc-item` (rows). Verify GSAP timeline is bound to `acc-open`/`acc-close` events with Scope: Children.
 - **Page still scrolls when lightbox open**: Check that your page isn’t using a custom scroll container; the lock targets `body`.
 
 ---
