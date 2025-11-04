@@ -129,6 +129,19 @@ export function initAccordion(rootSel = '.accordeon'){
     });
   }
 
+  function resetAllL2Under(container){
+    const scope = container || root;
+    scope.querySelectorAll('.acc-item > .acc-list').forEach(p => {
+      if (p.dataset.state === 'open' || p.dataset.state === 'opening'){
+        collapse(p);
+        const it = p.closest('.acc-item');
+        const t = it?.querySelector(':scope > .acc-trigger');
+        t?.setAttribute('aria-expanded', 'false');
+        t?.classList?.remove(ACTIVE_TRIGGER_CLASS);
+      }
+    });
+  }
+
   // No explicit level reset needed with universal grouping
 
   function toggle(item){
@@ -139,6 +152,12 @@ export function initAccordion(rootSel = '.accordeon'){
     dbg('toggle', { kind: itemKind(item), opening, label: labelOf(item), id: p.id });
     
     if (opening) closeSiblings(item);
+
+    // Reset all nested level‑2 panels when a section opens or closes
+    if (itemKind(item) === 'section'){
+      if (opening) resetAllL2Under(root);
+      else resetAllL2Under(item);
+    }
 
     if (opening){
       // Mark only this panel for animation, then emit open and expand height
