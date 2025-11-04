@@ -6,7 +6,7 @@
  * ==================================================
  */
 
-import { initAccordion } from './modules/accordion.js';
+import { initAccordion } from './modules/accordion-simple.js';
 import { initLightbox } from './modules/lightbox.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
 import { initCustomCursor } from './modules/cursor.js';
@@ -32,8 +32,10 @@ function init(options = {}){
   initLightbox({ root: lightboxRoot, closeDelayMs: 1000 });
   // Rely on CSS scroll-snap in `.perspective-wrapper`; do not attach JS paging
 
-  // Custom dark-blue cursor with snappy scale on clickable targets
-  try { initCustomCursor(); } catch(_) {}
+  // Custom dark-blue cursor (disabled by default; enable via options.enableCustomCursor === true)
+  if (options.enableCustomCursor === true) {
+    try { initCustomCursor(); } catch(_) {}
+  }
 
   // Bridge GSAP ScrollTrigger → Webflow IX
   try {
