@@ -161,13 +161,16 @@ GSAP with Webflow (single reusable timeline):
    - `acc-open` → Control: **Play from beginning**
    - `acc-close` → Control: **Reverse**
    - If you previously wired `accordeon-toggle`, switch to `acc-open`/`acc-close` (or `accordeon-open`/`accordeon-close`).
-3. **Action**:
-   - Target: **Custom selector** `.acc-item`
-   - Scope: **Children of selected element**. Attach the interaction to the `.acc-list` element (the panel). The module marks only the currently animating panel with `.acc-anim` so the timeline affects just its children.
+3. **CRITICAL - Target Configuration**:
+   - Target: **Custom selector**
+   - Enter exactly: `.acc-anim > .acc-item`
+   - Scope: **Select element** (NOT "Children")
+   - This selector targets ONLY `.acc-item` elements that are direct children of the panel marked with `.acc-anim`
+4. **Animation Properties**:
    - From→To: `opacity 0%`, `y 16px` → `opacity 100%`, `y 0`
    - Duration: `~0.20s`; Stagger: `0.06–0.08s`; Ease: `Power2/BackOut`
    - **Do NOT animate height/display** (JS handles panel height)
-4. The same timeline works for all levels because events are dispatched on the specific panel element; GSAP targets only children of that panel.
+5. **Why this works**: The JS adds `.acc-anim` class to the specific panel being opened/closed BEFORE emitting the event, so GSAP only animates items in that specific panel, not all items across the entire accordion.
 
 #### Lightbox (`src/modules/lightbox.js`)
 

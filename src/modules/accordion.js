@@ -127,7 +127,7 @@ export function initAccordion(rootSel = '.accordeon'){
       if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
         dbg('close sibling', { kind: want, label: labelOf(sib), id: p.id });
         // Tag the closing panel so reverse targets only it
-        p.classList.add(ANIM_PANEL_CLASS);
+        setAnimPanel(p);
         emitAll('acc-close');
         collapse(p);
         const trig = sib.querySelector(':scope > .acc-trigger');
@@ -177,7 +177,7 @@ export function initAccordion(rootSel = '.accordeon'){
       trig?.classList?.add(ACTIVE_TRIGGER_CLASS);
     } else {
       // Tag this panel so reverse targets only it
-      p.classList.add(ANIM_PANEL_CLASS);
+      setAnimPanel(p);
       dbg('emit acc-close', { id: p.id, animPanel: p.classList.contains(ANIM_PANEL_CLASS), items: p.querySelectorAll(':scope > .acc-item').length });
       emitAll('acc-close');
       collapse(p);
