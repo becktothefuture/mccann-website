@@ -16,32 +16,8 @@ export function initCustomCursor(options = {}){
   // Prevent duplicate initialization
   if (document.getElementById('mccann-custom-cursor')) return;
 
-  const clickableSelector = options.clickableSelector || [
-    'a[href]',
-    'button',
-    '[role="button"]',
-    '[data-clickable]',
-    // Form controls
-    'input:not([type="hidden"]):not([disabled])',
-    'select:not([disabled])',
-    'textarea:not([disabled])',
-    'label',
-    // Webflow/common clickable elements
-    '.w-inline-block',
-    '.w-tab-link',
-    '.w-dropdown-toggle',
-    '.w-nav-link',
-    '[data-w-id]',
-    // Slides / carousels
-    '.slide',
-    '.w-slide',
-    '.swiper-slide',
-    '.splide__slide',
-    // Generic focusables
-    '[tabindex]:not([tabindex="-1"])',
-    // Elements with handlers
-    '[onclick]'
-  ].join(',');
+  // Only treat anchors as scale-up targets per spec
+  const clickableSelector = options.clickableSelector || 'a[href]';
 
   // Inject minimal CSS
   const style = document.createElement('style');
@@ -63,7 +39,7 @@ export function initCustomCursor(options = {}){
       background: #0a3d91; /* dark blue */
       pointer-events: none;
       z-index: 2147483647;
-      transform: translate3d(-9999px, -9999px, 0) translate(-50%, -50%) scale(0.8);
+      transform: translate3d(-9999px, -9999px, 0) translate(-50%, -50%) scale(0.5);
       opacity: 0;
       transition: transform 120ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 80ms linear;
       will-change: transform, opacity;
@@ -95,7 +71,7 @@ export function initCustomCursor(options = {}){
     rafId = 0;
     if (!needsRender) return;
     needsRender = false;
-    const scale = isActive ? 1 : 0.8;
+    const scale = isActive ? 1 : 0.5;
     el.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%) scale(${scale})`;
   }
 
