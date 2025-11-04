@@ -21,25 +21,37 @@ export function initCustomCursor(options = {}){
     'button',
     '[role="button"]',
     '[data-clickable]',
+    // Form controls
     'input:not([type="hidden"]):not([disabled])',
     'select:not([disabled])',
     'textarea:not([disabled])',
+    'label',
+    // Webflow/common clickable elements
+    '.w-inline-block',
+    '.w-tab-link',
+    '.w-dropdown-toggle',
+    '.w-nav-link',
+    '[data-w-id]',
+    // Slides / carousels
     '.slide',
-    '.w-slide'
+    '.w-slide',
+    '.swiper-slide',
+    '.splide__slide',
+    // Generic focusables
+    '[tabindex]:not([tabindex="-1"])',
+    // Elements with handlers
+    '[onclick]'
   ].join(',');
 
   // Inject minimal CSS
   const style = document.createElement('style');
   style.id = 'mccann-custom-cursor-style';
   style.textContent = `
-    .has-custom-cursor body,
-    .has-custom-cursor a,
-    .has-custom-cursor button,
-    .has-custom-cursor [role="button"] { cursor: none !important; }
-
-    .has-custom-cursor input,
-    .has-custom-cursor textarea,
-    .has-custom-cursor select { cursor: auto !important; }
+    /* Hide native cursor everywhere, including pseudo elements */
+    .has-custom-cursor,
+    .has-custom-cursor * { cursor: none !important; }
+    .has-custom-cursor *::before,
+    .has-custom-cursor *::after { cursor: none !important; }
 
     .custom-cursor {
       position: fixed;
