@@ -133,7 +133,7 @@ npx localtunnel --port 3000
   - `acc-open` — fired when panel opens (trigger GSAP animation to play)
   - `acc-close` — fired when panel closes (trigger GSAP animation to reverse)
   Events bubble to `window` for global listening.
-  - Legacy aliases are also emitted for compatibility: `accordeon-open`, `accordeon-close`, and `accordeon-toggle`.
+  - Legacy aliases are also emitted for compatibility: `accordeon-open`, `accordeon-close`.
 
 Minimal markup example:
 ```html
@@ -160,7 +160,7 @@ GSAP with Webflow (single reusable timeline):
 2. **Triggers** (Custom event):
    - `acc-open` → Control: **Play from beginning**
    - `acc-close` → Control: **Reverse**
-   - If you already wired `accordeon-toggle`, keep it; aliases are emitted alongside `acc-open/acc-close`.
+   - If you previously wired `accordeon-toggle`, switch to `acc-open`/`acc-close` (or `accordeon-open`/`accordeon-close`).
 3. **Action**:
    - Target: **Custom selector** `.acc-item`
    - Scope: **Children of selected element**. Attach the interaction to the `.acc-list` element (the panel). The module marks only the currently animating panel with `.acc-anim` so the timeline affects just its children.

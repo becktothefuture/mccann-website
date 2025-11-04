@@ -55,11 +55,11 @@ export function initAccordion(rootSel = '.accordeon'){
     } catch(_) { return false; }
   }
 
-  // Emit primary event plus legacy aliases so existing Webflow timelines keep working
+  // Emit primary event plus legacy aliases (without global toggle) so existing Webflow timelines keep working
   function emitAll(primary){
     const aliases = [];
-    if (primary === 'acc-open') aliases.push('accordeon-open', 'accordeon-toggle');
-    if (primary === 'acc-close') aliases.push('accordeon-close', 'accordeon-toggle');
+    if (primary === 'acc-open') aliases.push('accordeon-open');
+    if (primary === 'acc-close') aliases.push('accordeon-close');
     [primary, ...aliases].forEach(ev => emitIx(ev));
   }
 
