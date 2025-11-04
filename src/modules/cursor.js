@@ -39,7 +39,7 @@ export function initCustomCursor(options = {}){
       background: #0a3d91; /* dark blue */
       pointer-events: none;
       z-index: 2147483647;
-      transform: translate3d(-9999px, -9999px, 0) translate(-50%, -50%) scale(0.35);
+      transform: translate3d(-9999px, -9999px, 0) translate(-50%, -50%) scale(0.3);
       opacity: 0;
       transition: transform 120ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 80ms linear;
       will-change: transform, opacity;
@@ -74,7 +74,7 @@ export function initCustomCursor(options = {}){
     rafId = 0;
     if (!needsRender) return;
     needsRender = false;
-    const scale = isActive ? 1 : 0.35;
+    const scale = isActive ? 1 : 0.3;
     el.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%) scale(${scale})`;
   }
 
