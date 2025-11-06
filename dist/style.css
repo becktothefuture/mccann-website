@@ -5,15 +5,20 @@
  * ==================================================
  */
 
-/* Global hardening */
+/* ============================================================
+   Global Base Styles
+   ============================================================ */
+
 html, body { 
   height: 100%;
   margin: 0;
   padding: 0;
 }
+
 html { 
-  overscroll-behavior: none;                      /* kill rubber-banding chain */
+  overscroll-behavior: none;
 }
+
 body {
   margin: 0;
   padding: 0;
@@ -21,20 +26,18 @@ body {
   -webkit-tap-highlight-color: rgba(0,0,0,0);
 }
 
-/* Disable text selection globally */
 * {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  -webkit-touch-callout: none; /* Disable iOS callout */
+  -webkit-touch-callout: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  orphans: 2; /* Minimum 2 lines at bottom of page/column */
-  widows: 2;  /* Minimum 2 lines at top of page/column */
+  orphans: 2;
+  widows: 2;
 }
 
-/* Allow selection for input fields and textareas */
 input,
 textarea,
 [contenteditable="true"],
@@ -48,45 +51,37 @@ textarea,
 img, svg, video { -webkit-user-drag: none; }
 
 /* ============================================================
-   Global SVG Rendering Optimization
-   Optimized for smooth subpixel movements and scaling
+   SVG Rendering
    ============================================================ */
 
 svg {
-  /* Geometric precision for smooth curves and subpixel rendering */
   shape-rendering: geometricPrecision;
-  
-  /* High-quality text rendering */
   text-rendering: geometricPrecision;
-  
-  /* Auto image rendering (browser optimizes for subpixel smoothness) */
   image-rendering: auto;
   image-rendering: -webkit-optimize-contrast;
-  
-  /* Force GPU layer for animated SVGs */
   transform: translateZ(0);
-  
-  /* Prevent blur during transforms */
   backface-visibility: hidden;
-  
-  /* Subpixel antialiasing for smoother rendering */
   -webkit-font-smoothing: subpixel-antialiased;
   -moz-osx-font-smoothing: auto;
 }
 
-/* Snap/Parallax stability */
-.slide{ contain: layout paint; }
+/* ============================================================
+   Layout & Utilities
+   ============================================================ */
 
-/* Lightbox: ALL styles (position, inset, z-index, display, opacity, etc.) handled by Webflow GSAP animations */
-/* JavaScript only manages state tracking and content injection */
+.slide { contain: layout paint; }
 
-/* Lock page when overlays are open */
 body.modal-open { overflow: hidden; }
-/* If a dedicated scroll wrapper existed, it would be locked here.
-   Now slides are direct children of body, so the fixed-body lock is sufficient. */
 
-/* Small BEM utilities we can reuse anywhere */
-.u-visually-hidden { position:absolute !important; clip:rect(1px,1px,1px,1px); padding:0; border:0; height:1px; width:1px; overflow:hidden; }
+.u-visually-hidden { 
+  position:absolute !important; 
+  clip:rect(1px,1px,1px,1px); 
+  padding:0; 
+  border:0; 
+  height:1px; 
+  width:1px; 
+  overflow:hidden; 
+}
 
 /* ============================================================
    Accordion
@@ -144,10 +139,11 @@ body.modal-open { overflow: hidden; }
    ============================================================ */
 
 /* Preloader container - full viewport overlay */
+/* Ensures preloader appears first, before any content */
 #preloader {
   position: fixed;
   inset: 0;
-  z-index: 99999; /* Above everything */
+  z-index: 999999; /* Maximum z-index - above everything */
   background-color: #f8f8f8; /* Off-white */
   display: flex;
   align-items: center;
@@ -155,12 +151,14 @@ body.modal-open { overflow: hidden; }
   opacity: 1;
   visibility: visible;
   transform: scale(1);
-  transition: transform 60ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Energetic reveal animation - sudden scale up (60ms) */
+/* Fast, energetic reveal: scale up slightly and fade out (250ms) */
 #preloader.is-revealing {
   transform: scale(1.05);
+  opacity: 0;
 }
 
 /* Lock body scroll while preloader active */
@@ -174,12 +172,6 @@ body.preloader-active {
   flex-direction: column;
   align-items: center;
   gap: 2rem;
-  transition: transform 60ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Content scales with reveal */
-#preloader.is-revealing .preloader__content {
-  transform: scale(1.05);
 }
 
 /* TruthWellTold signet */
@@ -192,12 +184,12 @@ body.preloader-active {
   opacity: var(--pulse-opacity, 1);
   will-change: opacity;
   
-  /* Smooth rendering */
-  image-rendering: auto;
-  image-rendering: -webkit-optimize-contrast;
+  /* GPU acceleration for smooth pulse */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-/* SVG rendering */
+/* SVG rendering optimizations */
 .preloader__signet svg {
   display: block;
   width: 100%;
@@ -222,19 +214,19 @@ body.preloader-active {
   }
   
   .preloader__signet {
-    transform: none !important;
-    transition: none;
-    animation: none;
+    opacity: 1 !important;
   }
 }
 
-/* Ensure preloader is on top of Webflow interactions */
+/* Ensure preloader is on top of Webflow interactions and appears first */
 #preloader {
   pointer-events: auto;
 }
 
-#preloader.is-revealing {
-  pointer-events: none;
+/* Ensure preloader appears first - highest priority */
+body > #preloader {
+  position: fixed !important;
+  z-index: 999999 !important;
 }
 
 /* ============================================================

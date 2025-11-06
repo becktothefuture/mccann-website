@@ -1,24 +1,25 @@
 /**
  * ==================================================
  *  McCann Website — Vimeo Helper
- *  Purpose: Mount/replace Vimeo iframe with privacy options
- *  Date: 2025-10-28
+ *  Purpose: Mount Vimeo iframe with privacy options
+ *  Date: 2025-11-06
  * ==================================================
  */
 
 console.log('[VIMEO] module loaded');
 
+// ============================================================
+// HELPERS
+// ============================================================
+
 function parseVimeoId(input){
   if (!input) return '';
   const str = String(input).trim();
-  // Accept bare IDs
   if (/^\d+$/.test(str)) return str;
-  // Extract from known URL forms
   try {
     const u = new URL(str, 'https://example.com');
     const host = u.hostname || '';
     if (host.includes('vimeo.com')){
-      // /video/{id} or /{id}
       const parts = u.pathname.split('/').filter(Boolean);
       const last = parts[parts.length - 1] || '';
       const id = last.match(/\d+/)?.[0] || '';
@@ -28,6 +29,10 @@ function parseVimeoId(input){
   return '';
 }
 
+// ============================================================
+// EXPORTS
+// ============================================================
+
 export function mountVimeo(container, inputId, params = {}){
   if (!container) return;
   const id = parseVimeoId(inputId);
@@ -36,7 +41,6 @@ export function mountVimeo(container, inputId, params = {}){
   const src = `https://player.vimeo.com/video/${id}?${query}`;
   const iframe = document.createElement('iframe');
   iframe.src = src;
-  // Minimal allow-list to reduce permission policy warnings in Designer
   iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
   iframe.setAttribute('frameborder', '0');
   iframe.style.width = '100%';
@@ -44,5 +48,3 @@ export function mountVimeo(container, inputId, params = {}){
   container.innerHTML = '';
   container.appendChild(iframe);
 }
-
-

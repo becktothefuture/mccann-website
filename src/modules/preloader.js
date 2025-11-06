@@ -1,7 +1,7 @@
 /**
  * ==================================================
  *  McCann Website — Preloader
- *  Purpose: Prefetch videos (HTML5 + Vimeo), show TruthWellTold signet
+ *  Purpose: Prefetch videos (HTML5 + Vimeo), show TruthWellTold signet with pulse
  *  Date: 2025-11-06
  * ==================================================
  */
@@ -20,7 +20,6 @@ let progressEl = null;
 let logEl = null;
 let animationFrameId = null;
 let showDebugLog = true; // Toggle to show/hide real-time log
-
 
 // ============================================================
 // INITIALIZATION
@@ -57,12 +56,21 @@ export function initPreloader({
   
   log('Initializing preloader...');
 
+  // Ensure preloader appears first - lock body scroll immediately
+  document.body.classList.add('preloader-active');
+  document.body.style.overflow = 'hidden';
+
   // Find elements
   preloaderEl = document.querySelector(selector);
   if (!preloaderEl) {
     console.error('[PRELOADER] ❌ Preloader element not found');
     return;
   }
+
+  // Ensure preloader is visible and on top
+  preloaderEl.style.display = 'flex';
+  preloaderEl.style.position = 'fixed';
+  preloaderEl.style.zIndex = '999999';
 
   signetEl = preloaderEl.querySelector('.preloader__signet');
   progressEl = preloaderEl.querySelector('.preloader__progress');
@@ -78,12 +86,12 @@ export function initPreloader({
   }
 
   log('✓ Elements found', 'success');
-  log('✓ Pulse animation started', 'success');
+  log('✓ Pulse animation starting', 'info');
 
   // Start pulse animation
   animatePulse(pulseDuration, pulseOpacity);
 
-  // Normal mode: Begin loading process and auto-hide
+  // Begin loading process
   const startTime = performance.now();
   
   // Load both HTML5 videos and Vimeo videos
@@ -121,7 +129,7 @@ export function initPreloader({
 }
 
 /**
- * Manually hide preloader (for customization panel)
+ * Manually hide preloader
  */
 export function hidePreloaderManually() {
   hidePreloader();
@@ -247,8 +255,6 @@ async function prefetchVideos(selector) {
 function prefetchSingleVideo(video, index, total, onProgress) {
   return new Promise((resolve, reject) => {
     
-    // Normal loading flow (stayOpen mode handled earlier, never gets here)
-    
     // If video already loaded/ready
     if (video.readyState >= 3) { // HAVE_FUTURE_DATA or higher
       log(`✓ Video ${index}/${total} already loaded`, 'success');
@@ -307,6 +313,7 @@ function updateProgress(current, total) {
   if (!progressEl) return;
   
   const percentage = Math.round((current / total) * 100);
+  
   progressEl.textContent = `${percentage}%`;
   progressEl.setAttribute('aria-valuenow', percentage);
 }
@@ -460,13 +467,13 @@ function prebufferVimeoIframes(vimeoIds, bufferLimit = 5) {
 }
 
 /**
- * Hide preloader with sudden, energetic reveal
- * Scales up quickly (60ms) - no blur
+ * Hide preloader with fast, energetic reveal animation
+ * Scales up slightly and fades out quickly (250ms max)
  */
 function hidePreloader() {
   if (!preloaderEl) return;
 
-  log('🎯 Hiding preloader with energetic reveal...', 'info');
+  log('🎯 Hiding preloader...', 'info');
   stopAnimations();
 
   // Check for prefers-reduced-motion
@@ -481,7 +488,7 @@ function hidePreloader() {
     return;
   }
 
-  // Sudden, energetic reveal - 60ms scale up
+  // Fast, energetic reveal: scale up + fade out (250ms total)
   preloaderEl.classList.add('is-revealing');
   
   setTimeout(() => {
@@ -490,13 +497,12 @@ function hidePreloader() {
     document.body.classList.remove('preloader-active');
     window.dispatchEvent(new CustomEvent('preloader:complete'));
     log('✓ Preloader complete', 'success');
-  }, 60);
+  }, 250); // 250ms max - sudden and energetic
 }
 
 // ============================================================
 // ANIMATION
 // ============================================================
-
 
 /**
  * Pulse animation - gentle opacity breathing
@@ -504,6 +510,8 @@ function hidePreloader() {
  * @param {number} opacityRange - Opacity variation (0.2 = 0.8 to 1.0)
  */
 function animatePulse(duration = 3000, opacityRange = 0.2) {
+  if (!signetEl) return;
+  
   const startTime = performance.now();
 
   function loop(currentTime) {
@@ -516,8 +524,8 @@ function animatePulse(duration = 3000, opacityRange = 0.2) {
   }
 
   animationFrameId = requestAnimationFrame(loop);
+  log(`✓ Pulse animation started (duration: ${duration}ms, opacity: ${1 - opacityRange}-1.0)`, 'success');
 }
-
 
 /**
  * Stop animation
@@ -526,15 +534,7 @@ function stopAnimations() {
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
-    console.log('[PRELOADER] ✓ Animation stopped');
   }
-}
-
-/**
- * Check if animation is running
- */
-function isAnimationRunning() {
-  return animationFrameId !== null;
 }
 
 // ============================================================
@@ -557,7 +557,7 @@ export function cleanupPreloader() {
 if (typeof window !== 'undefined') {
   window.App = window.App || {};
   window.App.preloader = {
-    cleanup: cleanupPreloader
+    cleanup: cleanupPreloader,
+    hide: hidePreloaderManually
   };
 }
-

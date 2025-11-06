@@ -280,23 +280,18 @@
       addStatus('🎬 All videos should be ready to play', 'success');
     });
     
-    // Initialize with high-frequency jitter frozen at 55%
+    // Initialize preloader with pulse animation
     window.App.init({
       preloader: {
-        stayOpen: true,        // Keep preloader open
-        useJitter: true,       // High-frequency jitter mode
         showDebugLog: true,    // Show debug log
-        jitterSpeed: 60,       // 60Hz frequency (screen-popping effect)
-        jitterDistance: 1.5,   // 1.5px visible vibration
         pulseDuration: 3000,
         pulseOpacity: 0.2
       }
     });
     
-    addStatus('✨ Preloader frozen at 55%!', 'success');
-    addStatus('⚡ 60Hz jitter - creates 3D "coming out" effect', 'info');
+    addStatus('✨ Preloader initialized!', 'success');
+    addStatus('💓 Pulse animation active', 'info');
     addStatus('📊 Real-time log in bottom-left corner', 'info');
-    addStatus('🎛️ Controls panel on right (press / to toggle)', 'info');
     
     // Check video playback after load
     setTimeout(() => {

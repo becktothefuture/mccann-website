@@ -36,8 +36,8 @@ let overlayLenis = null;
 
 export function initLightbox({ 
   root = '#lightbox',
-  openDuration = 1000,  // IMPORTANT: Must match Webflow IX3 'lb:open' animation duration
-  closeDuration = 1000  // IMPORTANT: Must match Webflow IX3 'lb:close' animation duration
+  openDuration = 1000,
+  closeDuration = 1000
 } = {}) {
   // ============================================================
   // SETUP & DOM REFERENCES
@@ -56,7 +56,6 @@ export function initLightbox({
   const slides = document.querySelectorAll('.slide');
   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Content injection targets (IDs, not classes)
   const clientEl = document.querySelector('#lightbox-client');
   const titleEl = document.querySelector('#lightbox-title');
   const truthEl = document.querySelector('#lightbox-truth');
@@ -68,16 +67,13 @@ export function initLightbox({
   // INITIALIZATION
   // ============================================================
   
-  // Set accessibility attributes
   lb.setAttribute('role', lb.getAttribute('role') || 'dialog');
   lb.setAttribute('aria-modal', lb.getAttribute('aria-modal') || 'true');
   lb.setAttribute('aria-hidden', 'true');
   lb.setAttribute('data-state', STATE.IDLE);
   
-  // Ensure scroll is unlocked on page load
   unlockScroll({ delayMs: 0 });
   
-  // Load project data from bundled JSON
   projectData = projectDataJson;
   const projectCount = Object.keys(projectData).length;
   console.log(`[LIGHTBOX] ✓ Loaded ${projectCount} project${projectCount !== 1 ? 's' : ''} from bundled data`);
@@ -135,9 +131,6 @@ export function initLightbox({
   // HELPER FUNCTIONS
   // ============================================================
   
-  /**
-   * Validate slide data attributes against loaded JSON
-   */
   function validateSlideData() {
     if (!projectData) return;
     
@@ -162,9 +155,6 @@ export function initLightbox({
     }
   }
   
-  /**
-   * Emit custom event via Webflow IX for GSAP animations
-   */
   function emitWebflowEvent(name) {
     try {
       if (window.Webflow && window.Webflow.require) {
@@ -186,9 +176,6 @@ export function initLightbox({
     window.dispatchEvent(new CustomEvent(name));
   }
 
-  /**
-   * Make all page content except lightbox inert
-   */
   function setPageInert(on) {
     const siblings = Array.from(document.body.children).filter(n => n !== lb);
     siblings.forEach(n => {
@@ -200,9 +187,6 @@ export function initLightbox({
     });
   }
 
-  /**
-   * Trap focus within lightbox when Tab is pressed
-   */
   function trapFocus(e) {
     if (e.key !== 'Tab') return;
     
@@ -233,9 +217,6 @@ export function initLightbox({
     }
   }
 
-  /**
-   * Get project data by ID
-   */
   function getProjectById(id) {
     if (!projectData[id]) {
       console.error(`[LIGHTBOX] ❌ Project "${id}" not found in JSON`);
@@ -244,9 +225,6 @@ export function initLightbox({
     return projectData[id];
   }
 
-  /**
-   * Wait for all images to load and decode
-   */
   async function waitForImages(imageUrls) {
     if (!imageUrls || imageUrls.length === 0) return;
     
@@ -272,9 +250,6 @@ export function initLightbox({
     console.log(`[LIGHTBOX] ✓ All images loaded`);
   }
 
-  /**
-   * Inject project content into lightbox DOM
-   */
   async function injectContent(project) {
     console.log(`[LIGHTBOX] 📝 Injecting content for: ${project.title}`);
     
@@ -319,9 +294,6 @@ export function initLightbox({
     console.log(`[LIGHTBOX] ✓ Content injected`);
   }
 
-  /**
-   * Set state and update data-state attribute
-   */
   function setState(newState) {
     currentState = newState;
     lb.setAttribute('data-state', newState);
@@ -332,9 +304,6 @@ export function initLightbox({
   // CORE FUNCTIONS
   // ============================================================
   
-  /**
-   * Open lightbox with content from clicked slide
-   */
   async function openFromSlide(slide) {
     // Guard: only open from IDLE state
     if (currentState !== STATE.IDLE) {
@@ -398,9 +367,6 @@ export function initLightbox({
     }
   }
 
-  /**
-   * Called when GSAP open animation completes
-   */
   function finishOpen() {
     console.log('[LIGHTBOX] ✓ Open animation complete');
     
@@ -427,9 +393,6 @@ export function initLightbox({
     emit('LIGHTBOX_OPENED', lb);
   }
 
-  /**
-   * Close lightbox with animation
-   */
   function requestClose() {
     // Guard: only close from OPEN state
     if (currentState !== STATE.OPEN) {
@@ -469,9 +432,6 @@ export function initLightbox({
     }
   }
 
-  /**
-   * Called when GSAP close animation completes
-   */
   function finishClose() {
     console.log('[LIGHTBOX] ✓ Close animation complete');
     
@@ -516,12 +476,6 @@ export function initLightbox({
   // EVENT LISTENERS
   // ============================================================
   
-  /**
-   * OPEN TRIGGER: Click on .slide elements
-   * 
-   * Each .slide must have data-project attribute matching a key in project-data.json
-   * Clicking triggers: content load → image preload → GSAP animation → open
-   */
   slides.forEach((slide, index) => {
     slide.addEventListener('click', (e) => {
       e.preventDefault();
@@ -530,15 +484,6 @@ export function initLightbox({
     }, { passive: false });
   });
 
-  /**
-   * CLOSE TRIGGER 1: Close button (#close-btn)
-   * 
-   * When #close-btn is clicked:
-   * 1. Check state is OPEN (prevents closing during transitions)
-   * 2. Call requestClose() → emits 'lb:close' event to Webflow IX
-   * 3. Webflow GSAP animation plays: opacity 1→0, scale 1.0→0.95, display flex→none
-   * 4. After animation duration (1000ms), finishClose() runs cleanup
-   */
   if (closeBtn) {
     closeBtn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -552,17 +497,6 @@ export function initLightbox({
     console.warn('[LIGHTBOX] ⚠️  #close-btn not found - only Escape key will close');
   }
 
-  /**
-   * CLOSE TRIGGER 2: Escape key
-   * 
-   * When Escape is pressed:
-   * 1. Check state is OPEN (prevents closing during transitions)
-   * 2. Call requestClose() → emits 'lb:close' event to Webflow IX
-   * 3. Webflow GSAP animation plays: opacity 1→0, scale 1.0→0.95, display flex→none
-   * 4. After animation duration (1000ms), finishClose() runs cleanup
-   * 
-   * Tab key is handled separately for focus trapping (keeps focus inside lightbox)
-   */
   document.addEventListener('keydown', e => {
     if (currentState === STATE.OPEN) {
       if (e.key === 'Escape') {
