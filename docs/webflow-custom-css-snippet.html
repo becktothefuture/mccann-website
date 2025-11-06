@@ -1,0 +1,57 @@
+<!-- Webflow Custom CSS Snippet: Paste into Project Settings → Custom Code → Head -->
+<!-- Copy the entire contents of webflow-custom-css.css and paste between the <style> tags below -->
+
+<style>
+/* Disable text selection globally */
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none; /* Disable iOS callout */
+  orphans: 2; /* Minimum 2 lines at bottom of page/column */
+  widows: 2;  /* Minimum 2 lines at top of page/column */
+}
+
+/* Allow selection for input fields and textareas */
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Accordion base styles */
+.acc-list {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+/* Ensure items are visible by default */
+.acc-item {
+  opacity: 1;
+  transform: none;
+  transition: none; /* Let GSAP handle animations */
+}
+
+/* Visual feedback for active triggers */
+.acc-trigger.acc-trigger--active {
+  font-weight: 600;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Ensure GSAP can animate these */
+.acc-animate-target {
+  will-change: transform, opacity;
+}
+
+/* Debug: Highlight animated items (remove in production) */
+.debug-mode .acc-animate-target {
+  outline: 2px solid orange !important;
+  background: rgba(255, 165, 0, 0.1) !important;
+}
+</style>
+
+

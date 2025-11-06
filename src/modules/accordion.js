@@ -1,23 +1,34 @@
 /**
  * ==================================================
  *  McCann Website — Accordion Module
- *  Purpose: ARIA, smooth transitions, GSAP event hooks
- *  Date: 2025-10-28
+ *  Purpose: ARIA-compliant nested accordion with GSAP animations
+ *  Date: 2025-11-06
  * ==================================================
  */
 
-import { emit } from '../core/events.js';
 import { gsapOpenAnimation, gsapCloseAnimation } from './accordion-direct-gsap.js';
-console.log('[ACCORDION] module loaded');
+console.log('[ACCORDION] Module loaded');
 
-export function initAccordion(rootSel = '.accordeon'){
-  const root = document.querySelector(rootSel);
-  if (!root){ console.log('[ACCORDION] ❌ root not found for selector:', rootSel); return; }
-  console.log('[ACCORDION] ✅ Initializing accordion on:', rootSel);
+// ============================================================
+// EXPORTS
+// ============================================================
+
+export function initAccordion(options = {}){
+  const { selector = '.accordeon' } = options;
   
-  // Store reference globally for debugging
+  const root = document.querySelector(selector);
+  if (!root){ 
+    console.log('[ACCORDION] ❌ Root element not found:', selector); 
+    return; 
+  }
+  console.log('[ACCORDION] ✓ Root element found:', selector);
+  
   window._accordionRoot = root;
   window._accordionDebug = true;
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
 
   const panelOf = item => item?.querySelector(':scope > .acc-list');
   const groupOf = item => {
@@ -32,9 +43,7 @@ export function initAccordion(rootSel = '.accordeon'){
   };
   const ACTIVE_TRIGGER_CLASS = 'acc-trigger--active';
   
-  // Use classes for Webflow compatibility
   function markItemsForAnimation(panel, show = true) {
-    // Mark direct child items of this panel for animation
     const items = panel.querySelectorAll(':scope > .acc-item');
     items.forEach(item => {
       if (show) {
@@ -44,13 +53,6 @@ export function initAccordion(rootSel = '.accordeon'){
       }
     });
     dbg(`Marked ${items.length} items for ${show ? 'show' : 'hide'} animation in panel ${panel.id}`);
-    
-    // Debug: Log what elements have the class now
-    const allMarked = root.querySelectorAll('.acc-animate-target');
-    dbg(`Total elements with acc-animate-target class in DOM: ${allMarked.length}`);
-    allMarked.forEach(el => {
-      dbg(`  - ${el.className} | Text: ${(el.textContent || '').trim().slice(0, 50)}`);
-    });
   }
   
   function clearAllAnimationMarkers() {
@@ -58,29 +60,27 @@ export function initAccordion(rootSel = '.accordeon'){
       el.classList.remove('acc-animate-target');
     });
   }
-  // Webflow IX (ix3 preferred, fallback ix2). If not present, we still dispatch window CustomEvent
+
+  // ============================================================
+  // WEBFLOW IX INTEGRATION
+  // ============================================================
+
   const wfIx = (window.Webflow && window.Webflow.require)
     ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
     : null;
   dbg('Webflow IX available:', !!wfIx);
+
   function emitIx(name){
-    // First, always try Webflow's native system for any GSAP timelines set up there
     try {
       if (wfIx && typeof wfIx.emit === 'function') {
         dbg(`🎯 EMITTING via wfIx.emit: "${name}"`);
         wfIx.emit(name);
-        
-        // Also check what elements currently have the class
-        const marked = root.querySelectorAll('.acc-animate-target');
-        dbg(`  → ${marked.length} elements have acc-animate-target class when "${name}" fires`);
       }
     } catch(err) {
       dbg('wfIx.emit error', err && err.message);
     }
     
-    // SECOND, ALWAYS dispatch a window event for our direct GSAP listeners as a reliable fallback
     try {
-      // Fallback: bubble a CustomEvent on window for any listeners
       window.dispatchEvent(new CustomEvent(name));
       dbg(`📢 EMITTING via window.dispatchEvent: "${name}"`);
     } catch(err) { 
@@ -88,7 +88,6 @@ export function initAccordion(rootSel = '.accordeon'){
     }
   }
 
-  // Emit primary event plus legacy aliases (without global toggle) so existing Webflow timelines keep working
   function emitAll(primary){
     const aliases = [];
     if (primary === 'acc-open') aliases.push('accordeon-open');
@@ -96,7 +95,10 @@ export function initAccordion(rootSel = '.accordeon'){
     [primary, ...aliases].forEach(ev => emitIx(ev));
   }
 
-  // ARIA bootstrap
+  // ============================================================
+  // ARIA SETUP
+  // ============================================================
+
   const triggers = root.querySelectorAll('.acc-trigger');
   triggers.forEach((t, i) => {
     const item = t.closest('.acc-section, .acc-item');
@@ -110,45 +112,42 @@ export function initAccordion(rootSel = '.accordeon'){
   });
   dbg('bootstrapped', triggers.length, 'triggers');
 
+  // ============================================================
+  // CORE FUNCTIONS
+  // ============================================================
+
   function expand(p){
-    dbg('expand start', { id: p.id, children: p.children?.length, h: p.scrollHeight });
-    p.classList.add('is-active');
-    // Ensure direct child rows are not stuck hidden by any global GSAP initial state
-    Array.from(p.querySelectorAll(':scope > .acc-item')).forEach((row) => {
-      row.style.removeProperty('opacity');
-      row.style.removeProperty('visibility');
-      row.style.removeProperty('transform');
-    });
-    p.style.maxHeight = p.scrollHeight + 'px';
+    dbg('expand start', { id: p.id, children: p.children?.length });
+    p.classList.add('is-active', 'acc-list--expanding');
     p.dataset.state = 'opening';
+    
     const onEnd = (e) => {
       if (e.propertyName !== 'max-height') return;
-      p.removeEventListener('transitionend', onEnd);
       if (p.dataset.state === 'opening'){
-        p.style.maxHeight = 'none';
+        p.classList.remove('acc-list--expanding');
+        p.classList.add('acc-list--expanded');
         p.dataset.state = 'open';
         dbg('expanded', { id: p.id });
       }
     };
-    p.addEventListener('transitionend', onEnd);
+    p.addEventListener('transitionend', onEnd, { once: true });
   }
 
   function collapse(p){
-    const h = p.style.maxHeight === 'none' ? p.scrollHeight : parseFloat(p.style.maxHeight || 0);
-    p.style.maxHeight = (h || p.scrollHeight) + 'px';
-    p.offsetHeight; // reflow
-    p.style.maxHeight = '0px';
+    dbg('collapse start', { id: p.id });
+    p.classList.remove('acc-list--expanding', 'acc-list--expanded');
     p.dataset.state = 'closing';
+    
     const onEnd = (e) => {
       if (e.propertyName !== 'max-height') return;
-      p.removeEventListener('transitionend', onEnd);
-      p.dataset.state = 'collapsed';
-      p.classList.remove('is-active');
-      // Clear animation markers when collapse completes
-      markItemsForAnimation(p, false);
-      dbg('collapsed', { id: p.id });
+      if (p.dataset.state === 'closing'){
+        p.dataset.state = 'collapsed';
+        p.classList.remove('is-active');
+        markItemsForAnimation(p, false);
+        dbg('collapsed', { id: p.id });
+      }
     };
-    p.addEventListener('transitionend', onEnd);
+    p.addEventListener('transitionend', onEnd, { once: true });
   }
 
   function closeSiblings(item){
@@ -160,10 +159,9 @@ export function initAccordion(rootSel = '.accordeon'){
       const p = panelOf(sib);
       if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
         dbg('close sibling', { kind: want, label: labelOf(sib), id: p.id });
-        // Clear all markers first, then mark only the closing panel's items
         clearAllAnimationMarkers();
-        markItemsForAnimation(p, true); // Mark for hide animation
-        setTimeout(() => emitAll('acc-close'), 10);
+        markItemsForAnimation(p, true);
+        requestAnimationFrame(() => emitAll('acc-close'));
         collapse(p);
         const trig = sib.querySelector(':scope > .acc-trigger');
         trig?.setAttribute('aria-expanded', 'false');
@@ -185,8 +183,6 @@ export function initAccordion(rootSel = '.accordeon'){
     });
   }
 
-  // No explicit level reset needed with universal grouping
-
   function toggle(item){
     const p = panelOf(item);
     if (!p) return;
@@ -196,80 +192,84 @@ export function initAccordion(rootSel = '.accordeon'){
     
     if (opening) closeSiblings(item);
 
-    // Reset all nested level‑2 panels when a section opens or closes
     if (itemKind(item) === 'section'){
       if (opening) resetAllL2Under(root);
       else resetAllL2Under(item);
     }
 
     if (opening){
-      // Clear all markers first, then mark only this panel's items
       clearAllAnimationMarkers();
       markItemsForAnimation(p, true);
-      // Small delay to ensure DOM updates before GSAP reads it
-      setTimeout(() => {
-        const markedItems = p.querySelectorAll(':scope > .acc-item.acc-animate-target');
-        dbg('emit acc-open', { id: p.id, markedItems: markedItems.length, totalItems: p.querySelectorAll(':scope > .acc-item').length });
-        emitAll('acc-open'); // For Webflow IX
-        gsapOpenAnimation(); // For direct GSAP control
-      }, 10);
+      requestAnimationFrame(() => {
+        dbg('emit acc-open', { id: p.id });
+        emitAll('acc-open');
+        gsapOpenAnimation();
+      });
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
       trig?.classList?.add(ACTIVE_TRIGGER_CLASS);
     } else {
-      // Clear all markers first, then mark only this panel's items
       clearAllAnimationMarkers();
       markItemsForAnimation(p, true);
-      setTimeout(() => {
-        const markedItems = p.querySelectorAll(':scope > .acc-item.acc-animate-target');
-        dbg('emit acc-close', { id: p.id, markedItems: markedItems.length, totalItems: p.querySelectorAll(':scope > .acc-item').length });
-        emitAll('acc-close'); // For Webflow IX
-        gsapCloseAnimation(); // For direct GSAP control
-      }, 10);
+      requestAnimationFrame(() => {
+        dbg('emit acc-close', { id: p.id });
+        emitAll('acc-close');
+        gsapCloseAnimation();
+      });
       collapse(p);
       trig?.setAttribute('aria-expanded', 'false');
       trig?.classList?.remove(ACTIVE_TRIGGER_CLASS);
     }
   }
 
-  document.body.classList.add('js-prep');
-  // Collapse all panels; top-level items remain visible (not inside panels)
-  root.querySelectorAll('.acc-list').forEach(p => { p.style.maxHeight = '0px'; p.dataset.state = 'collapsed'; });
-  // Safety: ensure top-level rows are visible even if a GSAP timeline set inline styles globally
-  Array.from(root.querySelectorAll(':scope > .acc-item')).forEach((row) => {
-    row.style.removeProperty('opacity');
-    row.style.removeProperty('visibility');
-    row.style.removeProperty('transform');
-  });
-  requestAnimationFrame(() => document.body.classList.remove('js-prep'));
+  // ============================================================
+  // INITIALIZATION
+  // ============================================================
 
-  root.addEventListener('click', e => {
+  document.body.classList.add('js-prep');
+  root.querySelectorAll('.acc-list').forEach(p => { 
+    p.dataset.state = 'collapsed'; 
+  });
+  requestAnimationFrame(() => {
+    document.body.classList.remove('js-prep');
+  });
+
+  // ============================================================
+  // EVENT LISTENERS
+  // ============================================================
+
+  function handleInteraction(e) {
     const t = e.target.closest('.acc-trigger');
     if (!t || !root.contains(t)) return;
+    
+    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+    
     e.preventDefault();
     const item = t.closest('.acc-section, .acc-item');
-    dbg('click', { label: (t.textContent || '').trim().replace(/\s+/g,' ').slice(0,80) });
-    item && toggle(item);
-  });
-  root.addEventListener('keydown', e => {
-    const t = e.target.closest('.acc-trigger');
-    if (!t || !root.contains(t)) return;
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    const item = t.closest('.acc-section, .acc-item');
-    dbg('keydown', { key: e.key, label: (t.textContent || '').trim().replace(/\s+/g,' ').slice(0,80) });
-    item && toggle(item);
-  });
+    if (item) {
+      dbg(e.type, { label: (t.textContent || '').trim().replace(/\s+/g,' ').slice(0,80) });
+      toggle(item);
+    }
+  }
+  
+  root.addEventListener('click', handleInteraction);
+  root.addEventListener('keydown', handleInteraction);
 
   const ro = new ResizeObserver(entries => {
     entries.forEach(({ target: p }) => {
-      if (p.dataset.state === 'open'){ p.style.maxHeight = 'none'; }
-      else if (p.dataset.state === 'opening'){ p.style.maxHeight = p.scrollHeight + 'px'; }
+      if (p.dataset.state === 'open'){ 
+        if (!p.classList.contains('acc-list--expanded')) {
+          p.classList.add('acc-list--expanded');
+        }
+      }
     });
   });
   root.querySelectorAll('.acc-list').forEach(p => ro.observe(p));
   
-  // Expose debugging functions globally
+  // ============================================================
+  // DEBUG API
+  // ============================================================
+
   window._accordionTest = {
     markItems: (panelId) => {
       const panel = document.getElementById(panelId) || root.querySelector('.acc-list');
@@ -303,5 +303,3 @@ export function initAccordion(rootSel = '.accordeon'){
   
   console.log('[ACCORDION] Debug functions available at window._accordionTest');
 }
-
-

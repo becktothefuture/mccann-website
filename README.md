@@ -1,8 +1,10 @@
 ### McCann Website — Webflow Single‑Bundle Integration
 
-This project ships a single, self‑contained JavaScript bundle designed to drop into a running Webflow site. It wires a11y‑friendly UI behaviors (accordion, lightbox with Vimeo) and native scroll snapping (no JS slide snapping module) with minimal surface area and careful fallbacks.
+This project ships a single, self‑contained JavaScript bundle designed to drop into a running Webflow site. It wires a11y‑friendly UI behaviors (accordion, lightbox with Vimeo), video preloading with TruthWellTold signet animation, and native scroll snapping (no JS slide snapping module) with minimal surface area and careful fallbacks.
 
 The bundle auto‑initializes on DOM ready and also exposes a tiny global `window.App.init(options)` for manual re‑init or customization.
+
+**New:** 🚀 **Video Preloader** — Prefetches all autoplay videos before showing page content, with subtle TruthWellTold signet animation (pulse or micro-jitter). See [`docs/PRELOADER_WEBFLOW_SETUP.md`](./docs/PRELOADER_WEBFLOW_SETUP.md) for full setup guide.
 
 ---
 
@@ -22,14 +24,20 @@ The bundle auto‑initializes on DOM ready and also exposes a tiny global `windo
 - `src/app.js`: App entry; wires modules and exposes `window.App.init`.
 - `src/core/events.js`: Tiny `emit(name, target, detail)` helper for bubbling `CustomEvent`s.
 - `src/core/scrolllock.js`: iOS‑safe fixed‑body scroll lock with precise restore and `modal-open` CSS hook.
+- `src/modules/preloader.js`: **NEW** — Video prefetching with TruthWellTold signet animation (pulse/jitter modes). See [`PRELOADER_WEBFLOW_SETUP.md`](./docs/PRELOADER_WEBFLOW_SETUP.md).
 - `src/modules/accordion.js`: Two‑level accordion with ARIA, keyboard support, smooth height transitions, and sibling closing.
 - `src/modules/lightbox.js`: Accessible lightbox that traps focus, locks page scroll, closes on outside click/Escape, and mounts Vimeo videos.
 - `src/modules/vimeo.js`: Parses Vimeo IDs/URLs and mounts a privacy‑respecting iframe.
-- `src/modules/webflow-scrolltrigger.js`: GSAP ScrollTrigger → Webflow IX bridge for `.perspective-wrapper` + first `.slide`.
+- `src/modules/webflow-scrolltrigger.js`: GSAP ScrollTrigger → Webflow IX bridge for `.perspective-wrapper` + first `.slide` (Legacy).
+- `src/modules/slide-transition-observer.js`: IntersectionObserver-based slide transition detection (New).
+- `src/modules/smooth-scroll.js`: Lenis-powered weighted momentum scrolling with scroll-snap compatibility.
 - `style.css`: Small hardening and module‑adjacent CSS (lightbox baseline, accordion transition).
+- `webflow-custom-css.css`: Custom CSS for Webflow (text selection prevention, widows/orphans, accordion styles).
 - `esbuild.config.mjs`: Build/watch config that outputs a single IIFE to `dist/app.js` and serves it in dev.
 - `dist/app.js`: Built bundle (minified in prod, inline sourcemap in dev).
 - `docs/webflow-head.html`: HEAD snippet for Webflow (Vimeo preconnects).
+- `docs/webflow-custom-css-snippet.html`: Ready-to-paste HTML snippet with custom CSS wrapped in `<style>` tags.
+- `docs/PRELOADER_WEBFLOW_SETUP.md`: **NEW** — Complete guide for setting up video preloader with TruthWellTold signet.
 
 ---
 
@@ -70,7 +78,19 @@ npm run build
 <link rel="preconnect" href="https://i.vimeocdn.com">
 ```
 
-2) **Load the bundle** (Project Settings → Footer code or page‑level Embed):
+2) **Add Custom CSS** (Project Settings → Custom Code → Head): wrap the contents of `webflow-custom-css.css` in `<style>` tags:
+```html
+<style>
+/* Copy entire contents of webflow-custom-css.css here */
+</style>
+```
+   - Alternatively, host `webflow-custom-css.css` on your CDN and reference it:
+```html
+<link rel="stylesheet" href="https://your.cdn.example.com/mccann/webflow-custom-css.css">
+```
+   - This CSS includes: text selection prevention, widows/orphans control, and accordion styles.
+
+3) **Load the bundle** (Project Settings → Footer code or page‑level Embed):
 ```html
 <!-- Production: host dist/app.js on your CDN and reference it here -->
 <script src="https://your.cdn.example.com/mccann/dist/app.js" defer></script>
@@ -82,19 +102,62 @@ npx localtunnel --port 3000
 # Use the printed HTTPS URL, e.g. https://<subdomain>.loca.lt/app.js
 ```
 
-3) **Initialization**: The bundle auto‑runs on `DOMContentLoaded`. You can also initialize (or re‑initialize) manually:
+4) **Initialization**: The bundle auto‑runs on `DOMContentLoaded`. You can also initialize (or re‑initialize) manually:
 ```html
 <script>
-  // Optional: customize where the lightbox container lives
-  window.App && window.App.init({ lightboxRoot: '#lightbox' });
+  // Optional: customize initialization
+  window.App && window.App.init({ 
+    lightboxRoot: '#lightbox',
+    lerp: 0.08,                    // Smooth scroll weight for non-snap pages (0.05-0.2; lower = heavier)
+    useIntersectionObserver: true, // Use new IntersectionObserver-based logo animation (default: false)
+    preloader: {                   // NEW: Video preloader configuration
+      selector: '#preloader',
+      videoSelector: 'video[autoplay], video[data-autoplay]',
+      useJitter: false,            // Use micro-jitter instead of pulse (default: false)
+      minLoadTime: 1000            // Minimum display time in ms (default: 1000)
+    }
+  });
   // If omitted, defaults are used and missing elements are safely ignored
+  // initPreloader is called FIRST (prefetches videos before showing content)
+  // initSmoothScroll is called automatically (disabled on pages with .perspective-wrapper)
   // initAccordion is called for '.accordeon'
   // initLightbox is called for '#lightbox'
+  // Logo animation: Legacy ScrollTrigger (default) or new IntersectionObserver (if flag enabled)
   // YouTube iframes have their allow-tokens patched automatically
   </script>
 ```
 
 4) **Create the custom Interactions in Webflow** (Interactions → New → Custom):
+
+   **Option A: New System (IntersectionObserver)** — Recommended:
+   
+   To use the new system, enable it via the feature flag:
+   ```js
+   window.App && window.App.init({ useIntersectionObserver: true });
+   ```
+   
+   Then create these interactions:
+   
+   - **`logo-appear`**:
+     1. Event name: `logo-appear` (case-sensitive)
+     2. Trigger: Custom Event (`logo-appear`)
+     3. Target: Select your logo element (the one that should animate)
+     4. Animation: Timeline from hidden/small → visible/big (forward animation)
+     5. Control: **Play from start**
+     6. **When it fires**: When the first slide (`#intro-slide`) scrolls out of view
+   
+   - **`logo-disappear`**:
+     1. Event name: `logo-disappear` (case-sensitive)
+     2. Trigger: Custom Event (`logo-disappear`)
+     3. Target: Same logo element
+     4. Animation: Same timeline as `logo-appear` (reverse animation)
+     5. Control: **Reverse**
+     6. **When it fires**: When the first slide (`#intro-slide`) scrolls back into view
+   
+   **Option B: Legacy System (ScrollTrigger)** — Default:
+   
+   If you don't enable the feature flag, the legacy system uses these events:
+   
    - **`logo-start`**:
      1. Event name must be exactly: `logo-start` (case-sensitive)
      2. Trigger: Custom Event (`logo-start`)
@@ -203,9 +266,26 @@ body.modal-open { overflow:hidden; }
 ```
 
 
-#### Webflow ScrollTrigger → IX bridge (`src/modules/webflow-scrolltrigger.js`)
+#### Slide Transition Observer (`src/modules/slide-transition-observer.js`) — **New**
 
-- **Behavior**: Ties `ScrollTrigger` to `.perspective-wrapper`. Emits an init event on load to set the animation to its start/paused state. As soon as the user begins scrolling down from the top of the first slide, emits a play event. When scrolling back above the driver, emits the reset event again so it’s paused at the top.
+- **Behavior**: Uses IntersectionObserver to passively detect when `#intro-slide` leaves/enters the viewport. Emits `logo-appear` when slide scrolls out, `logo-disappear` when it scrolls back in. Fully compatible with scroll-snap and Lenis smooth scroll.
+- **Defaults**:
+  - scroller: `.perspective-wrapper`
+  - target slide: `#intro-slide`
+  - appear event: `logo-appear` (forward animation)
+  - disappear event: `logo-disappear` (reverse animation)
+  - threshold: `0.1` (fires when 90% of slide has scrolled out)
+- **Advantages**:
+  - Passive monitoring (no scroll interference)
+  - Works seamlessly with scroll-snap and Lenis
+  - More reliable than scroll position calculations
+  - No dependency on GSAP ScrollTrigger
+- **Safety**: No‑ops if Webflow IX (ix2/ix3) is unavailable, or if elements are missing.
+- **Activation**: Enable via feature flag: `window.App.init({ useIntersectionObserver: true })`
+
+#### Webflow ScrollTrigger → IX bridge (`src/modules/webflow-scrolltrigger.js`) — **Legacy**
+
+- **Behavior**: Ties `ScrollTrigger` to `.perspective-wrapper`. Emits an init event on load to set the animation to its start/paused state. As soon as the user begins scrolling down from the top of the first slide, emits a play event. When scrolling back above the driver, emits the reset event again so it's paused at the top.
 - **Defaults**:
   - scroller: `.perspective-wrapper`
   - driver: first `.slide` inside `.perspective-wrapper`
@@ -214,8 +294,32 @@ body.modal-open { overflow:hidden; }
   - grow event (scroll up): `logo-grow`
   - start `top top`, end `top -10%`, `markers: false`
 - **Safety**: No‑ops if Webflow IX (ix2/ix3) or ScrollTrigger are unavailable, or if elements are missing.
+- **Status**: Legacy system (default). Use new IntersectionObserver system for better compatibility with scroll-snap and Lenis.
 
 Note: JS slide paging is disabled; rely on CSS `scroll-snap` in `.perspective-wrapper`.
+
+#### Smooth Scroll (`src/modules/smooth-scroll.js`)
+
+- **Behavior**: Weighted momentum scrolling powered by Lenis. Adds a "heavy" feel to scrolling with customizable physics.
+- **Auto-detection**: Detects pages with `.perspective-wrapper` (scroll-snap container) and **disables itself** to preserve native snap behavior. Only activates on pages without scroll-snap.
+- **Why disabled on snap pages?**: Pages with scroll-snap containers (like homepage) scroll inside a specific element (`.perspective-wrapper`), not the window. Applying window-level smooth scroll would conflict with the container's native snap behavior.
+- **Configuration**:
+  - `lerp` (0.05-0.2): Lower = heavier/slower, higher = lighter/faster. Default: 0.1
+  - `wheelMultiplier`: Adjust scroll speed (higher = faster). Default: 1.0
+  - `forceEnableOnSnap`: Set to `true` to force enable on snap pages (not recommended)
+- **GSAP Integration**: Automatically syncs with GSAP ScrollTrigger when available.
+- **Lightbox Integration**: Smooth scroll pauses when lightbox opens, resumes on close.
+- **API**: Exposed via `window.App.smoothScroll` (only on non-snap pages):
+  - `.stop()` — Pause smooth scroll
+  - `.start()` — Resume smooth scroll
+  - `.instance` — Direct access to Lenis instance
+
+Example customization (for non-snap pages):
+```js
+window.App && window.App.init({ 
+  lerp: 0.07,        // Heavier weight for weighted scrolling
+});
+```
 
 #### Vimeo helper (`src/modules/vimeo.js`)
 
@@ -244,8 +348,10 @@ window.App && window.App.init({
 ```
 
 `init()` will:
+- call `initSmoothScroll()` (auto-disabled on pages with `.perspective-wrapper`)
 - call `initAccordion('.accordeon')`
 - call `initLightbox({ root: lightboxRoot, closeDelayMs: 1000 })`
+- call logo animation system (ScrollTrigger legacy or IntersectionObserver new, based on `useIntersectionObserver` flag)
 - patch YouTube `iframe[allow]` capabilities to include common tokens
 
 ---

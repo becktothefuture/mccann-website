@@ -12,24 +12,27 @@ console.log('[WEBFLOW] module loaded');
  * Initialize GSAP ScrollTrigger → Webflow IX bridge.
  *
  * Behavior:
- *  1. On page load: emit logo-grow (small → big)
- *  2. Scroll down past #intro-slide: emit logo-shrink (big → small)
- *  3. Scroll back up to #intro-slide: emit logo-grow (small → big)
+ *  1. Logo appears when #intro-slide is scrolled out by 80% (20% visible)
+ *  2. Logo disappears when #intro-slide is scrolled in by 20% (20% visible)
+ *
+ * Uses percentage-based triggers:
+ *  - appearTrigger: Triggers when slide top reaches 80% down the viewport (80% scrolled out)
+ *  - hideTrigger: Triggers when slide top reaches 20% down the viewport (20% scrolled in)
  *
  * Requirements in Webflow:
- *  - logo-shrink: Control → Play from start (big → small animation)
- *  - logo-grow: Control → Play from start (small → big animation)
+ *  - logo-hide: Control → Reverse (reverse animation)
+ *  - logo-appear: Control → Play from start (forward animation)
  *
  * @param {Object} options
  * @param {string} [options.scrollerSelector='.perspective-wrapper']
- * @param {string} [options.shrinkEventName='logo-shrink']
- * @param {string} [options.growEventName='logo-grow']
+ * @param {string} [options.hideEventName='logo-hide']
+ * @param {string} [options.appearEventName='logo-appear']
  * @param {boolean} [options.markers=false]
  */
 export function initWebflowScrollTriggers(options = {}){
   const scrollerSelector = options.scrollerSelector || '.perspective-wrapper';
-  const shrinkEventName = options.shrinkEventName || options.playEventName || 'logo-shrink';
-  const growEventName = options.growEventName || 'logo-grow';
+  const hideEventName = options.hideEventName || options.shrinkEventName || 'logo-hide';
+  const appearEventName = options.appearEventName || options.growEventName || 'logo-appear';
   const markers = !!options.markers;
 
   function onWindowLoad(cb){
@@ -64,53 +67,63 @@ export function initWebflowScrollTriggers(options = {}){
         driver: !!driver,
         wfIx: !!wfIx, 
         ScrollTrigger: !!ScrollTrigger,
-        shrinkEvent: shrinkEventName,
-        growEvent: growEventName
+        hideEvent: hideEventName,
+        appearEvent: appearEventName
       });
 
-      // Main ScrollTrigger: watches when #intro-slide leaves/enters top zone
+      // Track state to prevent duplicate events
+      let logoVisible = false; // Track if logo is currently visible
+      let lastScrollDirection = null;
+
+      // Trigger 1: logo-appear when slide is scrolled out by 80% (20% visible)
+      // When 80% is scrolled out, slide bottom should be at 20% of viewport
       ScrollTrigger.create({
         trigger: driver,
         scroller: scroller,
-        start: 'top top',
-        end: 'top -10%',
+        start: 'bottom 20%', // When slide bottom reaches 20% down viewport (80% scrolled out)
         markers: markers,
         
-        onLeave: () => {
-          // Scrolled DOWN past #intro-slide → shrink
-          try {
-            console.log('[WEBFLOW] emit shrink (scrolled down):', shrinkEventName);
-            wfIx.emit(shrinkEventName);
-          } catch(err) {
-            console.error('[WEBFLOW] Error emitting shrink:', err);
+        onEnter: () => {
+          // Scrolling DOWN: slide bottom has reached 20% → 80% scrolled out → appear
+          if (!logoVisible) {
+            try {
+              console.log('[WEBFLOW] ✓ emit appear (80% scrolled out):', appearEventName);
+              wfIx.emit(appearEventName);
+              logoVisible = true;
+            } catch(err) {
+              console.error('[WEBFLOW] Error emitting appear:', err);
+            }
           }
-        },
+        }
+      });
+
+      // Trigger 2: logo-hide when slide is scrolled in by 20% (20% visible)
+      // Use onLeaveBack which fires when scrolling UP past the start point
+      ScrollTrigger.create({
+        trigger: driver,
+        scroller: scroller,
+        start: 'bottom 20%', // Same trigger point as appear - when slide bottom reaches 20%
+        markers: markers,
         
-        onEnterBack: () => {
-          // Scrolled back up to #intro-slide → grow
-          try {
-            console.log('[WEBFLOW] emit grow (scrolled back up):', growEventName);
-            wfIx.emit(growEventName);
-          } catch(err) {
-            console.error('[WEBFLOW] Error emitting grow:', err);
+        onLeaveBack: () => {
+          // Scrolling UP past the 20% point → logo should hide
+          if (logoVisible) {
+            try {
+              console.log('[WEBFLOW] ✓ emit hide (scrolled back up past 20%):', hideEventName);
+              wfIx.emit(hideEventName);
+              logoVisible = false;
+            } catch(err) {
+              console.error('[WEBFLOW] Error emitting hide:', err);
+            }
           }
         }
       });
       
       console.log('[WEBFLOW] ScrollTrigger initialized');
       
-      // On page load: trigger logo-grow to animate logo from small → big
+      // Refresh ScrollTrigger to ensure triggers are properly initialized
       requestAnimationFrame(() => {
         ScrollTrigger.refresh();
-        
-        setTimeout(() => {
-          try {
-            console.log('[WEBFLOW] emit grow (initial load):', growEventName);
-            wfIx.emit(growEventName);
-          } catch(err) {
-            console.error('[WEBFLOW] Error emitting initial grow:', err);
-          }
-        }, 200);
       });
     });
   });

@@ -75,3 +75,6 @@ console.log('  directGSAPTest.testOpen()  - Test open animation');
 console.log('  directGSAPTest.testClose() - Test close animation');
 console.log('  directGSAPTest.checkGSAP() - Check GSAP status');
 console.log('  _accordionTest.getMarkedItems() - See marked items');
+
+
+

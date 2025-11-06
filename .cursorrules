@@ -1,0 +1,419 @@
+# McCann Website - Cursor AI Rules
+
+## Project Overview
+This is a Webflow integration project using vanilla JavaScript modules with GSAP animations. Code provides functionality while Webflow handles visual design and interactions.
+
+## Code Style Rules
+
+### File Headers
+Every module starts with a Swiss-grid box header:
+```javascript
+/**
+ * ==================================================
+ *  McCann Website — Module Name
+ *  Purpose: Brief description
+ *  Date: YYYY-MM-DD
+ * ==================================================
+ */
+```
+
+### Module Structure (in order)
+1. Header comment
+2. Module-level console log: `console.log('[MODULE-NAME] Module loaded');`
+3. Imports
+4. Main export function
+5. Section dividers: `// ============================================================`
+6. Sections: STATE, INITIALIZATION, HELPER FUNCTIONS, CORE FUNCTIONS, EVENT LISTENERS
+
+### Naming Conventions
+- Functions: verb-based (`initModule`, `lockScroll`, `emitEvent`)
+- Variables: abbreviated but clear (`lb` for lightbox, `el` for element)
+- CSS classes: BEM-style (`.block__element`, `.block--modifier`)
+- Events: kebab-case (`acc-open`, `logo-appear`)
+- Module exports: named exports, not default
+
+### Console Logging
+- Always prefix with module: `[MODULE-NAME]`
+- Use emojis strategically: ✓ success, ❌ error, ⚠️ warning, 🎯 action
+- Initialization checks show what was found/verified
+
+### Options Pattern
+```javascript
+export function initModule(options = {}) {
+  const {
+    selector = '.default',
+    delay = 1000
+  } = options;
+}
+```
+
+### Early Returns
+Always check for missing elements first:
+```javascript
+const el = document.querySelector(selector);
+if (!el) {
+  console.log('[MODULE] ❌ Element not found');
+  return;
+}
+```
+
+### Comments
+- Explain WHY, not WHAT
+- Use arrows for emphasis: `// This is crucial →`
+- Inline comments for non-obvious logic
+- Technical but accessible tone
+
+## Performance Rules (THE FUNDAMENTALS)
+
+### Always Throttle High-Frequency Events
+```javascript
+let rafId = null;
+function handleMouseMove(e) {
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(() => {
+    expensiveOperation();
+  });
+}
+
+// Debounce for input/search events (delay until pause)
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Use passive listeners for scroll/touch → better performance
+window.addEventListener('scroll', handler, { passive: true });
+```
+
+### Use requestAnimationFrame for Animations
+- Never use setTimeout for animations
+- Always use RAF for 60fps smoothness
+- Batch DOM reads/writes in RAF to avoid layout thrashing
+- Use `will-change` CSS property sparingly (only during animation)
+
+### DOM Performance Fundamentals
+```javascript
+// BAD: Multiple reflows/repaints
+element.style.left = '10px';
+element.style.top = '10px';  
+element.style.width = '20px';
+
+// GOOD: Single reflow via CSS class
+element.classList.add('positioned');
+
+// GOOD: Batch reads before writes
+const height = element.offsetHeight; // Read
+const width = element.offsetWidth;   // Read
+element.style.height = height + 'px'; // Write
+element.style.width = width + 'px';   // Write
+```
+
+### Cache DOM Selectors & Minimize DOM Access
+```javascript
+// BAD: Query in loop
+for (let i = 0; i < items.length; i++) {
+  document.querySelector('.container').appendChild(items[i]);
+}
+
+// GOOD: Cache selector, use fragment
+const container = document.querySelector('.container');
+const fragment = document.createDocumentFragment();
+items.forEach(item => fragment.appendChild(item));
+container.appendChild(fragment); // Single DOM update
+```
+
+### Use CSS for Visual Changes When Possible
+- Prefer CSS transitions/animations over JavaScript
+- Use `transform` and `opacity` for animations (GPU accelerated)
+- Avoid animating properties that trigger layout (width, height, top, left)
+- Use CSS containment for complex components: `contain: layout style paint`
+- **NEVER use inline styles for animations or dynamic transforms** - Use CSS classes and custom properties instead:
+  ```javascript
+  // BAD: Inline styles cause conflicts, especially with scale/transform
+  element.style.transform = 'scale(0.5)';  // ❌ Conflicts with Webflow, hard to maintain
+  element.style.transform = `translate(${x}px, ${y}px) scale(${scale})`; // ❌ Mixes concerns
+  
+  // GOOD: CSS classes for state changes
+  element.classList.add('is-scaled');  // ✓ CSS: .is-scaled { transform: scale(0.5); }
+  
+  // GOOD: CSS custom properties for dynamic values  
+  element.style.setProperty('--x', `${x}px`);  // ✓ Position via CSS variables
+  element.style.setProperty('--y', `${y}px`);  // ✓ CSS handles transform
+  // CSS: transform: translate(var(--x), var(--y)) scale(0.2);
+  ```
+
+### Lazy Load & Intersection Observer
+```javascript
+// Modern lazy loading for images/videos
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      img.src = img.dataset.src;
+      observer.unobserve(img);
+    }
+  });
+}, { rootMargin: '50px' }); // Load 50px before visible
+
+document.querySelectorAll('img[data-src]').forEach(img => {
+  observer.observe(img);
+});
+```
+
+### Event Delegation for Dynamic Content
+```javascript
+// BAD: Individual listeners
+items.forEach(item => {
+  item.addEventListener('click', handleClick);
+});
+
+// GOOD: Single delegated listener
+container.addEventListener('click', (e) => {
+  const item = e.target.closest('.item');
+  if (item) handleClick(e);
+});
+```
+
+### GSAP Best Practices
+```javascript
+// Use timeline for complex sequences
+const tl = gsap.timeline();
+tl.to('.el1', { x: 100 })
+  .to('.el2', { y: 50 }, '<') // Start at same time
+  .to('.el3', { scale: 1.2 }, '-=0.5'); // Overlap by 0.5s
+
+// ScrollTrigger: Use function-based values for responsive
+ScrollTrigger.create({
+  trigger: '.section',
+  start: () => `top ${window.innerHeight * 0.8}px`, // Recalculates on refresh
+  invalidateOnRefresh: true // Re-evaluate animation values
+});
+
+// Batch ScrollTriggers for multiple elements
+ScrollTrigger.batch('.item', {
+  onEnter: batch => gsap.to(batch, { opacity: 1, stagger: 0.1 }),
+  start: 'top 80%'
+});
+
+// Clean up on component unmount
+onCleanup() {
+  ScrollTrigger.getAll().forEach(st => st.kill());
+  gsap.killTweensOf('.element');
+}
+```
+
+## Webflow Integration
+
+### Check for Webflow IX
+```javascript
+const wfIx = (window.Webflow && window.Webflow.require)
+  ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
+  : null;
+```
+
+### Emit Both Webflow and Window Events
+```javascript
+function emitWebflowEvent(name) {
+  // Try Webflow IX
+  try {
+    if (wfIx && typeof wfIx.emit === 'function') {
+      wfIx.emit(name);
+    }
+  } catch(err) {
+    console.warn(`[MODULE] Cannot emit "${name}"`, err);
+  }
+  
+  // Always emit window event
+  window.dispatchEvent(new CustomEvent(name));
+}
+```
+
+### CSS for Function Only
+Keep visual design in Webflow. JavaScript handles behavior, CSS handles functional states.
+
+## Accessibility Requirements
+
+### Always Set ARIA
+Interactive elements need ARIA attributes:
+- `role`, `aria-expanded`, `aria-hidden`, `aria-modal`, `aria-controls`
+
+### Keyboard Support Required
+- Enter/Space for activation
+- Escape for closing
+- Tab for navigation
+- Focus trapping in modals
+
+### Respect prefers-reduced-motion
+```javascript
+const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (prefersReduced) {
+  // Skip or reduce animations
+}
+```
+
+## Error Handling
+
+### Log Don't Throw
+```javascript
+try {
+  riskyOperation();
+} catch(err) {
+  console.error('[MODULE] Operation failed:', err);
+  // Continue execution
+}
+```
+
+### Graceful Degradation
+Missing elements should not break the site. Features should no-op gracefully.
+
+## Module Patterns
+
+### Single Responsibility
+Each module does ONE thing well. No kitchen sink modules.
+
+### Event-Driven Communication
+Modules communicate via CustomEvents, not direct calls:
+```javascript
+// Emit
+emit('MODULE_EVENT', element, { data });
+
+// Listen
+window.addEventListener('MODULE_EVENT', handler);
+```
+
+### Expose Minimal API
+Only expose what's necessary via window.App:
+```javascript
+window.App = window.App || {};
+window.App.moduleName = {
+  cleanup,
+  // Only essential methods
+};
+```
+
+## Project-Specific Patterns
+
+### Scroll Lock Pattern
+Use position:fixed approach for iOS compatibility:
+```javascript
+// Lock
+document.body.style.position = 'fixed';
+document.body.style.top = `-${savedY}px`;
+
+// Unlock and restore
+document.body.style.position = '';
+window.scrollTo(0, savedY);
+```
+
+### Animation Coordination
+GSAP animations via Webflow IX events. Timing coordination with delays.
+
+## Common Selectors
+
+```javascript
+// Accordion
+'.accordeon'        // Root
+'.acc-item'         // Items  
+'.acc-trigger'      // Triggers
+'.acc-list'         // Panels
+
+// Lightbox
+'#lightbox'         // Container
+'.lightbox__inner'  // Inner
+'.video-area'       // Video container
+```
+
+## Testing Requirements
+
+When implementing features:
+1. Check all elements exist (log with ✓)
+2. Verify event listeners attached
+3. Test keyboard navigation
+4. Check mobile/touch behavior
+5. Verify ARIA attributes
+6. Test with prefers-reduced-motion
+7. Check console for errors
+
+## DO NOT (PERFORMANCE KILLERS & BAD PRACTICES)
+
+### DOM & Rendering Anti-patterns
+- Use display:none for GSAP animations (use visibility/opacity)
+- Query DOM in loops or during animations
+- Trigger synchronous layouts (reading offsetWidth then immediately writing)
+- Animate layout properties (width, height, padding) - use transform instead
+- **Use inline styles for animations or transforms** - causes conflicts with Webflow/CSS, breaks separation of concerns
+  - Especially avoid mixing position and scale in inline transforms: `element.style.transform = translate() scale()`
+  - Instead use CSS classes for states and CSS custom properties for dynamic values
+- Create/destroy elements repeatedly - reuse or hide instead
+
+### JavaScript Anti-patterns
+- Use `new Object()` or `new Array()` - use literals `{}` and `[]`
+- Reassign function parameters - create new variables
+- Use Function constructor or eval() - security risk
+- Break strings across lines with \ or + concatenation
+- Use var - always use const/let with block scope
+- Create functions in loops without careful scope management
+
+### Event & Animation Anti-patterns
+- Forget to throttle/debounce high-frequency events
+- Use setTimeout/setInterval for animations - use RAF
+- Add non-passive listeners for scroll/touch events
+- Bind event handlers in render methods (creates new functions)
+- Leave event listeners attached to removed elements
+
+### Code Organization Anti-patterns
+- Throw errors in production (log and gracefully degrade)
+- Skip accessibility attributes and keyboard support
+- Use default exports (use named exports for clarity)
+- Mix visual design with functional code
+- Create files unless absolutely necessary
+- Create documentation unless explicitly requested
+- Nest code deeply (early returns, guard clauses)
+- Write comments that explain WHAT instead of WHY
+
+## Remember (CORE PRINCIPLES)
+
+### Performance is User Experience
+- First paint < 1s, Interactive < 3s, Complete < 5s
+- Minimize main thread work - offload to workers when possible
+- Batch DOM operations - read all, then write all
+- Use CSS containment and content-visibility for long lists
+- Profile don't guess - use Performance DevTools
+
+### Modern JavaScript Best Practices
+```javascript
+// Use optional chaining and nullish coalescing
+const value = data?.deeply?.nested?.value ?? 'default';
+
+// Prefer array methods over loops
+const doubled = numbers.map(n => n * 2);
+const filtered = items.filter(Boolean);
+const sum = values.reduce((a, b) => a + b, 0);
+
+// Destructure for cleaner code
+const { x, y, ...rest } = position;
+const [first, second] = array;
+
+// Use template literals for complex strings
+const message = `[${MODULE}] ✓ Found ${count} items`;
+```
+
+### Code Quality Checklist
+- ✓ Comments explain WHY, not WHAT
+- ✓ Early returns for guard clauses
+- ✓ Console logs prefixed with [MODULE-NAME]
+- ✓ Options use destructuring with defaults
+- ✓ Events are kebab-case
+- ✓ Functions are verb-based
+- ✓ CSS is functional only (Webflow handles design)
+- ✓ Accessibility is not optional (ARIA, keyboard, focus)
+- ✓ Performance monitored (RAF, throttle, passive listeners)
+- ✓ Memory leaks prevented (cleanup listeners, kill animations)
+- ✓ Errors logged not thrown (graceful degradation)

@@ -8,6 +8,7 @@
  */
 
 import { build, context } from 'esbuild';
+import { copyFileSync, mkdirSync, watchFile } from 'fs';
 
 const isDev = process.argv.includes('--dev');
 
@@ -19,15 +20,45 @@ const shared = {
   target: ['es2019'],
   minify: !isDev,
   sourcemap: isDev ? 'inline' : false,
+  loader: {
+    '.json': 'json'  // Enable JSON imports
+  }
 };
 
+function copyCSS(){
+  const cssSource = 'style.css';
+  const cssDest = 'dist/style.css';
+  try {
+    mkdirSync('dist', { recursive: true });
+    copyFileSync(cssSource, cssDest);
+    console.log(`✓ Copied ${cssSource} → ${cssDest}`);
+  } catch (err) {
+    console.warn(`[build] Could not copy CSS: ${err.message}`);
+  }
+}
+
+// JSON is now bundled into app.js, no need to copy separately
+// function copyJSON() removed - data is imported directly in lightbox.js
+
 async function run(){
+  // Copy CSS file to dist (JSON is bundled into app.js)
+  copyCSS();
+  
   if (isDev) {
+    // Watch CSS file and copy on changes
+    watchFile('style.css', { interval: 500 }, () => {
+      copyCSS();
+    });
+    
+    // JSON changes will trigger esbuild rebuild automatically
+    
     const ctx = await context(shared);
     await ctx.watch();
     const host = process.env.HOST || '127.0.0.1';
     const basePort = Number(process.env.PORT) || 3000;
-    await startServer(ctx, host, basePort);
+    const info = await startServer(ctx, host, basePort);
+    console.log(`CSS available at http://${host}:${info.port}/style.css`);
+    return;
   } else {
     await build(shared);
   }

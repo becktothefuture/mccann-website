@@ -1,15 +1,19 @@
 /**
  * ==================================================
- *  McCann Website — Direct GSAP Accordion Animations
- *  Purpose: Provide direct, callable GSAP animation functions
- *  Date: 2025-11-04
+ *  McCann Website — Accordion GSAP Animations
+ *  Purpose: Direct GSAP control for accordion reveal animations
+ *  Date: 2025-11-06
  * ==================================================
  */
 
 let gsap;
 
+// ============================================================
+// GSAP DISCOVERY
+// ============================================================
+
 function findGSAP() {
-  if (gsap) return gsap; // Return cached GSAP
+  if (gsap) return gsap;
 
   let attempts = 0;
   const find = () => {
@@ -27,9 +31,11 @@ function findGSAP() {
   find();
 }
 
-// Find GSAP as soon as the module loads
 findGSAP();
 
+// ============================================================
+// ANIMATION FUNCTIONS
+// ============================================================
 
 export function gsapOpenAnimation() {
   if (!gsap) {
@@ -43,13 +49,18 @@ export function gsapOpenAnimation() {
   
   gsap.killTweensOf && gsap.killTweensOf(targets);
   
-  gsap.set(targets, { opacity: 0, y: 30, scale: 0.98 });
+  gsap.set(targets, { opacity: 0, y: -6 });
   
   gsap.to(targets, {
     opacity: 1,
+    duration: 0.01,
+    stagger: 0.08,
+    ease: "none"
+  });
+  
+  gsap.to(targets, {
     y: 0,
-    scale: 1,
-    duration: 0.4,
+    duration: 0.3,
     stagger: 0.08,
     ease: "power2.out",
     onComplete: () => {
@@ -73,30 +84,41 @@ export function gsapCloseAnimation() {
   
   gsap.to(targets, {
     opacity: 0,
-    y: -20,
-    scale: 0.98,
-    duration: 0.25,
+    duration: 0.01,
     stagger: {
-      each: 0.04,
+      each: 0.05,
       from: "end"
     },
-    ease: "power2.out",
+    ease: "none"
+  });
+  
+  gsap.to(targets, {
+    y: -6,
+    duration: 0.2,
+    stagger: {
+      each: 0.05,
+      from: "end"
+    },
+    ease: "power2.in",
     onComplete: () => {
       console.log('[DIRECT-GSAP] ✅ Close animation complete');
     }
   });
 }
 
-// Expose test functions
+// ============================================================
+// DEBUG API
+// ============================================================
+
 window.directGSAPTest = {
   testOpen: () => {
     console.log('[DIRECT-GSAP] Manual test: OPEN');
-    document.querySelectorAll('.acc-item').forEach(el => el.classList.add('acc-animate-target'));
+    document.querySelectorAll('.acc-item').forEach(el => el.classList?.add('acc-animate-target'));
     gsapOpenAnimation();
   },
   testClose: () => {
     console.log('[DIRECT-GSAP] Manual test: CLOSE');
-    document.querySelectorAll('.acc-item').forEach(el => el.classList.add('acc-animate-target'));
+    document.querySelectorAll('.acc-item').forEach(el => el.classList?.add('acc-animate-target'));
     gsapCloseAnimation();
   },
   checkGSAP: () => {
