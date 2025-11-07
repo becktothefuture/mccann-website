@@ -2,7 +2,7 @@
 
 ## Overview
 
-The preloader prefetches all autoplay videos before the site content is displayed, showing the TruthWellTold signet with a subtle animation during loading. This ensures smooth video playback from the moment users see the page.
+The preloader prefetches all autoplay videos before the site content is displayed, showing the TruthWellTold signet with a subtle animation during loading. This ensures smooth video playback from the moment users see the page. **Additionally, the preloader includes a resize cover feature** that automatically appears during browser window resizing to prevent visual jank and maintain a polished user experience.
 
 ---
 
@@ -62,8 +62,9 @@ Add this HTML Embed element **at the very beginning of your `<body>`** (before a
 **Important Notes:**
 - The `#preloader` ID is CRITICAL - JavaScript finds the element by this ID
 - The `.preloader__signet` class is where animation is applied
-- The `.preloader__progress` class shows loading percentage (optional)
+- The `.preloader__progress` class shows loading percentage (hidden by default, can be enabled via CSS)
 - SVG uses `fill="currentColor"` to inherit text color for easy theming
+- **Resize Cover**: The same preloader element is automatically used as a resize cover (no additional setup needed)
 
 ---
 
@@ -143,14 +144,17 @@ Body class removed: .preloader-active (scroll unlocked)
 ### Animation Options
 
 **Pulse Animation (Default)**
-- Subtle scale oscillation (0.98 to 1.02)
-- 2-second cycle using sine wave
-- Smooth, organic feel
+- Subtle opacity oscillation (0.8 to 1.0)
+- Configurable cycle duration (default: 3 seconds)
+- Smooth, organic feel using sine wave
 
-**Micro-Jitter Animation**
-- High-frequency random movement within 1x1px area
-- Creates unique perceptual vibration effect
-- Enable via: `window.App.init({ preloader: { useJitter: true } })`
+**Resize Cover Feature**
+- Automatically shows preloader during browser window resize
+- Instant fade-in when resizing starts (no delay)
+- Smooth fade-out when resizing stops (150ms default)
+- Configurable delay before showing again (800ms default) to prevent flickering
+- Logo stays centered during resize
+- Respects `prefers-reduced-motion` (instant show/hide if enabled)
 
 ### Accessibility Features
 
@@ -206,10 +210,16 @@ window.App.init({
     videoSelector: 'video[autoplay], video[data-autoplay]',     // Videos to prefetch
     
     // Animation
-    useJitter: false,                                           // Use micro-jitter instead of pulse
+    pulseDuration: 3000,                                         // Pulse cycle duration (ms)
+    pulseOpacity: 0.2,                                           // Pulse opacity range (0-1)
     
     // Timing
-    minLoadTime: 1000                                           // Minimum display time (ms)
+    minLoadTime: 1000,                                          // Minimum display time (ms)
+    
+    // Resize Cover
+    enableResizeCover: true,                                    // Enable resize cover (default: true)
+    resizeFadeDuration: 150,                                    // Fade-out duration (ms, default: 150)
+    resizeShowDelay: 800                                         // Delay before showing again (ms, default: 800)
   }
 });
 ```
@@ -233,6 +243,7 @@ window.App.init({
 **Progress Text Style:**
 ```css
 .preloader__progress {
+  display: block; /* Show progress (hidden by default) */
   font-size: 1rem;
   color: #333333;
   font-weight: 400;
@@ -286,8 +297,9 @@ window.App.init({
 
 **Check:**
 1. Is `.preloader__progress` element present?
-2. Check console for `[PRELOADER] ✓ Video X can play` messages
-3. Videos might be loading too fast to see updates (good problem!)
+2. Progress is hidden by default - enable via CSS: `.preloader__progress { display: block; }`
+3. Check console for `[PRELOADER] ✓ Video X can play` messages
+4. Videos might be loading too fast to see updates (good problem!)
 
 ---
 
@@ -332,6 +344,53 @@ Both pulse and jitter animations use `requestAnimationFrame()` for 60fps smoothn
 ⚠️ **Older Browsers**
 - Preloader still works but may not animate
 - Graceful degradation ensures site loads successfully
+
+## Resize Cover Feature
+
+The preloader includes an automatic resize cover that prevents visual jank during browser window resizing. This feature uses the same preloader element and requires no additional setup.
+
+### How It Works
+
+When the browser window is resized:
+1. **Resize starts** → Preloader cover appears instantly (no fade-in delay)
+2. **During resize** → Cover stays visible, logo remains centered
+3. **Resize stops** → Cover fades out smoothly (150ms default)
+4. **Quick re-resize** → If resizing starts again within 800ms, waits before showing again to prevent flickering
+
+### Configuration
+
+The resize cover is enabled by default. To customize:
+
+```javascript
+window.App.init({
+  preloader: {
+    enableResizeCover: true,      // Enable/disable resize cover (default: true)
+    resizeFadeDuration: 150,      // Fade-out duration in ms (default: 150)
+    resizeShowDelay: 800          // Delay before showing again in ms (default: 800)
+  }
+});
+```
+
+### Behavior Details
+
+- **Instant appearance**: Cover appears immediately when resizing starts (no transition delay)
+- **Smooth fade-out**: Fades out smoothly when resizing stops (configurable duration)
+- **Smart delay**: Prevents flickering by delaying re-appearance if resize restarts quickly
+- **Logo centering**: Logo stays perfectly centered during resize
+- **Accessibility**: Respects `prefers-reduced-motion` (instant show/hide if enabled)
+- **Performance**: Uses passive event listeners and requestAnimationFrame for smooth operation
+
+### Disabling Resize Cover
+
+To disable the resize cover feature:
+
+```javascript
+window.App.init({
+  preloader: {
+    enableResizeCover: false
+  }
+});
+```
 
 ---
 

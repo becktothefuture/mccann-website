@@ -26,7 +26,7 @@
 
 ## Features
 
-- **Preloader** — Prefetches autoplay videos (HTML5 + Vimeo) with progress tracking
+- **Preloader** — Prefetches autoplay videos (HTML5 + Vimeo) with progress tracking, includes resize cover to prevent visual jank during window resizing
 - **Accordion** — Two-level nested accordion with full ARIA support and smooth transitions
 - **Lightbox** — Focus-trapped modal with Vimeo mounting and scroll lock
 - **Smooth Scroll** — Weighted momentum scrolling via Lenis with GSAP integration
@@ -200,7 +200,7 @@ For detailed setup instructions including markup requirements and troubleshootin
 **Selector**: `#preloader`  
 **Video Selector**: `video[data-wf-ignore], video[autoplay], video[data-autoplay]`
 
-Prefetches all autoplay videos (HTML5 + Vimeo) before showing page content. Displays TruthWellTold signet with configurable pulse animation. Real-time progress tracking, intelligent retry logic, graceful timeout fallbacks. Emits `PRELOADER_COMPLETE` when done.
+Prefetches all autoplay videos (HTML5 + Vimeo) before showing page content. Displays TruthWellTold signet with configurable pulse animation. Real-time progress tracking, intelligent retry logic, graceful timeout fallbacks. **Resize Cover**: Automatically shows preloader during browser window resize to prevent visual jank, with instant fade-in and smooth fade-out. Emits `PRELOADER_COMPLETE` when done.
 
 **Configuration**:
 - `minLoadTime` (ms): Minimum display time (default: 1000)
@@ -208,6 +208,9 @@ Prefetches all autoplay videos (HTML5 + Vimeo) before showing page content. Disp
 - `pulseOpacity` (0–1): Pulse depth (default: 0.2)
 - `vimeoPreload`: Strategy for Vimeo (`'none'`, `'metadata'`, `'prefetch'`)
 - `vimeoBufferLimit`: Buffer seconds for Vimeo (default: 5)
+- `enableResizeCover` (boolean): Show preloader during resize (default: true)
+- `resizeFadeDuration` (ms): Fade-out duration during resize (default: 150)
+- `resizeShowDelay` (ms): Delay before showing cover again after hiding (default: 800)
 
 **Events**: `PRELOADER_COMPLETE` (bubbles to window)
 
@@ -332,15 +335,18 @@ window.App && window.App.init({
   lerp: 0.1,                              // Smooth scroll weight (default: 0.1)
   snapLerp: 0.15,                         // Smooth scroll weight for snap pages (default: 0.15)
   smoothScroll: {},                       // Additional Lenis options
-  preloader: {                            // Preloader configuration
-    selector: '#preloader',
-    videoSelector: 'video[autoplay], video[data-autoplay]',
-    minLoadTime: 1000,
-    pulseDuration: 3000,
-    pulseOpacity: 0.2,
-    vimeoPreload: 'prefetch',
-    vimeoBufferLimit: 5
-  }
+    preloader: {                            // Preloader configuration
+      selector: '#preloader',
+      videoSelector: 'video[autoplay], video[data-autoplay]',
+      minLoadTime: 1000,
+      pulseDuration: 3000,
+      pulseOpacity: 0.2,
+      vimeoPreload: 'prefetch',
+      vimeoBufferLimit: 5,
+      enableResizeCover: true,              // Show cover during resize (default: true)
+      resizeFadeDuration: 150,              // Fade-out duration (ms, default: 150)
+      resizeShowDelay: 800                  // Delay before showing again (ms, default: 800)
+    }
 });
 ```
 

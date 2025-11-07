@@ -161,6 +161,21 @@ body.modal-open { overflow: hidden; }
   opacity: 0;
 }
 
+/* Resize cover states - instant fade-in, smooth fade-out */
+#preloader.is-resizing {
+  opacity: 0;
+  visibility: visible;
+  /* Transition handled dynamically via inline styles for fade-out */
+  transition: none;
+}
+
+#preloader.is-resizing.is-resize-visible {
+  opacity: 1;
+  visibility: visible;
+  /* Instant appearance - no transition */
+  transition: none;
+}
+
 /* Lock body scroll while preloader active */
 body.preloader-active {
   overflow: hidden;
@@ -199,6 +214,7 @@ body.preloader-active {
 
 /* Progress indicator */
 .preloader__progress {
+  display: none; /* Hidden - loading text removed */
   font-size: 0.875rem; /* 14px */
   font-weight: 300;
   color: #7A8A91;
@@ -210,6 +226,11 @@ body.preloader-active {
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   #preloader {
+    transition: none;
+  }
+  
+  #preloader.is-resizing,
+  #preloader.is-resizing.is-resize-visible {
     transition: none;
   }
   

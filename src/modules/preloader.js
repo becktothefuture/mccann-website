@@ -20,6 +20,12 @@ let progressEl = null;
 let logEl = null;
 let animationFrameId = null;
 let showDebugLog = true; // Toggle to show/hide real-time log
+let resizeTimeoutId = null;
+let isResizing = false;
+let resizeFadeDuration = 150; // Fast fade by default (ms)
+let resizeShowDelayTimeoutId = null;
+let lastResizeCoverHideTime = 0;
+let resizeShowDelay = 800; // Delay before showing again (ms)
 
 // ============================================================
 // INITIALIZATION
@@ -39,6 +45,9 @@ let showDebugLog = true; // Toggle to show/hide real-time log
  * @param {boolean} options.showDebugLog - Show real-time debug log (default: true)
  * @param {number} options.pulseDuration - Pulse cycle duration in ms (default: 3000)
  * @param {number} options.pulseOpacity - Opacity range: 0.8 to 1.0
+ * @param {boolean} options.enableResizeCover - Show preloader during resize (default: true)
+ * @param {number} options.resizeFadeDuration - Fade in/out duration during resize (ms, default: 150)
+ * @param {number} options.resizeShowDelay - Delay before showing cover again after hiding (ms, default: 800)
  */
 export function initPreloader({
   selector = '#preloader',
@@ -49,10 +58,15 @@ export function initPreloader({
   minLoadTime = 1000,
   showDebugLog: debugLogOption = true,
   pulseDuration = 3000,
-  pulseOpacity = 0.2
+  pulseOpacity = 0.2,
+  enableResizeCover = true,
+  resizeFadeDuration: fadeDuration = 150,
+  resizeShowDelay: showDelay = 800
 } = {}) {
 
   showDebugLog = debugLogOption;
+  resizeFadeDuration = fadeDuration;
+  resizeShowDelay = showDelay;
   
   log('Initializing preloader...');
 
@@ -71,6 +85,11 @@ export function initPreloader({
   preloaderEl.style.display = 'flex';
   preloaderEl.style.position = 'fixed';
   preloaderEl.style.zIndex = '999999';
+  
+  // Initialize resize cover if enabled
+  if (enableResizeCover) {
+    initResizeCover();
+  }
 
   signetEl = preloaderEl.querySelector('.preloader__signet');
   progressEl = preloaderEl.querySelector('.preloader__progress');
@@ -538,6 +557,183 @@ function stopAnimations() {
 }
 
 // ============================================================
+// RESIZE COVER
+// ============================================================
+
+/**
+ * Initialize resize cover functionality
+ * Shows preloader during browser resize to prevent visual jank
+ */
+function initResizeCover() {
+  if (!preloaderEl) return;
+  
+  let isResizingActive = false;
+  
+  function handleResizeStart() {
+    if (isResizingActive) return; // Already showing
+    
+    isResizingActive = true;
+    isResizing = true;
+    
+    // Check if we're within the delay window since last hide
+    const timeSinceLastHide = performance.now() - lastResizeCoverHideTime;
+    const shouldDelay = timeSinceLastHide < resizeShowDelay;
+    
+    if (shouldDelay) {
+      // Clear any existing delay timeout
+      if (resizeShowDelayTimeoutId) {
+        clearTimeout(resizeShowDelayTimeoutId);
+      }
+      
+      // Wait for the remaining delay time before showing
+      const remainingDelay = resizeShowDelay - timeSinceLastHide;
+      resizeShowDelayTimeoutId = setTimeout(() => {
+        // Only show if still resizing (user hasn't stopped)
+        if (isResizing && isResizingActive) {
+          showResizeCover();
+        } else {
+          // User stopped resizing during delay, cancel
+          isResizingActive = false;
+          isResizing = false;
+        }
+      }, remainingDelay);
+    } else {
+      // Show immediately if enough time has passed
+      showResizeCover();
+    }
+  }
+  
+  function handleResizeEnd() {
+    if (!isResizingActive) return; // Already hidden
+    
+    // Cancel any pending delay timeout
+    if (resizeShowDelayTimeoutId) {
+      clearTimeout(resizeShowDelayTimeoutId);
+      resizeShowDelayTimeoutId = null;
+    }
+    
+    isResizingActive = false;
+    isResizing = false;
+    
+    // Hide preloader with fade out
+    hideResizeCover();
+  }
+  
+  // Throttled resize handler using RAF
+  function handleResize() {
+    handleResizeStart();
+    
+    // Clear existing timeout
+    if (resizeTimeoutId) {
+      clearTimeout(resizeTimeoutId);
+    }
+    
+    // Debounce end detection
+    resizeTimeoutId = setTimeout(() => {
+      handleResizeEnd();
+    }, 100); // Small delay to detect resize end
+  }
+  
+  // Use passive listener for performance
+  window.addEventListener('resize', handleResize, { passive: true });
+  
+  log(`✓ Resize cover enabled (fade: ${resizeFadeDuration}ms, show delay: ${resizeShowDelay}ms)`, 'success');
+}
+
+/**
+ * Show preloader cover during resize
+ * Appears instantly (no fade-in) and stays visible
+ */
+function showResizeCover() {
+  if (!preloaderEl) return;
+  
+  // Check for prefers-reduced-motion
+  const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  
+  if (prefersReduced) {
+    // Instant show for reduced motion
+    preloaderEl.style.display = 'flex';
+    preloaderEl.classList.add('is-resizing');
+    return;
+  }
+  
+  // Set CSS custom property for fade duration (only for fade-out)
+  preloaderEl.style.setProperty('--resize-fade-duration', `${resizeFadeDuration}ms`);
+  
+  // Ensure preloader is visible and on top
+  preloaderEl.style.display = 'flex';
+  preloaderEl.style.position = 'fixed';
+  preloaderEl.style.zIndex = '999999';
+  
+  // Remove any reveal class that might be hiding it
+  preloaderEl.classList.remove('is-revealing');
+  
+  // Add resize state classes and make visible instantly (no transition delay)
+  preloaderEl.classList.add('is-resizing', 'is-resize-visible');
+  
+  // Force instant opacity (bypass transition for fade-in)
+  // Use inline style to override any transition
+  preloaderEl.style.opacity = '1';
+  preloaderEl.style.visibility = 'visible';
+  preloaderEl.style.transition = 'none';
+}
+
+/**
+ * Hide preloader cover after resize ends
+ * Fades out quickly
+ */
+function hideResizeCover() {
+  if (!preloaderEl) return;
+  
+  // Check if initial preloader is still active
+  const isInitialPreload = document.body.classList.contains('preloader-active') && 
+                          !preloaderEl.classList.contains('is-revealing');
+  
+  // Check for prefers-reduced-motion
+  const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  
+  if (prefersReduced) {
+    // Instant hide for reduced motion
+    preloaderEl.classList.remove('is-resizing', 'is-resize-visible');
+    // Only hide if not in initial preload state
+    if (!isInitialPreload) {
+      preloaderEl.style.display = 'none';
+    }
+    return;
+  }
+  
+  // Remove visible class to trigger fade out
+  preloaderEl.classList.remove('is-resize-visible');
+  
+  // Set transition for smooth fade-out and trigger it
+  preloaderEl.style.transition = `opacity ${resizeFadeDuration}ms cubic-bezier(0.4, 0, 0.2, 1), visibility ${resizeFadeDuration}ms step-end`;
+  
+  // Trigger fade-out by setting opacity to 0
+  requestAnimationFrame(() => {
+    if (preloaderEl) {
+      preloaderEl.style.opacity = '0';
+    }
+  });
+  
+  // Remove resize state after fade completes
+  setTimeout(() => {
+    if (preloaderEl && !isResizing) {
+      preloaderEl.classList.remove('is-resizing');
+      // Clean up inline styles
+      preloaderEl.style.opacity = '';
+      preloaderEl.style.visibility = '';
+      preloaderEl.style.transition = '';
+      // Only hide if not in initial preload state
+      if (!isInitialPreload) {
+        preloaderEl.style.display = 'none';
+      }
+      // Track when cover was hidden for delay calculation
+      lastResizeCoverHideTime = performance.now();
+    }
+  }, resizeFadeDuration);
+}
+
+// ============================================================
 // CLEANUP & API
 // ============================================================
 
@@ -546,10 +742,24 @@ function stopAnimations() {
  */
 export function cleanupPreloader() {
   stopAnimations();
+  
+  // Cleanup resize handlers
+  if (resizeTimeoutId) {
+    clearTimeout(resizeTimeoutId);
+    resizeTimeoutId = null;
+  }
+  
+  if (resizeShowDelayTimeoutId) {
+    clearTimeout(resizeShowDelayTimeoutId);
+    resizeShowDelayTimeoutId = null;
+  }
+  
   preloaderEl = null;
   signetEl = null;
   progressEl = null;
   logEl = null;
+  isResizing = false;
+  lastResizeCoverHideTime = 0;
   log('Cleaned up', 'info');
 }
 
