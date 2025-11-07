@@ -1,20 +1,43 @@
-/**
- * ==================================================
- *  McCann Website — Webflow Integration Bundle
- *  Built by: MRM UK for McCann
- *  Date: 2025-11-06
- * ==================================================
- */
+# McCann Website — Webflow Integration Bundle
 
-## What This Is
-
-A single-bundle JavaScript integration for Webflow sites. Provides accessibility-first UI behaviors—accordion, lightbox with Vimeo, video preloading with animated signet—plus weighted smooth scrolling (Lenis) and scroll-triggered logo animations. Built for McCann's brand site.
+> A single-bundle JavaScript integration for Webflow sites. Provides accessibility-first UI behaviors—accordion, lightbox with Vimeo, video preloading with animated signet—plus weighted smooth scrolling (Lenis) and scroll-triggered logo animations. Built for McCann's brand site.
 
 **Core principle**: JavaScript handles behavior and function. Webflow handles visual design and layout. Clean separation, minimal global footprint, graceful degradation when elements are missing.
 
 ---
 
-## The Stack
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Webflow Integration](#webflow-integration)
+- [Modules](#modules)
+- [API Reference](#api-reference)
+- [Event System](#event-system)
+- [Troubleshooting](#troubleshooting)
+- [Performance](#performance)
+- [Accessibility](#accessibility)
+- [Browser Support](#browser-support)
+- [Development](#development)
+- [License](#license)
+
+---
+
+## Features
+
+- **Preloader** — Prefetches autoplay videos (HTML5 + Vimeo) with progress tracking
+- **Accordion** — Two-level nested accordion with full ARIA support and smooth transitions
+- **Lightbox** — Focus-trapped modal with Vimeo mounting and scroll lock
+- **Smooth Scroll** — Weighted momentum scrolling via Lenis with GSAP integration
+- **Logo Animations** — Scroll-triggered logo animations via Webflow IX
+- **Accessibility First** — Full ARIA, keyboard support, focus management, `prefers-reduced-motion`
+- **Privacy Conscious** — No analytics, no storage, Vimeo DNT enabled
+- **Performance Optimized** — Throttled events, batched DOM operations, lazy initialization
+
+---
+
+## Tech Stack
 
 - **Vanilla JavaScript** (ES modules → single IIFE bundle via esbuild)
 - **GSAP** (via Webflow IX; no direct dependency)
@@ -23,92 +46,36 @@ A single-bundle JavaScript integration for Webflow sites. Provides accessibility
 
 ---
 
-## Architecture Decisions
-
-### Single IIFE Bundle
-Webflow doesn't provide ESM or a module loader. An IIFE bundle (`format: 'iife'`) means one `<script>` tag works everywhere without polluting globals beyond a single `window.App` namespace.
-
-### Minimal Global API
-`window.App` exposes only what's necessary: `init()` for manual configuration, `smoothScroll` API for external control. Everything else is encapsulated.
-
-### Progressive Enhancement
-Modules check for required DOM elements on init. Missing elements → no-op, no error. Pages work across templates and CMS variations without brittle dependencies.
-
-### Accessibility First
-- ARIA roles, states, relationships on all interactive elements
-- Keyboard support (Enter/Space/Escape/Tab/Arrow keys)
-- Focus trapping in modals with inert fallbacks
-- `prefers-reduced-motion` respected throughout
-
-### Privacy Conscious
-- Vimeo embeds: `dnt=1` (Do Not Track)
-- No analytics, no telemetry, no storage
-- YouTube `allow` tokens normalized to minimum necessary
-
-### Performance Obsessed
-- Throttled high-frequency events via `requestAnimationFrame`
-- Passive listeners for scroll/touch
-- DOM reads batched before writes (no layout thrash)
-- `ResizeObserver` for smooth panel transitions
-- CSS transforms/opacity (GPU-accelerated) over layout properties
-- Lazy initialization — modules only run when their elements exist
-
----
-
-## What's Included
-
-### Modules
-
-**Preloader** (`src/modules/preloader.js`)  
-Prefetches all autoplay videos (HTML5 + Vimeo) before showing page content. Displays TruthWellTold signet with configurable pulse animation. Real-time progress tracking, intelligent retry logic, graceful timeout fallbacks. Emits `PRELOADER_COMPLETE` when done. See `docs/PRELOADER_WEBFLOW_SETUP.md` for setup.
-
-**Accordion** (`src/modules/accordion.js`)  
-Two-level nested accordion with full ARIA implementation, keyboard navigation, smooth height transitions via `max-height`, sibling auto-close behavior. Uses `ResizeObserver` to adapt to dynamic content. Emits `acc-open`/`acc-close` events for GSAP coordination via Webflow IX. See `docs/ACCORDION_WEBFLOW_SETUP.md`.
-
-**Lightbox** (`src/modules/lightbox.js`)  
-Modal overlay with focus trap, scroll lock (iOS-safe), outside-click and Escape to close, Vimeo video mounting. Coordinates with Webflow IX via `lb:open`/`lb:close` events for GSAP animations. Respects `prefers-reduced-motion`. See `docs/LIGHTBOX_WEBFLOW_SETUP.md`.
-
-**Smooth Scroll** (`src/modules/smooth-scroll.js`)  
-Weighted momentum scrolling via Lenis. Auto-detects pages with scroll-snap containers (`.perspective-wrapper`) and disables itself to preserve native snap behavior. Configurable `lerp` (0.05–0.2; lower = heavier). Syncs with GSAP ScrollTrigger. Pauses during lightbox interaction.
-
-**Webflow ScrollTrigger Bridge** (`src/modules/webflow-scrolltrigger.js`)  
-Wires GSAP ScrollTrigger to `.perspective-wrapper` for logo animations. Emits `logo-appear` and `logo-hide` events to coordinate logo animations as user scrolls through slides. Works with scroll-snap containers and Lenis smooth scroll.
-
-**Vimeo Helper** (`src/modules/vimeo.js`)  
-Parses Vimeo IDs from bare numerics or common URL formats. Mounts privacy-respecting iframes with `dnt=1`. Accepts additional query params for autoplay, muted, background modes.
-
-### Core Utilities
-
-**Events** (`src/core/events.js`)  
-Tiny `emit(name, target, detail)` helper. Dispatches bubbling `CustomEvent` on target element and also on `window` for easy cross-module listening. No dependencies, no overhead.
-
-**Scroll Lock** (`src/core/scrolllock.js`)  
-iOS-safe scroll lock using fixed-body approach. Captures and restores scroll position precisely. Adds `body.modal-open` class for styling hooks. Optional delay on unlock for animated overlays.
-
----
-
 ## Quick Start
 
-### Install Dependencies
-```bash
-npm install
-```
+### Prerequisites
 
-### Development (watch + local server)
-```bash
-npm run dev
-# → Dev server at http://127.0.0.1:3000/app.js
-# → Auto-rebuilds on file changes
-# → Falls back to ports 3001–3019 if 3000 is busy
-```
+- Node.js 18.x or higher
+- npm or yarn
 
-**Exposing to Webflow Designer**: Use LocalTunnel for HTTPS tunnel (Webflow requires HTTPS):
-```bash
-npx localtunnel --port 3000
-# → Use the printed https://<subdomain>.loca.lt/app.js URL in Webflow
-```
+### Installation
+
+1. Clone the repository
+   ```bash
+   git clone <repository-url>
+   cd mccann-website
+   ```
+
+2. Install dependencies
+   ```bash
+   npm install
+   ```
+
+3. Start development server
+   ```bash
+   npm run dev
+   # → Dev server at http://127.0.0.1:3000/app.js
+   # → Auto-rebuilds on file changes
+   # → Falls back to ports 3001–3019 if 3000 is busy
+   ```
 
 ### Production Build
+
 ```bash
 npm run build
 # → Output: dist/app.js (minified IIFE)
@@ -120,18 +87,24 @@ npm run build
 ## Webflow Integration
 
 ### 1. Add HEAD Preconnects
+
 In **Project Settings → Custom Code → Head**, paste:
+
 ```html
 <link rel="preconnect" href="https://player.vimeo.com">
 <link rel="preconnect" href="https://i.vimeocdn.com">
 ```
+
 This optimizes Vimeo loading by establishing connections early.
 
 ### 2. Add Custom CSS
+
 In **Project Settings → Custom Code → Head**, paste the contents of `docs/webflow-custom-css-snippet.html` (includes `<style>` tags). This CSS includes: text selection prevention, widows/orphans control, accordion transition styles.
 
 ### 3. Load the Bundle
+
 In **Project Settings → Custom Code → Footer** (or page-level Embed), add:
+
 ```html
 <script src="https://your.cdn.example.com/mccann/dist/app.js" defer></script>
 ```
@@ -139,6 +112,7 @@ In **Project Settings → Custom Code → Footer** (or page-level Embed), add:
 **Auto-initialization**: The bundle runs on `DOMContentLoaded`. No further action needed for default behavior.
 
 **Manual configuration** (optional):
+
 ```html
 <script>
   window.App && window.App.init({
@@ -163,53 +137,53 @@ The site uses custom event interactions in Webflow to coordinate GSAP animations
 
 Two custom event interactions handle logo appearance/disappearance:
 
-**`logo-appear`** (forward animation):
-- Event: Custom → `logo-appear`
-- Target: Logo element
-- Animation: Timeline from hidden/small → visible/big
-- Control: **Play from start**
-- Fires when: `#intro-slide` scrolls out of view (scrolling down)
+- **`logo-appear`** (forward animation):
+  - Event: Custom → `logo-appear`
+  - Target: Logo element
+  - Animation: Timeline from hidden/small → visible/big
+  - Control: **Play from start**
+  - Fires when: `#intro-slide` scrolls out of view (scrolling down)
 
-**`logo-hide`** (reverse animation):
-- Event: Custom → `logo-hide`
-- Target: Same logo element
-- Animation: Same timeline as `logo-appear`
-- Control: **Reverse**
-- Fires when: `#intro-slide` scrolls back into view (scrolling up)
+- **`logo-hide`** (reverse animation):
+  - Event: Custom → `logo-hide`
+  - Target: Same logo element
+  - Animation: Same timeline as `logo-appear`
+  - Control: **Reverse**
+  - Fires when: `#intro-slide` scrolls back into view (scrolling up)
 
 **Accordion Animations**
 
 Two custom event interactions on `.accordeon` root handle panel animations:
 
-**`acc-open`** (panel opening):
-- Event: Custom → `acc-open`
-- Target: Class `.acc-item` → Scope: Children
-- Animation: Staggered fade-in + slide-up (opacity 0→100%, y 16px→0)
-- Duration: ~0.20s, Stagger: 0.06–0.08s, Ease: Power2/BackOut
-- Control: **Play from beginning**
-- Condition: Affects only children with `.acc-anim` class (active panel)
+- **`acc-open`** (panel opening):
+  - Event: Custom → `acc-open`
+  - Target: Class `.acc-item` → Scope: Children
+  - Animation: Staggered fade-in + slide-up (opacity 0→100%, y 16px→0)
+  - Duration: ~0.20s, Stagger: 0.06–0.08s, Ease: Power2/BackOut
+  - Control: **Play from beginning**
+  - Condition: Affects only children with `.acc-anim` class (active panel)
 
-**`acc-close`** (panel closing):
-- Event: Custom → `acc-close`
-- Target: Same as above
-- Animation: Same timeline
-- Control: **Reverse**
+- **`acc-close`** (panel closing):
+  - Event: Custom → `acc-close`
+  - Target: Same as above
+  - Animation: Same timeline
+  - Control: **Reverse**
 
 **Lightbox Animations**
 
 Two custom event interactions on `#lightbox` handle modal animations:
 
-**`lb:open`** (lightbox opening):
-- Event: Custom → `lb:open`
-- Target: `#lightbox` or `.lightbox__inner`
-- Animation: Fade in, scale up, or other configured animation
-- Control: **Play from start**
+- **`lb:open`** (lightbox opening):
+  - Event: Custom → `lb:open`
+  - Target: `#lightbox` or `.lightbox__inner`
+  - Animation: Fade in, scale up, or other configured animation
+  - Control: **Play from start**
 
-**`lb:close`** (lightbox closing):
-- Event: Custom → `lb:close`
-- Target: Same
-- Animation: Reverse or configured close animation
-- Control: **Play from start** or **Reverse** (depending on setup)
+- **`lb:close`** (lightbox closing):
+  - Event: Custom → `lb:close`
+  - Target: Same
+  - Animation: Reverse or configured close animation
+  - Control: **Play from start** or **Reverse** (depending on setup)
 
 For detailed setup instructions including markup requirements and troubleshooting, see:
 - `docs/ACCORDION_WEBFLOW_SETUP.md`
@@ -219,13 +193,14 @@ For detailed setup instructions including markup requirements and troubleshootin
 
 ---
 
-## Module Details
+## Modules
 
 ### Preloader
+
 **Selector**: `#preloader`  
 **Video Selector**: `video[data-wf-ignore], video[autoplay], video[data-autoplay]`
 
-**Behavior**: On page load, finds all autoplay videos (HTML5 + Vimeo), prefetches them in parallel with intelligent retry/timeout handling, displays TruthWellTold signet with pulse animation. When all videos are ready (or timeout), fades out preloader and reveals content. Emits `PRELOADER_COMPLETE` event.
+Prefetches all autoplay videos (HTML5 + Vimeo) before showing page content. Displays TruthWellTold signet with configurable pulse animation. Real-time progress tracking, intelligent retry logic, graceful timeout fallbacks. Emits `PRELOADER_COMPLETE` when done.
 
 **Configuration**:
 - `minLoadTime` (ms): Minimum display time (default: 1000)
@@ -242,12 +217,11 @@ For detailed setup instructions including markup requirements and troubleshootin
 - Video load errors → retries with exponential backoff, then proceeds anyway
 - Timeout after 30s → proceeds regardless of video state
 
----
-
 ### Accordion
+
 **Selector**: `.accordeon` (root), `.acc-item`, `.acc-trigger`, `.acc-list` (panel)
 
-**Behavior**: Two-level nested accordion. Click/Enter/Space on trigger toggles panel. Opening a sibling closes others. Smooth height transitions via `max-height` with `ResizeObserver` tracking. Full ARIA roles, keyboard support, focus management.
+Two-level nested accordion with full ARIA implementation, keyboard navigation, smooth height transitions via `max-height`, sibling auto-close behavior. Uses `ResizeObserver` to adapt to dynamic content. Emits `acc-open`/`acc-close` events for GSAP coordination via Webflow IX.
 
 **States**:
 - `aria-expanded="true|false"` on triggers
@@ -265,21 +239,11 @@ For detailed setup instructions including markup requirements and troubleshootin
 - Arrow Up/Down: Navigate between triggers
 - Home/End: First/last trigger
 
-**CSS Requirement** (already in `style.css`):
-```css
-.acc-list {
-  overflow: hidden;
-  transition: max-height 0.28s cubic-bezier(0.25, 0.8, 0.25, 1);
-  will-change: max-height;
-}
-```
-
----
-
 ### Lightbox
+
 **Selector**: `#lightbox` (container), `.lightbox__inner`, `.video-area` (video mount point)
 
-**Behavior**: Opens when `.slide` element is clicked and has `data-video` attribute (Vimeo ID/URL). Focus trap with inert/aria fallbacks. Scroll lock on open (iOS-safe). Close via Escape, outside click, or close button. Emits events for Webflow IX coordination.
+Modal overlay with focus trap, scroll lock (iOS-safe), outside-click and Escape to close, Vimeo video mounting. Coordinates with Webflow IX via `lb:open`/`lb:close` events for GSAP animations. Respects `prefers-reduced-motion`.
 
 **Events**:
 - `lb:open` — emitted to Webflow IX for open animation
@@ -298,29 +262,10 @@ For detailed setup instructions including markup requirements and troubleshootin
 - Focus trap with fallback inert polyfill
 - Scroll lock with position restore
 
-**CSS Requirement** (already in `style.css`):
-```css
-.lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-.lightbox.is-open {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-body.modal-open {
-  overflow: hidden;
-}
-```
-
----
-
 ### Smooth Scroll
+
+Weighted momentum scrolling via Lenis. Auto-detects pages with scroll-snap containers (`.perspective-wrapper`) and disables itself to preserve native snap behavior. Configurable `lerp` (0.05–0.2; lower = heavier). Syncs with GSAP ScrollTrigger. Pauses during lightbox interaction.
+
 **Auto-detection**: Disables on pages with `.perspective-wrapper` (scroll-snap container)
 
 **Why**: Scroll-snap pages scroll inside a specific container, not the window. Window-level smooth scroll would conflict with native snap behavior.
@@ -334,19 +279,13 @@ body.modal-open {
 
 **Lightbox Integration**: Pauses on lightbox open, resumes on close
 
-**API** (exposed via `window.App.smoothScroll`):
-- `.stop()` — Pause smooth scroll
-- `.start()` — Resume smooth scroll
-- `.instance` — Direct Lenis instance access
-
 **When Active**: Only on pages WITHOUT `.perspective-wrapper`. Provides weighted momentum scrolling with configurable physics.
 
----
-
 ### Webflow ScrollTrigger Bridge
+
 **Selectors**: `.perspective-wrapper` (scroller), `#intro-slide` (driver)
 
-**Behavior**: Wires GSAP ScrollTrigger to scroll container. Emits events as user scrolls to coordinate logo animations via Webflow IX. Fully compatible with scroll-snap and Lenis smooth scroll.
+Wires GSAP ScrollTrigger to scroll container. Emits events as user scrolls to coordinate logo animations via Webflow IX. Fully compatible with scroll-snap and Lenis smooth scroll.
 
 **Events**:
 - `logo-appear` — emitted when scrolling down (`#intro-slide` exits viewport)
@@ -360,11 +299,24 @@ body.modal-open {
 
 **How It Works**: When the bottom of `#intro-slide` passes 20% from the top of the viewport, fires `logo-appear`. When scrolling back and it re-enters, fires `logo-hide`.
 
+### Vimeo Helper
+
+Parses Vimeo IDs from bare numerics or common URL formats. Mounts privacy-respecting iframes with `dnt=1`. Accepts additional query params for autoplay, muted, background modes.
+
+### Core Utilities
+
+**Events** (`src/core/events.js`)  
+Tiny `emit(name, target, detail)` helper. Dispatches bubbling `CustomEvent` on target element and also on `window` for easy cross-module listening. No dependencies, no overhead.
+
+**Scroll Lock** (`src/core/scrolllock.js`)  
+iOS-safe scroll lock using fixed-body approach. Captures and restores scroll position precisely. Adds `body.modal-open` class for styling hooks. Optional delay on unlock for animated overlays.
+
 ---
 
-## Public API
+## API Reference
 
 ### Auto-Initialization
+
 On `DOMContentLoaded`, the bundle:
 1. Patches Vimeo iframe allow tokens
 2. Calls `init()` with defaults
@@ -373,6 +325,7 @@ On `DOMContentLoaded`, the bundle:
 No manual action required for default behavior.
 
 ### Manual Initialization
+
 ```js
 window.App && window.App.init({
   lightboxRoot: '#lightbox',              // Lightbox container selector (default: '#lightbox')
@@ -392,6 +345,7 @@ window.App && window.App.init({
 ```
 
 ### Exposed APIs
+
 **`window.App.init(options)`** — Initialize or re-initialize all modules
 
 **`window.App.smoothScroll`** (only on non-snap pages):
@@ -466,7 +420,7 @@ window.addEventListener('PRELOADER_COMPLETE', () => {
 
 ---
 
-## Performance Notes
+## Performance
 
 **Optimization Checklist**:
 - ✓ Throttled scroll/mousemove/resize via `requestAnimationFrame`
@@ -489,7 +443,7 @@ window.addEventListener('PRELOADER_COMPLETE', () => {
 
 ---
 
-## Accessibility Checklist
+## Accessibility
 
 **Required for All Interactive Elements**:
 - ✓ ARIA roles (`role="button"`, `role="dialog"`)
@@ -508,7 +462,63 @@ window.addEventListener('PRELOADER_COMPLETE', () => {
 
 ---
 
-## File Structure
+## Browser Support
+
+**Modern Evergreen Browsers**:
+- Chrome/Edge 90+
+- Firefox 88+
+- Safari 14+
+
+**Required Features**:
+- ES6 modules (bundled to IIFE for Webflow)
+- `ResizeObserver`
+- `CustomEvent`
+- `requestAnimationFrame`
+- GSAP ScrollTrigger (provided by Webflow)
+
+**Polyfills**: None required for target browsers. Older browsers will gracefully degrade (no animations, no smooth scroll, but core content remains accessible).
+
+---
+
+## Development
+
+### Architecture Decisions
+
+**Single IIFE Bundle**  
+Webflow doesn't provide ESM or a module loader. An IIFE bundle (`format: 'iife'`) means one `<script>` tag works everywhere without polluting globals beyond a single `window.App` namespace.
+
+**Minimal Global API**  
+`window.App` exposes only what's necessary: `init()` for manual configuration, `smoothScroll` API for external control. Everything else is encapsulated.
+
+**Progressive Enhancement**  
+Modules check for required DOM elements on init. Missing elements → no-op, no error. Pages work across templates and CMS variations without brittle dependencies.
+
+**Privacy Conscious**  
+- Vimeo embeds: `dnt=1` (Do Not Track)
+- No analytics, no telemetry, no storage
+- YouTube `allow` tokens normalized to minimum necessary
+
+**Performance Obsessed**  
+- Throttled high-frequency events via `requestAnimationFrame`
+- Passive listeners for scroll/touch
+- DOM reads batched before writes (no layout thrash)
+- `ResizeObserver` for smooth panel transitions
+- CSS transforms/opacity (GPU-accelerated) over layout properties
+- Lazy initialization — modules only run when their elements exist
+
+### Coding Style
+
+Swiss-grid box headers, early returns, minimal nesting, emoji-prefixed console logs, verb-based function names, BEM CSS classes, kebab-case events. See `docs/CODING_RULES.md` for full guidelines.
+
+**No Storage**: Code stores nothing locally, makes no remote calls by default. Privacy-first approach.
+
+**Graceful Degradation**: Missing elements → no-op, no error. Features fail silently and don't break the site.
+
+**Event-Driven**: Modules communicate via `CustomEvent`s, not direct calls. Loose coupling, easy testing.
+
+**Single Responsibility**: Each module does one thing well. No kitchen-sink utilities.
+
+### File Structure
 
 ```
 src/
@@ -540,42 +550,24 @@ dist/
 └── app.js                              Built bundle (single IIFE, minified in prod)
 
 style.css                               Module-adjacent CSS (lightbox, accordion)
-webflow-custom-css.css                  Custom CSS for Webflow (text selection, widows)
 esbuild.config.mjs                      Build config (watch/build/serve)
 package.json                            Dependencies and scripts
 ```
 
----
+### Exposing to Webflow Designer
 
-## Development Notes
+Use LocalTunnel for HTTPS tunnel (Webflow requires HTTPS):
 
-**Coding Style**: Swiss-grid box headers, early returns, minimal nesting, emoji-prefixed console logs, verb-based function names, BEM CSS classes, kebab-case events. See `docs/CODING_RULES.md` for full guidelines.
-
-**No Storage**: Code stores nothing locally, makes no remote calls by default. Privacy-first approach.
-
-**Graceful Degradation**: Missing elements → no-op, no error. Features fail silently and don't break the site.
-
-**Event-Driven**: Modules communicate via `CustomEvent`s, not direct calls. Loose coupling, easy testing.
-
-**Single Responsibility**: Each module does one thing well. No kitchen-sink utilities.
+```bash
+npx localtunnel --port 3000
+# → Use the printed https://<subdomain>.loca.lt/app.js URL in Webflow
+```
 
 ---
 
-## Browser Support
+## License
 
-**Modern Evergreen Browsers**:
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 14+
-
-**Required Features**:
-- ES6 modules (bundled to IIFE for Webflow)
-- `ResizeObserver`
-- `CustomEvent`
-- `requestAnimationFrame`
-- GSAP ScrollTrigger (provided by Webflow)
-
-**Polyfills**: None required for target browsers. Older browsers will gracefully degrade (no animations, no smooth scroll, but core content remains accessible).
+ISC
 
 ---
 
@@ -583,8 +575,7 @@ package.json                            Dependencies and scripts
 
 **Built by**: MRM UK for McCann  
 **Date**: November 2025  
-**Tech Stack**: Vanilla JavaScript, Lenis, GSAP (via Webflow)  
-**License**: ISC
+**Tech Stack**: Vanilla JavaScript, Lenis, GSAP (via Webflow)
 
 ---
 

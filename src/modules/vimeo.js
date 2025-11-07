@@ -46,12 +46,92 @@ export function mountVimeo(container, inputId, params = {}){
   iframe.setAttribute('allowfullscreen', '');
   iframe.style.cssText = `
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 50%;
+    left: 50%;
+    /* Sizes are set dynamically to achieve true cover */
     width: 100%;
     height: 100%;
+    transform: translate(-50%, -50%);
     border: 0;
   `;
   container.innerHTML = '';
   container.appendChild(iframe);
+
+  // Ensure container can crop overflow
+  const prevOverflow = container.style.overflow;
+  if (!container.style.position || container.style.position === 'static') {
+    container.style.position = 'relative';
+  }
+  container.style.overflow = 'hidden';
+
+  // Try to use Vimeo Player API to get exact video aspect ratio
+  ensureVimeoApi().then(() => {
+    // eslint-disable-next-line no-undef
+    const player = new (window.Vimeo && window.Vimeo.Player ? window.Vimeo.Player : function(){}) (iframe);
+    if (!player || !player.getVideoWidth) {
+      // Fallback to 16:9 if API not available
+      fitIframeToCover(container, iframe, 16 / 9);
+      return;
+    }
+
+    Promise.all([player.getVideoWidth(), player.getVideoHeight()])
+      .then(([vw, vh]) => {
+        const ratio = vw && vh ? vw / vh : 16 / 9;
+        fitIframeToCover(container, iframe, ratio);
+        // Refit on container resize
+        const ro = new ResizeObserver(() => fitIframeToCover(container, iframe, ratio));
+        ro.observe(container);
+        window.addEventListener('resize', () => fitIframeToCover(container, iframe, ratio), { passive: true });
+      })
+      .catch(() => {
+        fitIframeToCover(container, iframe, 16 / 9);
+      });
+  });
+}
+
+/**
+ * Ensure Vimeo Player API is available (loads script once)
+ */
+function ensureVimeoApi(){
+  if (window.Vimeo && window.Vimeo.Player) return Promise.resolve();
+  return new Promise(resolve => {
+    const existing = document.querySelector('script[src*="player.vimeo.com/api/player.js"]');
+    if (existing) { existing.addEventListener('load', () => resolve()); return; }
+    const s = document.createElement('script');
+    s.src = 'https://player.vimeo.com/api/player.js';
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => resolve(); // Graceful fallback
+    document.head.appendChild(s);
+  });
+}
+
+/**
+ * Size and center the iframe so the video covers the container (like background-size: cover)
+ * @param {HTMLElement} container
+ * @param {HTMLIFrameElement} iframe
+ * @param {number} videoRatio - width/height of the video
+ */
+function fitIframeToCover(container, iframe, videoRatio){
+  const rect = container.getBoundingClientRect();
+  const cw = Math.max(1, rect.width);
+  const ch = Math.max(1, rect.height);
+  const containerRatio = cw / ch;
+
+  let w, h;
+  if (containerRatio > videoRatio) {
+    // Container is wider → match width, grow height
+    w = cw;
+    h = cw / videoRatio;
+  } else {
+    // Container is taller → match height, grow width
+    h = ch;
+    w = ch * videoRatio;
+  }
+
+  iframe.style.width = `${w}px`;
+  iframe.style.height = `${h}px`;
+  iframe.style.top = '50%';
+  iframe.style.left = '50%';
+  iframe.style.transform = 'translate(-50%, -50%)';
 }
