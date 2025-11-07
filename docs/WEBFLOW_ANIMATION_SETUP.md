@@ -147,6 +147,53 @@ After creating both events, you should see:
 
 ---
 
+## Event 3: `load-completed` (Preloader Complete Animation)
+
+### **When to Use:**
+This event fires **100ms before** the preloader disappears, perfect for triggering page entrance animations that should start as the preloader is about to hide.
+
+### **Step-by-Step in Webflow:**
+
+1. **Create New Custom Event Interaction**
+   - Click **"+"** button in Interactions panel
+   - Select **"Custom Event"**
+   - Name: `load-completed` (exact, case-sensitive!)
+
+2. **Set Trigger Options**
+   - Control: **"Play from beginning"**
+   - This ensures animation starts fresh each time
+
+3. **Add Your Entrance Animations**
+   - Select elements you want to animate in
+   - Common examples:
+     - **Hero text:** Fade up from opacity 0 → 100%
+     - **Images:** Scale from 0.9 → 1.0 with opacity
+     - **Navigation:** Slide down from Y: -100px → 0px
+   - Set appropriate durations and delays for staggered effects
+
+4. **Example Timeline:**
+   ```
+   0ms:    Hero heading - Opacity 0→100%, Y: 30px→0px (500ms ease-out)
+   100ms:  Hero subtext - Opacity 0→100%, Y: 20px→0px (400ms ease-out)
+   200ms:  CTA button - Opacity 0→100%, Scale: 0.95→1 (300ms ease-out)
+   0ms:    Navigation - Y: -80px→0px, Opacity 0→100% (600ms ease-out-quart)
+   ```
+
+### **JavaScript Trigger (How it Works):**
+The preloader module automatically emits this event:
+```javascript
+// This happens automatically in preloader.js:
+const wfIx = Webflow.require('ix3');
+wfIx.emit('load-completed');  // Triggers your Webflow animation
+```
+
+### **Timing Coordination:**
+- Preloader emits `load-completed` → Your animations start
+- 100ms later → Preloader begins fade out (250ms duration)
+- Result: Smooth transition from loading to content
+
+---
+
 ## Next Steps
 
 After setting up animations:
@@ -159,7 +206,13 @@ After setting up animations:
      closeDuration: 1000   // Match lb:close duration
    });
    ```
-4. Publish and test on live site
+4. For preloader animations, adjust timing if needed:
+   ```javascript
+   initPreloader({
+     eventLeadMs: 100  // Milliseconds before hide to emit load-completed
+   });
+   ```
+5. Publish and test on live site
 
 Perfect! Your GSAP animations are now controlling all visibility. 🎬
 

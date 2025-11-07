@@ -26,6 +26,12 @@ let resizeFadeDuration = 150; // Fast fade by default (ms)
 let resizeShowDelayTimeoutId = null;
 let lastResizeCoverHideTime = 0;
 let resizeShowDelay = 800; // Delay before showing again (ms)
+let eventLeadMs = 100; // Time before hide to emit load-completed event (ms)
+
+// Webflow IX helper (ix3 or ix2)
+const wfIx = (window.Webflow && window.Webflow.require)
+  ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
+  : null;
 
 // ============================================================
 // INITIALIZATION
@@ -48,6 +54,7 @@ let resizeShowDelay = 800; // Delay before showing again (ms)
  * @param {boolean} options.enableResizeCover - Show preloader during resize (default: true)
  * @param {number} options.resizeFadeDuration - Fade in/out duration during resize (ms, default: 150)
  * @param {number} options.resizeShowDelay - Delay before showing cover again after hiding (ms, default: 800)
+ * @param {number} options.eventLeadMs - Time before hide to emit load-completed event (ms, default: 100)
  */
 export function initPreloader({
   selector = '#preloader',
@@ -61,12 +68,14 @@ export function initPreloader({
   pulseOpacity = 0.2,
   enableResizeCover = true,
   resizeFadeDuration: fadeDuration = 150,
-  resizeShowDelay: showDelay = 800
+  resizeShowDelay: showDelay = 800,
+  eventLeadMs: leadMs = 100
 } = {}) {
 
   showDebugLog = debugLogOption;
   resizeFadeDuration = fadeDuration;
   resizeShowDelay = showDelay;
+  eventLeadMs = leadMs;
   
   log('Initializing preloader...');
 
@@ -486,6 +495,21 @@ function prebufferVimeoIframes(vimeoIds, bufferLimit = 5) {
 }
 
 /**
+ * Emit load-completed event via Webflow IX and window
+ */
+function emitLoadCompleted() {
+  try { 
+    if (wfIx?.emit) wfIx.emit('load-completed'); 
+  } catch(_) {}
+  
+  try { 
+    window.dispatchEvent(new CustomEvent('load-completed')); 
+  } catch(_) {}
+  
+  log('🎯 Emitted "load-completed" event', 'success');
+}
+
+/**
  * Hide preloader with fast, energetic reveal animation
  * Scales up slightly and fades out quickly (250ms max)
  */
@@ -499,16 +523,25 @@ function hidePreloader() {
   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (prefersReduced) {
-    // Instant removal for reduced motion
-    preloaderEl.style.display = 'none';
-    document.body.classList.remove('preloader-active');
-    window.dispatchEvent(new CustomEvent('preloader:complete'));
-    log('✓ Preloader complete', 'success');
+    // Emit load-completed first, then hide after eventLeadMs
+    emitLoadCompleted();
+    
+    setTimeout(() => {
+      preloaderEl.style.display = 'none';
+      document.body.classList.remove('preloader-active');
+      window.dispatchEvent(new CustomEvent('preloader:complete'));
+      log('✓ Preloader complete', 'success');
+    }, eventLeadMs);
     return;
   }
 
   // Fast, energetic reveal: scale up + fade out (250ms total)
   preloaderEl.classList.add('is-revealing');
+  
+  // Emit load-completed after 150ms (100ms before removal at 250ms)
+  setTimeout(() => {
+    emitLoadCompleted();
+  }, 250 - eventLeadMs);
   
   setTimeout(() => {
     // Complete: Remove from DOM

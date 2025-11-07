@@ -215,6 +215,7 @@ window.App.init({
     
     // Timing
     minLoadTime: 1000,                                          // Minimum display time (ms)
+    eventLeadMs: 100,                                           // Time before hide to emit load-completed (ms)
     
     // Resize Cover
     enableResizeCover: true,                                    // Enable resize cover (default: true)
@@ -396,16 +397,46 @@ window.App.init({
 
 ## Event API
 
-The preloader emits a completion event that other modules can listen to:
+The preloader emits two events during its lifecycle:
+
+### 1. `load-completed` Event (100ms before hide)
+
+This event fires **100ms before** the preloader disappears, perfect for triggering entrance animations:
+
+**Via JavaScript:**
+```javascript
+window.addEventListener('load-completed', () => {
+  console.log('Preloader about to hide! Start animations.');
+  // Trigger your GSAP animations here
+});
+```
+
+**Via Webflow IX3 Custom Event:**
+1. In Webflow Designer, create a new Interaction
+2. Set trigger to **Custom Event**
+3. Event name: `load-completed`
+4. Set action to **Play from beginning**
+5. Add your animation timeline
+
+### 2. `preloader:complete` Event (after removal)
+
+This event fires **after** the preloader is fully removed from the DOM:
 
 ```javascript
 window.addEventListener('preloader:complete', () => {
   console.log('Preloader finished! Videos ready.');
-  // Your code here...
+  // Initialize modules that depend on preloader being gone
 });
 ```
 
-**Use case:** Trigger animations or initialize modules only after videos are ready.
+**Event Timing:**
+- `load-completed` → fires 100ms before hide (configurable via `eventLeadMs`)
+- Preloader hide animation → 250ms (or instant if reduced motion)
+- `preloader:complete` → fires after preloader is removed
+
+**Use cases:**
+- `load-completed`: Trigger entrance animations, start GSAP timelines
+- `preloader:complete`: Initialize modules, analytics, post-load tasks
 
 ---
 

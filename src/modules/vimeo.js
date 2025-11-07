@@ -70,21 +70,21 @@ export function mountVimeo(container, inputId, params = {}){
     const player = new (window.Vimeo && window.Vimeo.Player ? window.Vimeo.Player : function(){}) (iframe);
     if (!player || !player.getVideoWidth) {
       // Fallback to 16:9 if API not available
-      fitIframeToCover(container, iframe, 16 / 9);
+      fitIframeToCover(container, iframe, 16 / 9, 1.02);
       return;
     }
 
     Promise.all([player.getVideoWidth(), player.getVideoHeight()])
       .then(([vw, vh]) => {
         const ratio = vw && vh ? vw / vh : 16 / 9;
-        fitIframeToCover(container, iframe, ratio);
+        fitIframeToCover(container, iframe, ratio, 1.02);
         // Refit on container resize
-        const ro = new ResizeObserver(() => fitIframeToCover(container, iframe, ratio));
+        const ro = new ResizeObserver(() => fitIframeToCover(container, iframe, ratio, 1.02));
         ro.observe(container);
-        window.addEventListener('resize', () => fitIframeToCover(container, iframe, ratio), { passive: true });
+        window.addEventListener('resize', () => fitIframeToCover(container, iframe, ratio, 1.02), { passive: true });
       })
       .catch(() => {
-        fitIframeToCover(container, iframe, 16 / 9);
+        fitIframeToCover(container, iframe, 16 / 9, 1.02);
       });
   });
 }
@@ -112,7 +112,7 @@ function ensureVimeoApi(){
  * @param {HTMLIFrameElement} iframe
  * @param {number} videoRatio - width/height of the video
  */
-function fitIframeToCover(container, iframe, videoRatio){
+function fitIframeToCover(container, iframe, videoRatio, overscan = 1.0){
   const rect = container.getBoundingClientRect();
   const cw = Math.max(1, rect.width);
   const ch = Math.max(1, rect.height);
@@ -129,8 +129,12 @@ function fitIframeToCover(container, iframe, videoRatio){
     w = ch * videoRatio;
   }
 
-  iframe.style.width = `${w}px`;
-  iframe.style.height = `${h}px`;
+  // Apply slight overscan to avoid subpixel guttering at extreme ratios
+  const ow = Math.ceil(w * overscan);
+  const oh = Math.ceil(h * overscan);
+
+  iframe.style.width = `${ow}px`;
+  iframe.style.height = `${oh}px`;
   iframe.style.top = '50%';
   iframe.style.left = '50%';
   iframe.style.transform = 'translate(-50%, -50%)';
