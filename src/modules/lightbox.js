@@ -144,6 +144,14 @@ export function initLightbox({
       } else if (!projectData[projectId]) {
         missingData.push(`Slide ${index}: project ID "${projectId}" not found in JSON`);
       } else {
+        const project = projectData[projectId];
+        // Validate required video IDs
+        if (!project.vimeoId || project.vimeoId === '000000000') {
+          missingData.push(`Slide ${index} (${projectId}): missing or invalid vimeoId`);
+        }
+        if (!project.vimeoPreviewId || project.vimeoPreviewId === '000000000') {
+          missingData.push(`Slide ${index} (${projectId}): missing or invalid vimeoPreviewId`);
+        }
         validSlides++;
       }
     });
@@ -273,17 +281,21 @@ export function initLightbox({
     }
     
     // Mount Vimeo video
-    if (videoArea && project.vimeoId) {
-      mountVimeo(videoArea, project.vimeoId, { 
-        autoplay: 1, 
-        muted: 1,
-        autopause: 0,
-        controls: 0, 
-        background: 1,
-        playsinline: 1, 
-        loop: 1,
-        dnt: 1 
-      });
+    if (videoArea) {
+      if (!project.vimeoId || project.vimeoId === '000000000') {
+        console.error(`[LIGHTBOX] ❌ Missing or invalid vimeoId for project "${projectId}"`);
+      } else {
+        mountVimeo(videoArea, project.vimeoId, { 
+          autoplay: 1, 
+          muted: 1,
+          autopause: 0,
+          controls: 0, 
+          background: 1,
+          playsinline: 1, 
+          loop: 1,
+          dnt: 1 
+        });
+      }
     }
     
     // Wait for award images to load before opening
@@ -477,6 +489,29 @@ export function initLightbox({
   // ============================================================
   
   slides.forEach((slide, index) => {
+    // Mount preview video on the slide
+    const projectId = slide.dataset.project;
+    const project = getProjectById(projectId);
+    const previewContainer = slide.querySelector('.slide__preview');
+    
+    if (previewContainer && project) {
+      if (!project.vimeoPreviewId || project.vimeoPreviewId === '000000000') {
+        console.error(`[LIGHTBOX] ❌ Missing or invalid vimeoPreviewId for project "${projectId}"`);
+      } else {
+        mountVimeo(previewContainer, project.vimeoPreviewId, {
+          autoplay: 1,
+          muted: 1,
+          autopause: 0,
+          controls: 0,
+          background: 1,
+          playsinline: 1,
+          loop: 1,
+          dnt: 1
+        });
+      }
+    }
+    
+    // Add click handler
     slide.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();

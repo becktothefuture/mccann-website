@@ -155,15 +155,17 @@ In **Project Settings → Custom Code → Footer** (or page-level Embed), add:
 </script>
 ```
 
-### 4. Create Webflow Interactions
+### 4. Webflow Interactions
+
+The site uses custom event interactions in Webflow to coordinate GSAP animations with JavaScript module behavior. These interactions are already configured in the Webflow project.
 
 **Logo Animation**
 
-Create two custom event interactions:
+Two custom event interactions handle logo appearance/disappearance:
 
 **`logo-appear`** (forward animation):
 - Event: Custom → `logo-appear`
-- Target: Your logo element
+- Target: Logo element
 - Animation: Timeline from hidden/small → visible/big
 - Control: **Play from start**
 - Fires when: `#intro-slide` scrolls out of view (scrolling down)
@@ -177,7 +179,7 @@ Create two custom event interactions:
 
 **Accordion Animations**
 
-Create two custom event interactions on your `.accordeon` root:
+Two custom event interactions on `.accordeon` root handle panel animations:
 
 **`acc-open`** (panel opening):
 - Event: Custom → `acc-open`
@@ -185,7 +187,7 @@ Create two custom event interactions on your `.accordeon` root:
 - Animation: Staggered fade-in + slide-up (opacity 0→100%, y 16px→0)
 - Duration: ~0.20s, Stagger: 0.06–0.08s, Ease: Power2/BackOut
 - Control: **Play from beginning**
-- **Important**: Add condition "Affect: Class → `.acc-anim` → Children with this class" so only the active panel animates
+- Condition: Affects only children with `.acc-anim` class (active panel)
 
 **`acc-close`** (panel closing):
 - Event: Custom → `acc-close`
@@ -195,19 +197,19 @@ Create two custom event interactions on your `.accordeon` root:
 
 **Lightbox Animations**
 
-Create two custom event interactions on `#lightbox`:
+Two custom event interactions on `#lightbox` handle modal animations:
 
 **`lb:open`** (lightbox opening):
 - Event: Custom → `lb:open`
 - Target: `#lightbox` or `.lightbox__inner`
-- Animation: Your desired open animation (fade in, scale up, etc.)
+- Animation: Fade in, scale up, or other configured animation
 - Control: **Play from start**
 
 **`lb:close`** (lightbox closing):
 - Event: Custom → `lb:close`
 - Target: Same
-- Animation: Your desired close animation
-- Control: **Play from start** or **Reverse** (depending on your setup)
+- Animation: Reverse or configured close animation
+- Control: **Play from start** or **Reverse** (depending on setup)
 
 For detailed setup instructions including markup requirements and troubleshooting, see:
 - `docs/ACCORDION_WEBFLOW_SETUP.md`

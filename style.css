@@ -1117,3 +1117,37 @@ body > #preloader {
   }
 }
 
+/* ============================================================
+   Slide Preview Videos - Full Cover Background
+   ============================================================ */
+
+.slide {
+  position: relative;
+  overflow: hidden;
+}
+
+.slide__preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.slide__preview iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* Use aspect-ratio based sizing to ensure full coverage */
+  /* Width-based calculation for landscape containers */
+  width: 100%;
+  height: 56.25%; /* 16:9 aspect ratio */
+  /* Height-based calculation for portrait containers */
+  min-height: 100%;
+  min-width: 177.77%; /* 16:9 aspect ratio (100% * 16/9) */
+  transform: translate(-50%, -50%);
+  /* This ensures video covers entire container like background-size: cover */
+}
+

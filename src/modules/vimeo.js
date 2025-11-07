@@ -43,8 +43,15 @@ export function mountVimeo(container, inputId, params = {}){
   iframe.src = src;
   iframe.allow = 'autoplay; fullscreen; picture-in-picture; encrypted-media';
   iframe.setAttribute('frameborder', '0');
-  iframe.style.width = '100%';
-  iframe.style.height = '100%';
+  iframe.setAttribute('allowfullscreen', '');
+  iframe.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  `;
   container.innerHTML = '';
   container.appendChild(iframe);
 }
