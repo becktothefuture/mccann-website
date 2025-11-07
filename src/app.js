@@ -10,7 +10,6 @@ import { initPreloader } from './modules/preloader.js';
 import { initAccordion } from './modules/accordion.js';
 import { initLightbox } from './modules/lightbox.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
-import { initSlideTransitionObserver } from './modules/slide-transition-observer.js';
 import { initSmoothScroll } from './modules/smooth-scroll.js';
 
 // ============================================================
@@ -41,7 +40,6 @@ function patchVimeoAllowTokens() {
 function init(options = {}) {
   const {
     lightboxRoot = '#lightbox',
-    useIntersectionObserver = false,
     lerp = 0.1,
     snapLerp = 0.15,
     smoothScroll = {},
@@ -75,24 +73,15 @@ function init(options = {}) {
     closeDuration: 1000
   });
 
+  // Initialize logo animation via GSAP ScrollTrigger
   try {
-    if (useIntersectionObserver) {
-      initSlideTransitionObserver({
-        scrollerSelector: '.perspective-wrapper',
-        targetSlideSelector: '#intro-slide',
-        appearEventName: 'logo-appear',
-        hideEventName: 'logo-hide',
-        threshold: 0.1
-      });
-    } else {
-      initWebflowScrollTriggers({
-        scrollerSelector: '.perspective-wrapper',
-        hideEventName: 'logo-hide',
-        appearEventName: 'logo-appear'
-      });
-    }
+    initWebflowScrollTriggers({
+      scrollerSelector: '.perspective-wrapper',
+      hideEventName: 'logo-hide',
+      appearEventName: 'logo-appear'
+    });
   } catch (err) {
-    // Silent fail
+    // Silent fail - no logo animation if ScrollTrigger unavailable
   }
 }
 

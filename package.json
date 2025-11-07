@@ -1,16 +1,26 @@
 {
   "name": "mccann-website",
   "version": "1.0.0",
+  "description": "Single-bundle Webflow integration: accordion, lightbox, video preloading, smooth scroll. Built by MRM UK for McCann.",
   "main": "app.js",
   "scripts": {
     "dev": "node esbuild.config.mjs --dev",
     "build": "node esbuild.config.mjs",
     "test": "echo \"(placeholder)\""
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "webflow",
+    "gsap",
+    "lenis",
+    "smooth-scroll",
+    "accessibility",
+    "a11y",
+    "accordion",
+    "lightbox",
+    "vimeo"
+  ],
+  "author": "MRM UK",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "esbuild": "^0.25.11",
     "http-server": "^14.1.1"

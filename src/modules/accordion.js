@@ -6,7 +6,6 @@
  * ==================================================
  */
 
-import { gsapOpenAnimation, gsapCloseAnimation } from './accordion-direct-gsap.js';
 console.log('[ACCORDION] Module loaded');
 
 // ============================================================
@@ -203,7 +202,6 @@ export function initAccordion(options = {}){
       requestAnimationFrame(() => {
         dbg('emit acc-open', { id: p.id });
         emitAll('acc-open');
-        gsapOpenAnimation();
       });
       expand(p);
       trig?.setAttribute('aria-expanded', 'true');
@@ -214,7 +212,6 @@ export function initAccordion(options = {}){
       requestAnimationFrame(() => {
         dbg('emit acc-close', { id: p.id });
         emitAll('acc-close');
-        gsapCloseAnimation();
       });
       collapse(p);
       trig?.setAttribute('aria-expanded', 'false');
