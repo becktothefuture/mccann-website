@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node esbuild.config.mjs --dev",
     "build": "node esbuild.config.mjs",
-    "test": "echo \"(placeholder)\""
+    "test": "echo \"(placeholder)\"",
+    "publish:assets": "node scripts/publish-assets.js"
   },
   "keywords": [
     "webflow",

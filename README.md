@@ -94,11 +94,17 @@ Use the GitHub Pages deployment from `becktothefuture/mccann-assets` for product
 
 Update Webflow's Custom Code settings with these URLs whenever you need the live bundle.
 
-To publish new builds:
+### Publish New Builds
 
-1. Run `npm run build` in this repo to refresh `dist/`.
-2. Copy the `dist/` contents into the `mccann-assets` repository.
-3. Commit and push `mccann-assets/main`. The GitHub Actions workflow redeploys automatically (≈1 minute).
+```bash
+npm run publish:assets
+```
+
+The helper script will:
+
+- Run `npm run build`
+- Copy `dist/` into the sibling `mccann-assets` repo (override with `MCCANN_ASSETS_PATH=/absolute/path`)
+- Commit and push the changes, triggering the GitHub Pages workflow (~1 minute)
 
 ---
 
