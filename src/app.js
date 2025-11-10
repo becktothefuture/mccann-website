@@ -8,6 +8,7 @@
 
 import { initPreloader } from './modules/preloader.js';
 import { initAccordion } from './modules/accordion.js';
+import { initSlides } from './modules/slides.js';
 import { initLightbox } from './modules/lightbox.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
 import { initSmoothScroll } from './modules/smooth-scroll.js';
@@ -67,10 +68,17 @@ function init(options = {}) {
 
   initAccordion({ selector: '.accordeon' });
   
+  // Build slides from JSON FIRST (before lightbox initializes)
+  initSlides({
+    containerSelector: '.perspective-wrapper',
+    replaceExisting: true
+  });
+  
+  // Then initialize lightbox (it will find the newly created slides)
   initLightbox({ 
     root: lightboxRoot, 
-    openDuration: 1000,
-    closeDuration: 1000
+    openDuration: 1500,
+    closeDuration: 1500
   });
 
   // Initialize logo animation via GSAP ScrollTrigger

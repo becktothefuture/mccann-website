@@ -36,8 +36,8 @@ let overlayLenis = null;
 
 export function initLightbox({ 
   root = '#lightbox',
-  openDuration = 1000,
-  closeDuration = 1000
+  openDuration = 1500,
+  closeDuration = 1500
 } = {}) {
   // ============================================================
   // SETUP & DOM REFERENCES
@@ -53,6 +53,7 @@ export function initLightbox({
   const videoArea = lb.querySelector('.video-area');
   const overlay = lb.querySelector('.lightbox__overlay');
   const closeBtn = document.querySelector('#close-btn');
+  const detailsBtn = document.querySelector('#details-btn');
   const slides = document.querySelectorAll('.slide');
   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -67,16 +68,33 @@ export function initLightbox({
   // INITIALIZATION
   // ============================================================
   
+  // Ensure lightbox is hidden initially (fail-safe)
+  lb.style.display = 'none';
+  lb.style.pointerEvents = 'none';
+  
   lb.setAttribute('role', lb.getAttribute('role') || 'dialog');
   lb.setAttribute('aria-modal', lb.getAttribute('aria-modal') || 'true');
   lb.setAttribute('aria-hidden', 'true');
   lb.setAttribute('data-state', STATE.IDLE);
   
+  // Ensure scroll is unlocked on init (fail-safe)
   unlockScroll({ delayMs: 0 });
   
-  projectData = projectDataJson;
+  // Extra fail-safe: ensure body and wrapper are not locked
+  document.body.classList.remove('modal-open', 'preloader-active');
+  document.body.style.overflow = '';
+  const perspectiveWrapper = document.querySelector('.perspective-wrapper');
+  if (perspectiveWrapper) {
+    perspectiveWrapper.classList.remove('modal-open');
+    perspectiveWrapper.style.overflow = '';
+  }
+  
+  // Use project data from slides module (single source of truth)
+  // Falls back to direct import if slides module hasn't initialized yet
+  projectData = (window.App?.slides?.getProjectData?.()) || projectDataJson;
   const projectCount = Object.keys(projectData).length;
-  console.log(`[LIGHTBOX] ✓ Loaded ${projectCount} project${projectCount !== 1 ? 's' : ''} from bundled data`);
+  const dataSource = window.App?.slides?.getProjectData ? 'slides module' : 'bundled JSON';
+  console.log(`[LIGHTBOX] ✓ Loaded ${projectCount} project${projectCount !== 1 ? 's' : ''} from ${dataSource}`);
 
   // ============================================================
   // VALIDATION
@@ -86,28 +104,99 @@ export function initLightbox({
   console.log('🔍 LIGHTBOX SETUP VALIDATION');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
-  console.log('1️⃣  Main Container');
+  // Track validation status
+  let validationErrors = [];
+  let validationWarnings = [];
+
+  console.log('1️⃣  Main Container & Structure');
   console.log(`   ✓ Found: ${root}`);
   console.log(`   ✓ State machine initialized: ${currentState}`);
-  console.log(`   ⏱️  Open duration: ${openDuration}ms (must match Webflow 'lb:open' animation)`);
-  console.log(`   ⏱️  Close duration: ${closeDuration}ms (must match Webflow 'lb:close' animation)`);
+  console.log(`   ⏱️  Open duration: ${openDuration}ms (must match Webflow 'lb:show' animation)`);
+  console.log(`   ⏱️  Close duration: ${closeDuration}ms (must match Webflow 'lb:hide' animation)`);
+  
+  // Check critical structure elements
+  if (inner) {
+    console.log(`   ✓ .lightbox__inner found`);
+  } else {
+    console.log(`   ❌ .lightbox__inner NOT found`);
+    validationErrors.push('.lightbox__inner missing');
+  }
+  
+  if (overlay) {
+    console.log(`   ✓ .lightbox__overlay found (smooth scroll container)`);
+  } else {
+    console.log(`   ⚠️  .lightbox__overlay NOT found (smooth scroll will be skipped)`);
+    validationWarnings.push('.lightbox__overlay missing');
+  }
+  
+  if (videoArea) {
+    console.log(`   ✓ .video-area found`);
+  } else {
+    console.log(`   ❌ .video-area NOT found`);
+    validationErrors.push('.video-area missing');
+  }
   
   console.log('\n2️⃣  Content Injection Targets');
-  console.log(`   ${clientEl ? '✓' : '❌'} #lightbox-client`);
-  console.log(`   ${titleEl ? '✓' : '❌'} #lightbox-title`);
-  console.log(`   ${truthEl ? '✓' : '❌'} #lightbox-truth`);
-  console.log(`   ${truthWellToldEl ? '✓' : '❌'} #lightbox-truthwelltold`);
-  console.log(`   ${descriptionEl ? '✓' : '❌'} #lightbox-description`);
-  console.log(`   ${awardsContainer ? '✓' : '❌'} #lightbox-awards`);
-  console.log(`   ${videoArea ? '✓' : '❌'} .video-area`);
+  const contentTargets = [
+    { el: clientEl, id: '#lightbox-client', required: true },
+    { el: titleEl, id: '#lightbox-title', required: true },
+    { el: truthEl, id: '#lightbox-truth', required: false },
+    { el: truthWellToldEl, id: '#lightbox-truthwelltold', required: false },
+    { el: descriptionEl, id: '#lightbox-description', required: true },
+    { el: awardsContainer, id: '#lightbox-awards', required: true }
+  ];
   
-  console.log('\n3️⃣  Slide Triggers');
-  console.log(`   ✓ Found: ${slides.length} .slide elements`);
+  contentTargets.forEach(({ el, id, required }) => {
+    if (el) {
+      console.log(`   ✓ ${id}`);
+    } else if (required) {
+      console.log(`   ❌ ${id} NOT found (REQUIRED)`);
+      validationErrors.push(`${id} missing`);
+    } else {
+      console.log(`   ⚠️  ${id} NOT found (optional)`);
+      validationWarnings.push(`${id} missing`);
+    }
+  });
+  
+  console.log('\n3️⃣  Interactive Elements');
+  if (closeBtn) {
+    console.log(`   ✓ #close-btn found`);
+  } else {
+    console.log(`   ❌ #close-btn NOT found`);
+    validationErrors.push('#close-btn missing');
+  }
+  
+  console.log(`\n4️⃣  Slide Triggers & Links`);
+  console.log(`   ${slides.length > 0 ? '✓' : '❌'} Found: ${slides.length} .slide element${slides.length !== 1 ? 's' : ''}`);
+  
+  if (slides.length === 0) {
+    validationErrors.push('No .slide elements found');
+  } else {
+    // Validate each slide has a .slide__link
+    let slidesWithLinks = 0;
+    let slidesWithoutLinks = [];
+    
+    slides.forEach((slide, index) => {
+      const link = slide.querySelector('.slide__link');
+      if (link) {
+        slidesWithLinks++;
+      } else {
+        slidesWithoutLinks.push(index);
+      }
+    });
+    
+    console.log(`   ${slidesWithLinks === slides.length ? '✓' : '⚠️'} ${slidesWithLinks}/${slides.length} slides have .slide__link`);
+    
+    if (slidesWithoutLinks.length > 0) {
+      console.log(`   ⚠️  Missing .slide__link in slide indices: ${slidesWithoutLinks.join(', ')}`);
+      validationWarnings.push(`${slidesWithoutLinks.length} slides missing .slide__link`);
+    }
+  }
   
   // Validate slide data immediately (data is already loaded)
   validateSlideData();
   
-  console.log('\n4️⃣  Webflow IX Setup');
+  console.log('\n5️⃣  Webflow IX Setup');
   const wfIx = (window.Webflow && window.Webflow.require)
     ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
     : null;
@@ -116,16 +205,32 @@ export function initLightbox({
     const version = window.Webflow.require('ix3') ? 'IX3' : 'IX2';
     console.log(`   ✓ Webflow ${version} detected`);
   } else {
-    console.warn('   ⚠️  Webflow IX NOT detected');
+    console.log('   ⚠️  Webflow IX NOT detected');
+    validationWarnings.push('Webflow IX not detected');
   }
   
   console.log('\n   📋 Required Custom Events in Webflow:');
-  console.log('      • "lb:open" → triggers open animation');
-  console.log('      • "lb:close" → triggers close animation');
+  console.log('      • "lb:show" → triggers open animation');
+  console.log('      • "lb:hide" → triggers close animation');
   console.log(`      • Durations MUST match: open=${openDuration}ms, close=${closeDuration}ms`);
   
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('✅ VALIDATION COMPLETE\n');
+  
+  // Summary
+  if (validationErrors.length > 0) {
+    console.log('❌ VALIDATION FAILED');
+    console.log(`   ${validationErrors.length} critical error${validationErrors.length !== 1 ? 's' : ''}:`);
+    validationErrors.forEach(err => console.log(`   • ${err}`));
+  } else {
+    console.log('✅ VALIDATION COMPLETE - All critical elements found');
+  }
+  
+  if (validationWarnings.length > 0) {
+    console.log(`\n⚠️  ${validationWarnings.length} warning${validationWarnings.length !== 1 ? 's' : ''}:`);
+    validationWarnings.forEach(warn => console.log(`   • ${warn}`));
+  }
+  
+  console.log('');
 
   // ============================================================
   // HELPER FUNCTIONS
@@ -312,6 +417,30 @@ export function initLightbox({
     console.log(`[LIGHTBOX] State: ${newState}`);
   }
 
+  function disableSlideInteractions() {
+    slides.forEach(slide => {
+      const link = slide.querySelector('.slide__link');
+      if (link) {
+        link.classList.add('is-disabled');
+        link.setAttribute('aria-disabled', 'true');
+        link.style.pointerEvents = 'none'; // Extra safety against race conditions
+      }
+    });
+    console.log('[LIGHTBOX] 🚫 Slide links disabled');
+  }
+
+  function enableSlideInteractions() {
+    slides.forEach(slide => {
+      const link = slide.querySelector('.slide__link');
+      if (link) {
+        link.classList.remove('is-disabled');
+        link.removeAttribute('aria-disabled');
+        link.style.pointerEvents = ''; // Restore pointer events
+      }
+    });
+    console.log('[LIGHTBOX] ✓ Slide links re-enabled');
+  }
+
   // ============================================================
   // CORE FUNCTIONS
   // ============================================================
@@ -337,8 +466,11 @@ export function initLightbox({
       return;
     }
     
-    // Change state to OPENING
+    // Change state to OPENING immediately (synchronously) to prevent double-trigger
     setState(STATE.OPENING);
+    
+    // Disable pointer events on all slides immediately
+    disableSlideInteractions();
     
     // Save focus for restoration
     lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -361,7 +493,7 @@ export function initLightbox({
       
       // Trigger GSAP open animation via Webflow IX
       // GSAP will handle visibility (opacity, display, etc.)
-      emitWebflowEvent('lb:open');
+      emitWebflowEvent('lb:show');
       
       // Wait for GSAP animation to complete, then call finishOpen
       // IMPORTANT: This duration MUST match Webflow IX3 animation duration
@@ -376,6 +508,7 @@ export function initLightbox({
       console.error('[LIGHTBOX] ❌ Error opening:', err);
       // Revert to IDLE on error
       setState(STATE.IDLE);
+      enableSlideInteractions(); // Re-enable on error
     }
   }
 
@@ -420,28 +553,17 @@ export function initLightbox({
     
     // Trigger GSAP close animation via Webflow IX
     // GSAP will handle visibility (fade out, etc.)
-    emitWebflowEvent('lb:close');
+    emitWebflowEvent('lb:hide');
     
     // Calculate delay based on user's motion preference
     const hideDelay = prefersReduced ? 0 : closeDuration;
     
     // Wait for GSAP animation to complete, then call finishClose
     // IMPORTANT: This duration MUST match Webflow IX3 animation duration
+    // All cleanup happens inside finishClose() for guaranteed sequencing
     setTimeout(() => {
       finishClose();
     }, hideDelay);
-    
-    // Unlock scroll (with delay to coordinate with animation)
-    unlockScroll({ 
-      delayMs: prefersReduced ? 0 : closeDuration 
-    });
-    
-    // Restart smooth scroll if active
-    if (window.App?.smoothScroll?.start) {
-      setTimeout(() => {
-        window.App.smoothScroll.start();
-      }, hideDelay);
-    }
   }
 
   function finishClose() {
@@ -453,16 +575,7 @@ export function initLightbox({
     // Make page accessible again
     setPageInert(false);
     
-    // Clear content
-    if (videoArea) videoArea.innerHTML = '';
-    if (awardsContainer) awardsContainer.innerHTML = '';
-    if (clientEl) clientEl.textContent = '';
-    if (titleEl) titleEl.textContent = '';
-    if (truthEl) truthEl.textContent = '';
-    if (truthWellToldEl) truthWellToldEl.textContent = '';
-    if (descriptionEl) descriptionEl.textContent = '';
-    
-    // Destroy overlay smooth scroll instance
+    // Destroy overlay smooth scroll instance FIRST (before unlocking scroll)
     if (overlayLenis) {
       try {
         overlayLenis.destroy();
@@ -473,12 +586,36 @@ export function initLightbox({
       }
     }
     
+    // Unlock scroll (must happen after overlay scroll is destroyed)
+    unlockScroll({ delayMs: 0 });
+    console.log('[LIGHTBOX] ✓ Scroll unlocked');
+    
+    // Restart main smooth scroll if it exists
+    if (window.App?.smoothScroll?.start) {
+      requestAnimationFrame(() => {
+        window.App.smoothScroll.start();
+        console.log('[LIGHTBOX] ✓ Main smooth scroll restarted');
+      });
+    }
+    
+    // Re-enable slide interactions (after scroll is unlocked)
+    enableSlideInteractions();
+    
+    // Clear content
+    if (videoArea) videoArea.innerHTML = '';
+    if (awardsContainer) awardsContainer.innerHTML = '';
+    if (clientEl) clientEl.textContent = '';
+    if (titleEl) titleEl.textContent = '';
+    if (truthEl) truthEl.textContent = '';
+    if (truthWellToldEl) truthWellToldEl.textContent = '';
+    if (descriptionEl) descriptionEl.textContent = '';
+    
     // Restore focus to element that opened lightbox
     if (lastFocus && document.body.contains(lastFocus)) {
       lastFocus.focus();
     }
     
-    // Change state to IDLE → ready to open again
+    // Change state to IDLE → ready to open again (LAST STEP)
     setState(STATE.IDLE);
     
     emit('LIGHTBOX_CLOSED', lb);
@@ -488,51 +625,45 @@ export function initLightbox({
   // EVENT LISTENERS
   // ============================================================
   
-  slides.forEach((slide, index) => {
-    // Mount preview video on the slide
-    const projectId = slide.dataset.project;
-    const project = getProjectById(projectId);
-    const previewContainer = slide.querySelector('.slide__preview');
+  // Use event delegation for slide link clicks (more scalable)
+  const slidesContainer = slides[0]?.parentElement;
+  
+  function handleSlideClick(e) {
+    // Find clicked .slide__link
+    const link = e.target.closest('.slide__link');
+    if (!link) return;
     
-    if (previewContainer && project) {
-      if (!project.vimeoPreviewId || project.vimeoPreviewId === '000000000') {
-        console.error(`[LIGHTBOX] ❌ Missing or invalid vimeoPreviewId for project "${projectId}"`);
-      } else {
-        mountVimeo(previewContainer, project.vimeoPreviewId, {
-          autoplay: 1,
-          muted: 1,
-          autopause: 0,
-          controls: 0,
-          background: 1,
-          playsinline: 1,
-          loop: 1,
-          dnt: 1
-        });
-      }
+    // Early state check - prevent any interaction if not IDLE
+    if (currentState !== STATE.IDLE) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
     }
     
-    // Add click handler
-    slide.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      openFromSlide(slide);
-    }, { passive: false });
-  });
-
-  if (closeBtn) {
-    closeBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (currentState === STATE.OPEN) {
-        console.log('[LIGHTBOX] 🎯 Close button clicked');
-        requestClose();
-      }
-    });
-  } else {
-    console.warn('[LIGHTBOX] ⚠️  #close-btn not found - only Escape key will close');
+    // Find parent .slide
+    const slide = link.closest('.slide');
+    if (!slide) {
+      console.warn('[LIGHTBOX] ⚠️  .slide__link found but parent .slide missing');
+      return;
+    }
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Open lightbox with parent slide data
+    openFromSlide(slide);
   }
-
-  document.addEventListener('keydown', e => {
+  
+  function handleCloseBtnClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (currentState === STATE.OPEN) {
+      console.log('[LIGHTBOX] 🎯 Close button clicked');
+      requestClose();
+    }
+  }
+  
+  function handleKeydown(e) {
     if (currentState === STATE.OPEN) {
       if (e.key === 'Escape') {
         console.log('[LIGHTBOX] 🎯 Escape key pressed');
@@ -542,7 +673,103 @@ export function initLightbox({
         trapFocus(e);
       }
     }
-  });
+  }
+  
+  function handleDetailsClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('[LIGHTBOX] 🚫 Details button disabled for testing');
+    // TODO: Will emit 'details:show' event here later
+  }
+  
+  // Attach delegated listener to slides container
+  if (slidesContainer) {
+    slidesContainer.addEventListener('click', handleSlideClick, { passive: false });
+    console.log(`[LIGHTBOX] ✓ Delegated click handler attached to container (${slides.length} slides)`);
+  } else {
+    console.warn('[LIGHTBOX] ⚠️  Could not find slides container for event delegation');
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', handleCloseBtnClick);
+  } else {
+    console.warn('[LIGHTBOX] ⚠️  #close-btn not found - only Escape key will close');
+  }
+  
+  // Details button - DISABLED FOR TESTING
+  // Prevents accidental triggering of lb events
+  if (detailsBtn) {
+    detailsBtn.addEventListener('click', handleDetailsClick, { passive: false });
+    detailsBtn.style.opacity = '0.5';  // Visual feedback (dimmed)
+    detailsBtn.style.cursor = 'not-allowed';
+    console.log('[LIGHTBOX] ⚠️  Details button temporarily disabled for testing');
+  }
+
+  document.addEventListener('keydown', handleKeydown);
   
   console.log('[LIGHTBOX] ✓ Initialized and ready\n');
+  
+  // ============================================================
+  // CLEANUP & API EXPOSURE
+  // ============================================================
+  
+  function cleanup() {
+    // Remove event listeners
+    if (slidesContainer) {
+      slidesContainer.removeEventListener('click', handleSlideClick);
+    }
+    if (closeBtn) {
+      closeBtn.removeEventListener('click', handleCloseBtnClick);
+    }
+    if (detailsBtn) {
+      detailsBtn.removeEventListener('click', handleDetailsClick);
+    }
+    document.removeEventListener('keydown', handleKeydown);
+    
+    // Destroy overlay scroll if exists
+    if (overlayLenis) {
+      try {
+        overlayLenis.destroy();
+        overlayLenis = null;
+      } catch (err) {
+        console.warn('[LIGHTBOX] Error destroying overlay scroll on cleanup:', err);
+      }
+    }
+    
+    // Unlock scroll and reset state
+    unlockScroll({ delayMs: 0 });
+    setPageInert(false);
+    enableSlideInteractions();
+    currentState = STATE.IDLE;
+    
+    console.log('[LIGHTBOX] ✓ Cleanup complete');
+  }
+  
+  function openProjectById(projectId) {
+    const slide = Array.from(slides).find(s => s.dataset.project === projectId);
+    if (!slide) {
+      console.error(`[LIGHTBOX] ❌ No slide found for project: "${projectId}"`);
+      return false;
+    }
+    openFromSlide(slide);
+    return true;
+  }
+  
+  function getState() {
+    return {
+      current: currentState,
+      isIdle: currentState === STATE.IDLE,
+      isOpen: currentState === STATE.OPEN,
+      isTransitioning: currentState === STATE.OPENING || currentState === STATE.CLOSING
+    };
+  }
+  
+  // Expose API for debugging and programmatic control
+  window.App = window.App || {};
+  window.App.lightbox = {
+    open: openProjectById,
+    close: requestClose,
+    getState,
+    cleanup
+  };
 }

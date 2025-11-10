@@ -22,10 +22,13 @@ let animationFrameId = null;
 let showDebugLog = true; // Toggle to show/hide real-time log
 let resizeTimeoutId = null;
 let isResizing = false;
-let resizeFadeDuration = 150; // Fast fade by default (ms)
+let resizeFadeDuration = 75; // Quick fade-out (ms)
+let resizeFadeInDuration = 300; // Soft, refined, elegant fade-in (ms)
 let resizeShowDelayTimeoutId = null;
+let resizeHideDelayTimeoutId = null; // Delay before hiding after resize stops
 let lastResizeCoverHideTime = 0;
 let resizeShowDelay = 800; // Delay before showing again (ms)
+let resizeHideDelay = 1200; // Delay before hiding after resize stops (ms)
 let eventLeadMs = 100; // Time before hide to emit load-completed event (ms)
 let bodyOverflowBeforePreloader = '';
 let hasStoredBodyOverflow = false;
@@ -124,9 +127,10 @@ export function initPreloader({
   preloaderEl.style.zIndex = '999999';
   
   // Initialize resize cover if enabled
-  if (enableResizeCover) {
-    initResizeCover();
-  }
+  // TEMPORARILY DISABLED FOR TESTING
+  // if (enableResizeCover) {
+  //   initResizeCover();
+  // }
 
   signetEl = preloaderEl.querySelector('.preloader__signet');
   progressEl = preloaderEl.querySelector('.preloader__progress');
@@ -150,16 +154,28 @@ export function initPreloader({
   // Begin loading process
   const startTime = performance.now();
   
-  // Load both HTML5 videos and Vimeo videos
+  // Step 1: Load HTML5 videos and Vimeo preload/prefetch
   Promise.all([
     prefetchVideos(videoSelector),
     preloadVimeoVideos(projectData, vimeoPreload, vimeoBufferLimit)
   ])
     .then(() => {
+      log('✓ HTML5 videos and Vimeo preload complete', 'success');
+      
+      // Step 2: Wait for slides to be built (if slides module exists)
+      return waitForSlidesBuilt();
+    })
+    .then(() => {
+      log('✓ Slides built', 'success');
+      
+      // Step 3: Wait for all preview videos to be playing
+      return waitForPreviewVideosPlaying();
+    })
+    .then(() => {
       const elapsed = performance.now() - startTime;
       const remaining = Math.max(0, minLoadTime - elapsed);
       
-      log(`✓ All media loaded in ${Math.round(elapsed)}ms`, 'success');
+      log(`✓ All media loaded and previews playing in ${Math.round(elapsed)}ms`, 'success');
       
       if (remaining > 0) {
         log(`Waiting ${Math.round(remaining)}ms (min display time)...`, 'info');
@@ -523,6 +539,157 @@ function prebufferVimeoIframes(vimeoIds, bufferLimit = 5) {
 }
 
 /**
+ * Wait for slides module to finish building slides
+ */
+function waitForSlidesBuilt() {
+  return new Promise((resolve) => {
+    // Check if slides already built (slides module might have finished before we check)
+    const slides = document.querySelectorAll('.slide');
+    if (slides.length > 0) {
+      log(`✓ Found ${slides.length} existing slides`, 'success');
+      resolve();
+      return;
+    }
+    
+    // Wait for slides:built event (with timeout)
+    const timeout = setTimeout(() => {
+      log('⚠️  Slides build timeout - proceeding anyway', 'warning');
+      resolve();
+    }, 5000); // 5 second timeout
+    
+    window.addEventListener('slides:built', () => {
+      clearTimeout(timeout);
+      log('✓ Slides built event received', 'success');
+      resolve();
+    }, { once: true });
+  });
+}
+
+/**
+ * Wait for all Vimeo preview videos to be mounted and playing
+ */
+function waitForPreviewVideosPlaying() {
+  return new Promise((resolve) => {
+    // Give slides module time to mount preview videos (rAF delay)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const previewContainers = document.querySelectorAll('.slide__preview iframe[src*="vimeo.com"]');
+        
+        if (previewContainers.length === 0) {
+          log('⚠️  No preview videos found - proceeding', 'warning');
+          resolve();
+          return;
+        }
+        
+        log(`🎬 Waiting for ${previewContainers.length} preview video(s) to play...`, 'info');
+        
+        // Load Vimeo Player API if needed
+        ensureVimeoApi().then(() => {
+          const checkPromises = Array.from(previewContainers).map((iframe, index) => {
+            return new Promise((resolveVideo) => {
+              try {
+                // eslint-disable-next-line no-undef
+                if (!window.Vimeo || !window.Vimeo.Player) {
+                  log(`⚠️  Vimeo API not available for video ${index + 1} - assuming ready`, 'warning');
+                  resolveVideo();
+                  return;
+                }
+                
+                // eslint-disable-next-line no-undef
+                const player = new window.Vimeo.Player(iframe);
+                
+                // Wait for video to be ready and playing
+                let isReady = false;
+                let isPlaying = false;
+                
+                const checkComplete = () => {
+                  if (isReady && isPlaying) {
+                    log(`✓ Preview video ${index + 1}/${previewContainers.length} playing`, 'success');
+                    resolveVideo();
+                  }
+                };
+                
+                // Listen for ready event
+                player.ready().then(() => {
+                  isReady = true;
+                  checkComplete();
+                }).catch(() => {
+                  // If ready fails, assume ready after short delay
+                  setTimeout(() => {
+                    isReady = true;
+                    checkComplete();
+                  }, 1000);
+                });
+                
+                // Listen for play event
+                player.on('play', () => {
+                  isPlaying = true;
+                  checkComplete();
+                });
+                
+                // Fallback: check playing state after delay (autoplay might work immediately)
+                setTimeout(() => {
+                  player.getPaused().then((paused) => {
+                    if (!paused) {
+                      isPlaying = true;
+                      checkComplete();
+                    }
+                  }).catch(() => {
+                    // Assume playing if check fails (graceful degradation)
+                    isPlaying = true;
+                    checkComplete();
+                  });
+                }, 1500);
+                
+                // Timeout fallback (4 seconds per video)
+                setTimeout(() => {
+                  if (!isReady || !isPlaying) {
+                    log(`⚠️  Preview video ${index + 1} timeout - proceeding`, 'warning');
+                    resolveVideo();
+                  }
+                }, 4000);
+                
+              } catch (err) {
+                log(`⚠️  Error checking preview video ${index + 1}: ${err.message}`, 'warning');
+                resolveVideo(); // Resolve anyway to not block
+              }
+            });
+          });
+          
+          Promise.all(checkPromises).then(() => {
+            log('✓ All preview videos playing', 'success');
+            resolve();
+          });
+        }).catch(() => {
+          log('⚠️  Vimeo API failed to load - proceeding without verification', 'warning');
+          resolve();
+        });
+      });
+    });
+  });
+}
+
+/**
+ * Ensure Vimeo Player API is available
+ */
+function ensureVimeoApi() {
+  if (window.Vimeo && window.Vimeo.Player) return Promise.resolve();
+  return new Promise(resolve => {
+    const existing = document.querySelector('script[src*="player.vimeo.com/api/player.js"]');
+    if (existing) { 
+      existing.addEventListener('load', () => resolve()); 
+      return; 
+    }
+    const s = document.createElement('script');
+    s.src = 'https://player.vimeo.com/api/player.js';
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => resolve(); // Graceful fallback
+    document.head.appendChild(s);
+  });
+}
+
+/**
  * Emit load-completed event via Webflow IX and window
  */
 function emitLoadCompleted() {
@@ -539,7 +706,8 @@ function emitLoadCompleted() {
 
 /**
  * Hide preloader with fast, energetic reveal animation
- * Scales up slightly and fades out quickly (250ms max)
+ * Creates overlap between cover disappearing and loader appearing
+ * Emits load-completed BEFORE fade starts so Webflow animation can begin
  */
 function hidePreloader() {
   if (!preloaderEl) {
@@ -555,13 +723,30 @@ function hidePreloader() {
   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (prefersReduced) {
-    // Emit load-completed first, then hide after eventLeadMs
+    // Emit load-completed first, then hide immediately
     emitLoadCompleted();
     
+    // IMMEDIATELY unlock scroll for reduced motion
+    document.body.classList.remove('preloader-active');
+    restoreBodyOverflow();
+    
     setTimeout(() => {
-      preloaderEl.style.display = 'none';
+      if (preloaderEl) {
+        preloaderEl.style.display = 'none';
+        preloaderEl.style.pointerEvents = 'none';
+      }
+      
+      // Double-check unlock
       document.body.classList.remove('preloader-active');
       restoreBodyOverflow();
+      
+      // Also unlock perspective wrapper if it exists
+      const wrapper = document.querySelector('.perspective-wrapper');
+      if (wrapper) {
+        wrapper.classList.remove('modal-open');
+        wrapper.style.overflow = '';
+      }
+      
       window.dispatchEvent(new CustomEvent('preloader:complete'));
       log('✓ Preloader complete', 'success');
     }, eventLeadMs);
@@ -571,19 +756,38 @@ function hidePreloader() {
   // Fast, energetic reveal: scale up + fade out (250ms total)
   preloaderEl.classList.add('is-revealing');
   
-  // Emit load-completed after 150ms (100ms before removal at 250ms)
-  setTimeout(() => {
-    emitLoadCompleted();
-  }, 250 - eventLeadMs);
+  // Emit load-completed BEFORE fade starts (creates overlap)
+  // The Webflow animation triggered by load-completed will start immediately
+  // while preloader is still visible, creating smooth overlap
+  emitLoadCompleted();
   
+  // IMMEDIATELY unlock scroll (don't wait for animation)
+  // This prevents the page from staying frozen if animation fails
+  document.body.classList.remove('preloader-active');
+  restoreBodyOverflow();
+  
+  // Start fade-out after a brief delay to ensure event is processed
   setTimeout(() => {
-    // Complete: Remove from DOM
-    preloaderEl.style.display = 'none';
+    // Complete: Remove from DOM and ensure cleanup
+    if (preloaderEl) {
+      preloaderEl.style.display = 'none';
+      preloaderEl.style.pointerEvents = 'none'; // Extra safety
+    }
+    
+    // Double-check scroll is unlocked
     document.body.classList.remove('preloader-active');
     restoreBodyOverflow();
+    
+    // Also unlock perspective wrapper if it exists
+    const wrapper = document.querySelector('.perspective-wrapper');
+    if (wrapper) {
+      wrapper.classList.remove('modal-open');
+      wrapper.style.overflow = '';
+    }
+    
     window.dispatchEvent(new CustomEvent('preloader:complete'));
     log('✓ Preloader complete', 'success');
-  }, 250); // 250ms max - sudden and energetic
+  }, 250); // 250ms fade-out duration
 }
 
 // ============================================================
@@ -637,6 +841,12 @@ function initResizeCover() {
   let isResizingActive = false;
   
   function handleResizeStart() {
+    // Cancel any pending hide delay timeout (resize started again)
+    if (resizeHideDelayTimeoutId) {
+      clearTimeout(resizeHideDelayTimeoutId);
+      resizeHideDelayTimeoutId = null;
+    }
+    
     if (isResizingActive) return; // Already showing
     
     isResizingActive = true;
@@ -679,11 +889,23 @@ function initResizeCover() {
       resizeShowDelayTimeoutId = null;
     }
     
+    // Cancel any existing hide delay timeout
+    if (resizeHideDelayTimeoutId) {
+      clearTimeout(resizeHideDelayTimeoutId);
+      resizeHideDelayTimeoutId = null;
+    }
+    
     isResizingActive = false;
     isResizing = false;
     
-    // Hide preloader with fade out
-    hideResizeCover();
+    // Wait 1200ms before hiding overlay (super robust delay)
+    resizeHideDelayTimeoutId = setTimeout(() => {
+      // Double-check we're still not resizing before hiding
+      if (!isResizing && !isResizingActive) {
+        hideResizeCover();
+      }
+      resizeHideDelayTimeoutId = null;
+    }, resizeHideDelay);
   }
   
   // Throttled resize handler using RAF
@@ -709,7 +931,7 @@ function initResizeCover() {
 
 /**
  * Show preloader cover during resize
- * Appears instantly (no fade-in) and stays visible
+ * Fades in super fast and stays visible
  */
 function showResizeCover() {
   if (!preloaderEl) return;
@@ -720,11 +942,14 @@ function showResizeCover() {
   if (prefersReduced) {
     // Instant show for reduced motion
     preloaderEl.style.display = 'flex';
-    preloaderEl.classList.add('is-resizing');
+    preloaderEl.classList.add('is-resizing', 'is-resize-visible');
+    preloaderEl.style.opacity = '1';
+    preloaderEl.style.visibility = 'visible';
     return;
   }
   
-  // Set CSS custom property for fade duration (only for fade-out)
+  // Set CSS custom properties for fade durations
+  preloaderEl.style.setProperty('--resize-fade-in-duration', `${resizeFadeInDuration}ms`);
   preloaderEl.style.setProperty('--resize-fade-duration', `${resizeFadeDuration}ms`);
   
   // Ensure preloader is visible and on top
@@ -735,14 +960,23 @@ function showResizeCover() {
   // Remove any reveal class that might be hiding it
   preloaderEl.classList.remove('is-revealing');
   
-  // Add resize state classes and make visible instantly (no transition delay)
-  preloaderEl.classList.add('is-resizing', 'is-resize-visible');
+  // Add resize state class (but not visible yet - will fade in)
+  preloaderEl.classList.add('is-resizing');
+  preloaderEl.classList.remove('is-resize-visible');
   
-  // Force instant opacity (bypass transition for fade-in)
-  // Use inline style to override any transition
-  preloaderEl.style.opacity = '1';
+  // Start from opacity 0 for fade-in
+  preloaderEl.style.opacity = '0';
   preloaderEl.style.visibility = 'visible';
-  preloaderEl.style.transition = 'none';
+  preloaderEl.style.transition = `opacity ${resizeFadeInDuration}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+  
+  // Trigger fade-in animation
+  // Check if element still has is-resizing class (not module flag) to avoid race condition
+  requestAnimationFrame(() => {
+    if (preloaderEl && preloaderEl.classList.contains('is-resizing')) {
+      preloaderEl.classList.add('is-resize-visible');
+      preloaderEl.style.opacity = '1';
+    }
+  });
 }
 
 /**
@@ -819,6 +1053,11 @@ export function cleanupPreloader() {
   if (resizeShowDelayTimeoutId) {
     clearTimeout(resizeShowDelayTimeoutId);
     resizeShowDelayTimeoutId = null;
+  }
+  
+  if (resizeHideDelayTimeoutId) {
+    clearTimeout(resizeHideDelayTimeoutId);
+    resizeHideDelayTimeoutId = null;
   }
   
   preloaderEl = null;
