@@ -11,6 +11,7 @@
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
+- [Hosted Assets](#hosted-assets)
 - [Webflow Integration](#webflow-integration)
 - [Modules](#modules)
 - [API Reference](#api-reference)
@@ -81,6 +82,23 @@ npm run build
 # → Output: dist/app.js (minified IIFE)
 # → Deploy to your CDN and reference in Webflow
 ```
+
+---
+
+## Hosted Assets
+
+Use the GitHub Pages deployment from `becktothefuture/mccann-assets` for production-ready URLs:
+
+- JavaScript: `https://becktothefuture.github.io/mccann-assets/app.js`
+- Stylesheet: `https://becktothefuture.github.io/mccann-assets/style.css`
+
+Update Webflow's Custom Code settings with these URLs whenever you need the live bundle.
+
+To publish new builds:
+
+1. Run `npm run build` in this repo to refresh `dist/`.
+2. Copy the `dist/` contents into the `mccann-assets` repository.
+3. Commit and push `mccann-assets/main`. The GitHub Actions workflow redeploys automatically (≈1 minute).
 
 ---
 
