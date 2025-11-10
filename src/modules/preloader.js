@@ -27,11 +27,36 @@ let resizeShowDelayTimeoutId = null;
 let lastResizeCoverHideTime = 0;
 let resizeShowDelay = 800; // Delay before showing again (ms)
 let eventLeadMs = 100; // Time before hide to emit load-completed event (ms)
+let bodyOverflowBeforePreloader = '';
+let hasStoredBodyOverflow = false;
 
 // Webflow IX helper (ix3 or ix2)
 const wfIx = (window.Webflow && window.Webflow.require)
   ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
   : null;
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+
+function storeBodyOverflow() {
+  if (typeof document === 'undefined' || !document.body) return;
+  if (!hasStoredBodyOverflow) {
+    // Preserve author's overflow setting so we can restore later → prevents permanent scroll lock
+    bodyOverflowBeforePreloader = document.body.style.overflow || '';
+    hasStoredBodyOverflow = true;
+  }
+}
+
+function restoreBodyOverflow() {
+  if (typeof document === 'undefined' || !document.body) return;
+  if (hasStoredBodyOverflow) {
+    document.body.style.overflow = bodyOverflowBeforePreloader;
+  } else {
+    document.body.style.overflow = '';
+  }
+  hasStoredBodyOverflow = false;
+}
 
 // ============================================================
 // INITIALIZATION
@@ -80,6 +105,7 @@ export function initPreloader({
   log('Initializing preloader...');
 
   // Ensure preloader appears first - lock body scroll immediately
+  storeBodyOverflow();
   document.body.classList.add('preloader-active');
   document.body.style.overflow = 'hidden';
 
@@ -87,6 +113,8 @@ export function initPreloader({
   preloaderEl = document.querySelector(selector);
   if (!preloaderEl) {
     console.error('[PRELOADER] ❌ Preloader element not found');
+    document.body.classList.remove('preloader-active');
+    restoreBodyOverflow();
     return;
   }
 
@@ -514,7 +542,11 @@ function emitLoadCompleted() {
  * Scales up slightly and fades out quickly (250ms max)
  */
 function hidePreloader() {
-  if (!preloaderEl) return;
+  if (!preloaderEl) {
+    document.body.classList.remove('preloader-active');
+    restoreBodyOverflow();
+    return;
+  }
 
   log('🎯 Hiding preloader...', 'info');
   stopAnimations();
@@ -529,6 +561,7 @@ function hidePreloader() {
     setTimeout(() => {
       preloaderEl.style.display = 'none';
       document.body.classList.remove('preloader-active');
+      restoreBodyOverflow();
       window.dispatchEvent(new CustomEvent('preloader:complete'));
       log('✓ Preloader complete', 'success');
     }, eventLeadMs);
@@ -547,6 +580,7 @@ function hidePreloader() {
     // Complete: Remove from DOM
     preloaderEl.style.display = 'none';
     document.body.classList.remove('preloader-active');
+    restoreBodyOverflow();
     window.dispatchEvent(new CustomEvent('preloader:complete'));
     log('✓ Preloader complete', 'success');
   }, 250); // 250ms max - sudden and energetic
@@ -793,6 +827,9 @@ export function cleanupPreloader() {
   logEl = null;
   isResizing = false;
   lastResizeCoverHideTime = 0;
+  
+  document.body?.classList.remove('preloader-active');
+  restoreBodyOverflow();
   log('Cleaned up', 'info');
 }
 

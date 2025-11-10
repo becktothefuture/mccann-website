@@ -1142,10 +1142,6 @@ body > #preloader {
    Slide Preview Videos - Full Cover Background
    ============================================================ */
 
-.slide {
-  position: relative;
-  overflow: hidden;
-}
 
 .slide__preview {
   position: absolute;
