@@ -210,8 +210,8 @@ window.App.init({
     videoSelector: 'video[autoplay], video[data-autoplay]',     // Videos to prefetch
     
     // Animation
-    pulseDuration: 3000,                                         // Pulse cycle duration (ms)
-    pulseOpacity: 0.2,                                           // Pulse opacity range (0-1)
+    pulseDuration: 2400,                                         // Pulse cycle duration (ms) — mechanical double-beat
+    pulseOpacity: 0.35,                                          // Pulse amplitude (0-1) — deeper troughs for visibility
     
     // Timing
     minLoadTime: 1000,                                          // Minimum display time (ms)

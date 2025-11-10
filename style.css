@@ -207,10 +207,11 @@ body.preloader-active {
   width: auto;
   color: currentColor; /* SVG inherits text color */
   opacity: var(--pulse-opacity, 1);
-  will-change: opacity;
+  will-change: opacity, transform;
+  transform-origin: center center;
   
   /* GPU acceleration for smooth pulse */
-  transform: translateZ(0);
+  transform: translateZ(0) scale(var(--pulse-scale, 1));
   backface-visibility: hidden;
 }
 

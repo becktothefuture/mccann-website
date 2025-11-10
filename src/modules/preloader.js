@@ -77,8 +77,8 @@ function restoreBodyOverflow() {
  * @param {Object} options.projectData - Project data with vimeoId fields
  * @param {number} options.minLoadTime - Minimum time to show preloader (ms)
  * @param {boolean} options.showDebugLog - Show real-time debug log (default: true)
- * @param {number} options.pulseDuration - Pulse cycle duration in ms (default: 3000)
- * @param {number} options.pulseOpacity - Opacity range: 0.8 to 1.0
+ * @param {number} options.pulseDuration - Pulse cycle duration in ms (default: 2400)
+ * @param {number} options.pulseOpacity - Opacity variation amplitude (0-1, default: 0.35)
  * @param {boolean} options.enableResizeCover - Show preloader during resize (default: true)
  * @param {number} options.resizeFadeDuration - Fade in/out duration during resize (ms, default: 150)
  * @param {number} options.resizeShowDelay - Delay before showing cover again after hiding (ms, default: 800)
@@ -92,8 +92,8 @@ export function initPreloader({
   projectData = projectDataJson,
   minLoadTime = 1000,
   showDebugLog: debugLogOption = true,
-  pulseDuration = 3000,
-  pulseOpacity = 0.2,
+  pulseDuration = 2400,
+  pulseOpacity = 0.35,
   enableResizeCover = true,
   resizeFadeDuration: fadeDuration = 150,
   resizeShowDelay: showDelay = 800,
@@ -795,26 +795,92 @@ function hidePreloader() {
 // ============================================================
 
 /**
- * Pulse animation - gentle opacity breathing
+ * Pulse animation — mechanical double-beat with deliberate holds
+ * Creates a quick high-energy strike, a secondary pulse, then a long rest to feel engineered
  * @param {number} duration - Cycle duration in ms
- * @param {number} opacityRange - Opacity variation (0.2 = 0.8 to 1.0)
+ * @param {number} opacityRange - Pulse amplitude control (0-1)
  */
-function animatePulse(duration = 3000, opacityRange = 0.2) {
+function animatePulse(duration = 2400, opacityRange = 0.35) {
   if (!signetEl) return;
   
+  const prefersReduced = typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (prefersReduced) {
+    signetEl.style.setProperty('--pulse-opacity', '1');
+    signetEl.style.setProperty('--pulse-scale', '1');
+    log('⚠️ Prefers-reduced-motion detected — pulse disabled', 'warning');
+    return;
+  }
+
+  const normalizedDuration = Math.max(1200, duration);
+  const normalizedRange = Math.min(Math.max(opacityRange, 0.15), 0.65);
+  const peakOpacity = 1;
+  const floorOpacity = Math.max(0.25, peakOpacity - normalizedRange * 1.6);
+  const opacitySpan = peakOpacity - floorOpacity;
+
+  const scaleRange = 0.04 + normalizedRange * 0.06;
+  const scaleFloor = 1 - scaleRange * 0.45;
+  const scalePeak = 1 + scaleRange;
+
+  const segments = [
+    { start: 0.0, end: 0.12, from: 0.35, to: 1.0, ease: 'outCubic' },   // Snap up
+    { start: 0.12, end: 0.20, from: 1.0, to: 0.75, ease: 'inOutQuad' }, // Mechanical settle
+    { start: 0.20, end: 0.32, from: 0.75, to: 0.05, ease: 'inCubic' },  // Hard drop
+    { start: 0.32, end: 0.44, from: 0.05, to: 0.30, ease: 'outQuad' },  // Recovery glide
+    { start: 0.44, end: 0.50, from: 0.30, to: 0.30, ease: 'hold' },     // Hold low
+    { start: 0.50, end: 0.60, from: 0.30, to: 0.85, ease: 'outBack' },  // Secondary pulse
+    { start: 0.60, end: 0.68, from: 0.85, to: 0.55, ease: 'inQuad' },   // Step down
+    { start: 0.68, end: 0.82, from: 0.55, to: 0.08, ease: 'inCubic' },  // Drop to idle
+    { start: 0.82, end: 1.00, from: 0.08, to: 0.35, ease: 'outQuad' }   // Idle ramp
+  ];
+
+  const easingFns = {
+    hold: () => 0,
+    outCubic: t => 1 - Math.pow(1 - t, 3),
+    inCubic: t => t * t * t,
+    inOutQuad: t => (t < 0.5) ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
+    outQuad: t => 1 - (1 - t) * (1 - t),
+    inQuad: t => t * t,
+    outBack: t => {
+      const c1 = 1.70158;
+      const c3 = c1 + 1;
+      const x = t - 1;
+      return 1 + c3 * x * x * x + c1 * x * x;
+    }
+  };
+
+  const clamp01 = value => Math.max(0, Math.min(1, value));
+
+  const sampleEnergy = progress => {
+    const segment = segments.find(s => progress >= s.start && progress < s.end) || segments[segments.length - 1];
+    const { start, end, from, to, ease } = segment;
+    if (end <= start) return from;
+    const localProgress = clamp01((progress - start) / (end - start));
+    if (ease === 'hold') return from;
+    const eased = easingFns[ease] ? easingFns[ease](localProgress) : localProgress;
+    return from + (to - from) * eased;
+  };
+
   const startTime = performance.now();
 
   function loop(currentTime) {
-    const progress = ((currentTime - startTime) % duration) / duration;
-    // Sine wave for smooth breathing: 0.8 to 1.0
-    const opacity = 1 - (opacityRange / 2) + Math.sin(progress * Math.PI * 2) * (opacityRange / 2);
-    
-    signetEl.style.setProperty('--pulse-opacity', opacity);
+    const elapsed = (currentTime - startTime) % normalizedDuration;
+    const progress = elapsed / normalizedDuration;
+    const energy = clamp01(sampleEnergy(progress));
+
+    const opacity = floorOpacity + opacitySpan * energy;
+    const scale = scaleFloor + (scalePeak - scaleFloor) * energy;
+
+    signetEl.style.setProperty('--pulse-opacity', opacity.toFixed(3));
+    signetEl.style.setProperty('--pulse-scale', scale.toFixed(3));
+
     animationFrameId = requestAnimationFrame(loop);
   }
 
   animationFrameId = requestAnimationFrame(loop);
-  log(`✓ Pulse animation started (duration: ${duration}ms, opacity: ${1 - opacityRange}-1.0)`, 'success');
+  log(`✓ Pulse animation started (duration: ${Math.round(normalizedDuration)}ms, opacity: ${floorOpacity.toFixed(2)}-1.00)`, 'success');
 }
 
 /**
@@ -824,6 +890,11 @@ function stopAnimations() {
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
     animationFrameId = null;
+  }
+
+  if (signetEl) {
+    signetEl.style.removeProperty('--pulse-opacity');
+    signetEl.style.removeProperty('--pulse-scale');
   }
 }
 

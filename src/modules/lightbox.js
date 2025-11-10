@@ -33,6 +33,7 @@ let currentState = STATE.IDLE;
 let projectData = null;
 let lastFocus = null;
 let overlayLenis = null;
+let detailsOpen = false; // Track details overlay state
 
 export function initLightbox({ 
   root = '#lightbox',
@@ -62,6 +63,7 @@ export function initLightbox({
   const truthEl = document.querySelector('#lightbox-truth');
   const truthWellToldEl = document.querySelector('#lightbox-truthwelltold');
   const descriptionEl = document.querySelector('#lightbox-description');
+  const impactEl = document.querySelector('#lightbox-impact');
   const awardsContainer = document.querySelector('#lightbox-awards');
 
   // ============================================================
@@ -143,6 +145,7 @@ export function initLightbox({
     { el: truthEl, id: '#lightbox-truth', required: false },
     { el: truthWellToldEl, id: '#lightbox-truthwelltold', required: false },
     { el: descriptionEl, id: '#lightbox-description', required: true },
+    { el: impactEl, id: '#lightbox-impact', required: false },
     { el: awardsContainer, id: '#lightbox-awards', required: true }
   ];
   
@@ -338,6 +341,45 @@ export function initLightbox({
     return projectData[id];
   }
 
+  function renderAwards(awardsData) {
+    console.log(`[LIGHTBOX] 🏆 Rendering awards: ${awardsData?.length || 0} awards`);
+    
+    // First hide all award elements
+    const allAwards = document.querySelectorAll('[id^="award-"]');
+    allAwards.forEach(el => {
+      el.style.display = 'none';
+    });
+    
+    // If no awards data, we're done
+    if (!awardsData || awardsData.length === 0) {
+      console.log('[LIGHTBOX] No awards to display');
+      return;
+    }
+    
+    // Show and populate each award
+    awardsData.forEach((award, index) => {
+      const awardEl = document.getElementById(`award-${award.type}`);
+      
+      if (!awardEl) {
+        console.warn(`[LIGHTBOX] ⚠️  Award element #award-${award.type} not found in DOM`);
+        return;
+      }
+      
+      // Show the award element
+      awardEl.style.display = 'flex';
+      
+      // Find and populate the label
+      const labelEl = awardEl.querySelector('.award__label');
+      if (labelEl) {
+        labelEl.textContent = award.label || '';
+      } else {
+        console.warn(`[LIGHTBOX] ⚠️  Label element not found for #award-${award.type}`);
+      }
+      
+      console.log(`[LIGHTBOX] ✓ Award ${index + 1}: ${award.type} displayed`);
+    });
+  }
+
   async function waitForImages(imageUrls) {
     if (!imageUrls || imageUrls.length === 0) return;
     
@@ -372,18 +414,10 @@ export function initLightbox({
     if (truthEl) truthEl.textContent = project.truth || '';
     if (truthWellToldEl) truthWellToldEl.textContent = project.truthWellTold || '';
     if (descriptionEl) descriptionEl.textContent = project.description || '';
+    if (impactEl) impactEl.textContent = project.impact || '';
     
-    // Inject award images
-    if (awardsContainer && project.awards) {
-      awardsContainer.innerHTML = '';
-      project.awards.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = 'Award';
-        img.loading = 'eager'; // Load immediately, not lazy
-        awardsContainer.appendChild(img);
-      });
-    }
+    // Render awards
+    renderAwards(project.awards || []);
     
     // Mount Vimeo video
     if (videoArea) {
@@ -403,10 +437,8 @@ export function initLightbox({
       }
     }
     
-    // Wait for award images to load before opening
-    if (project.awards && project.awards.length > 0) {
-      await waitForImages(project.awards);
-    }
+    // No need to wait for award images - they're already in the DOM from Webflow
+    // The renderAwards function just shows/hides existing elements
     
     console.log(`[LIGHTBOX] ✓ Content injected`);
   }
@@ -522,7 +554,11 @@ export function initLightbox({
     setState(STATE.OPEN);
     
     // Initialize smooth scroll for overlay if it exists
+    // CRITICAL: Ensure overlay is always scrollable and clickable
     if (overlay) {
+      overlay.style.pointerEvents = detailsOpen ? 'auto' : 'none';
+      overlay.style.overflow = 'auto';
+      
       requestAnimationFrame(() => {
         overlayLenis = initContainerScroll(overlay, {
           lerp: 0.08,
@@ -606,12 +642,18 @@ export function initLightbox({
     
     // Clear content
     if (videoArea) videoArea.innerHTML = '';
-    if (awardsContainer) awardsContainer.innerHTML = '';
+    renderAwards([]); // Hide all awards
     if (clientEl) clientEl.textContent = '';
     if (titleEl) titleEl.textContent = '';
     if (truthEl) truthEl.textContent = '';
     if (truthWellToldEl) truthWellToldEl.textContent = '';
     if (descriptionEl) descriptionEl.textContent = '';
+    if (impactEl) impactEl.textContent = '';
+    
+    // Reset details overlay state
+    if (detailsOpen) {
+      closeDetails({ silent: true });
+    }
     
     // Disable pointer events on lightbox (hide it completely)
     lb.style.display = 'none';
@@ -673,8 +715,13 @@ export function initLightbox({
   function handleKeydown(e) {
     if (currentState === STATE.OPEN) {
       if (e.key === 'Escape') {
-        console.log('[LIGHTBOX] 🎯 Escape key pressed');
-        requestClose();
+        if (detailsOpen) {
+          console.log('[LIGHTBOX] 🎯 Escape key pressed - closing details overlay');
+          closeDetails();
+        } else {
+          console.log('[LIGHTBOX] 🎯 Escape key pressed - closing lightbox');
+          requestClose();
+        }
       }
       if (e.key === 'Tab') {
         trapFocus(e);
@@ -682,11 +729,82 @@ export function initLightbox({
     }
   }
   
+  function openDetails() {
+    if (detailsOpen || currentState !== STATE.OPEN) return;
+
+    detailsOpen = true;
+    console.log('[LIGHTBOX] 🎯 Details overlay opening');
+    emitWebflowEvent('details:show');
+
+    requestAnimationFrame(() => {
+      if (overlay) {
+        overlay.style.pointerEvents = 'auto';
+        overlay.style.overflow = 'auto';
+      }
+      if (lb) {
+        lb.style.pointerEvents = 'auto';
+      }
+    });
+  }
+
+  function closeDetails({ silent = false } = {}) {
+    if (!detailsOpen) return;
+
+    detailsOpen = false;
+    console.log('[LIGHTBOX] 🎯 Details overlay closing');
+
+    if (!silent) {
+      emitWebflowEvent('details:hide');
+    }
+
+    requestAnimationFrame(() => {
+      if (overlay) {
+        overlay.style.pointerEvents = 'none';
+      }
+      if (lb) {
+        lb.style.pointerEvents = 'auto';
+      }
+    });
+  }
+
   function handleDetailsClick(e) {
     e.preventDefault();
     e.stopPropagation();
-    console.log('[LIGHTBOX] 🚫 Details button disabled for testing');
-    // TODO: Will emit 'details:show' event here later
+
+    if (currentState !== STATE.OPEN) {
+      console.log('[LIGHTBOX] ⚠️  Details button clicked but lightbox not open');
+      return;
+    }
+
+    if (detailsOpen) {
+      closeDetails();
+    } else {
+      openDetails();
+    }
+  }
+
+  function handleOverlayClick(e) {
+    if (!detailsOpen || currentState !== STATE.OPEN) {
+      return;
+    }
+
+    console.log('[LIGHTBOX] 🔍 Overlay click while details open:', {
+      tag: e.target.tagName,
+      id: e.target.id,
+      classes: (e.target.className || '').toString().substring(0, 80)
+    });
+
+    closeDetails();
+    // Do NOT prevent default so underlying elements remain clickable
+  }
+
+  function handleLightboxClick(e) {
+    if (!detailsOpen || currentState !== STATE.OPEN) {
+      return;
+    }
+
+    console.log('[LIGHTBOX] 🔍 Lightbox click while details open');
+    closeDetails();
   }
   
   // Attach delegated listener to slides container
@@ -703,14 +821,24 @@ export function initLightbox({
     console.warn('[LIGHTBOX] ⚠️  #close-btn not found - only Escape key will close');
   }
   
-  // Details button - DISABLED FOR TESTING
-  // Prevents accidental triggering of lb events
+  // Details button - triggers details overlay
   if (detailsBtn) {
     detailsBtn.addEventListener('click', handleDetailsClick, { passive: false });
-    detailsBtn.style.opacity = '0.5';  // Visual feedback (dimmed)
-    detailsBtn.style.cursor = 'not-allowed';
-    console.log('[LIGHTBOX] ⚠️  Details button temporarily disabled for testing');
+    console.log('[LIGHTBOX] ✓ Details button handler attached');
+  } else {
+    console.warn('[LIGHTBOX] ⚠️  Details button (#details-btn) not found');
   }
+  
+  if (overlay) {
+    overlay.style.pointerEvents = 'none';
+    overlay.addEventListener('click', handleOverlayClick, { passive: false });
+    console.log('[LIGHTBOX] ✓ Overlay click handler attached (click anywhere to close details)');
+  } else {
+    console.warn('[LIGHTBOX] ⚠️  Overlay not found - details close-on-click disabled');
+  }
+  
+  lb.addEventListener('click', handleLightboxClick, { passive: false });
+  console.log('[LIGHTBOX] ✓ Lightbox container click handler attached');
 
   document.addEventListener('keydown', handleKeydown);
   
@@ -731,7 +859,15 @@ export function initLightbox({
     if (detailsBtn) {
       detailsBtn.removeEventListener('click', handleDetailsClick);
     }
+    if (overlay) {
+      overlay.removeEventListener('click', handleOverlayClick);
+      overlay.style.pointerEvents = 'none';
+    }
+    lb.removeEventListener('click', handleLightboxClick);
     document.removeEventListener('keydown', handleKeydown);
+    
+    // Reset state
+    detailsOpen = false;
     
     // Destroy overlay scroll if exists
     if (overlayLenis) {
