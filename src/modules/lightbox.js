@@ -491,6 +491,9 @@ export function initLightbox({
       // Update ARIA
       lb.setAttribute('aria-hidden', 'false');
       
+      // Enable pointer events on lightbox (was disabled on init)
+      lb.style.pointerEvents = 'auto';
+      
       // Trigger GSAP open animation via Webflow IX
       // GSAP will handle visibility (opacity, display, etc.)
       emitWebflowEvent('lb:show');
@@ -609,6 +612,10 @@ export function initLightbox({
     if (truthEl) truthEl.textContent = '';
     if (truthWellToldEl) truthWellToldEl.textContent = '';
     if (descriptionEl) descriptionEl.textContent = '';
+    
+    // Disable pointer events on lightbox (hide it completely)
+    lb.style.display = 'none';
+    lb.style.pointerEvents = 'none';
     
     // Restore focus to element that opened lightbox
     if (lastFocus && document.body.contains(lastFocus)) {
