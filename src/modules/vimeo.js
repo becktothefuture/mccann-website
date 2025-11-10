@@ -6,7 +6,7 @@
  * ==================================================
  */
 
-console.log('[VIMEO] module loaded');
+console.log('[VIMEO] Module loaded');
 
 // ============================================================
 // HELPERS
@@ -33,11 +33,51 @@ function parseVimeoId(input){
 // EXPORTS
 // ============================================================
 
-export function mountVimeo(container, inputId, params = {}){
-  if (!container) return;
+export function mountVimeo(container, inputId, options = {}){
+  if (!container) {
+    console.log('[VIMEO] ❌ mountVimeo called without container');
+    return null;
+  }
+
+  // Run previous cleanup (if any) to avoid stacking observers/listeners
+  if (typeof container.__vimeoCleanup === 'function') {
+    try {
+      container.__vimeoCleanup();
+    } catch (err) {
+      console.warn('[VIMEO] ⚠️ Previous cleanup failed:', err);
+    }
+  }
+
   const id = parseVimeoId(inputId);
-  if (!id){ container.innerHTML = ''; return; }
-  const query = new URLSearchParams({ dnt: 1, ...params }).toString();
+  if (!id){
+    container.innerHTML = '';
+    container.__vimeoCleanup = undefined;
+    console.log('[VIMEO] ⚠️ No valid video ID found');
+    return null;
+  }
+
+  const reservedKeys = new Set([
+    'query',
+    'startAt',
+    'playOnReady',
+    'unmuteOnStart',
+    'desiredVolume'
+  ]);
+
+  const legacyQuery = {};
+  Object.entries(options || {}).forEach(([key, value]) => {
+    if (!reservedKeys.has(key) && typeof options.query === 'undefined') {
+      legacyQuery[key] = value;
+    }
+  });
+
+  const queryParams = {
+    dnt: 1,
+    ...legacyQuery,
+    ...(options.query || {})
+  };
+
+  const query = new URLSearchParams(queryParams).toString();
   const src = `https://player.vimeo.com/video/${id}?${query}`;
   const iframe = document.createElement('iframe');
   iframe.src = src;
@@ -65,28 +105,100 @@ export function mountVimeo(container, inputId, params = {}){
   container.style.overflow = 'hidden';
 
   // Try to use Vimeo Player API to get exact video aspect ratio
+  const cleanupCallbacks = [];
+  container.__vimeoCleanup = () => {
+    cleanupCallbacks.splice(0).forEach(fn => {
+      try {
+        fn();
+      } catch (err) {
+        console.warn('[VIMEO] ⚠️ Cleanup error:', err);
+      }
+    });
+    container.__vimeoCleanup = undefined;
+  };
+
   ensureVimeoApi().then(() => {
-    // eslint-disable-next-line no-undef
-    const player = new (window.Vimeo && window.Vimeo.Player ? window.Vimeo.Player : function(){}) (iframe);
-    if (!player || !player.getVideoWidth) {
-      // Fallback to 16:9 if API not available
+    if (!(window.Vimeo && window.Vimeo.Player)) {
       fitIframeToCover(container, iframe, 16 / 9, 1.02);
+      console.warn('[VIMEO] ⚠️ Vimeo Player API unavailable – using fallback sizing');
       return;
     }
 
-    Promise.all([player.getVideoWidth(), player.getVideoHeight()])
-      .then(([vw, vh]) => {
-        const ratio = vw && vh ? vw / vh : 16 / 9;
-        fitIframeToCover(container, iframe, ratio, 1.02);
-        // Refit on container resize
-        const ro = new ResizeObserver(() => fitIframeToCover(container, iframe, ratio, 1.02));
-        ro.observe(container);
-        window.addEventListener('resize', () => fitIframeToCover(container, iframe, ratio, 1.02), { passive: true });
+    const player = new window.Vimeo.Player(iframe);
+    const { startAt = null, playOnReady = false, unmuteOnStart = false, desiredVolume } = options;
+
+    player.ready()
+      .then(() => {
+        console.log('[VIMEO] ✓ Player ready');
+
+        const ratioPromise = Promise.all([player.getVideoWidth(), player.getVideoHeight()])
+          .then(([vw, vh]) => {
+            const ratio = vw && vh ? vw / vh : 16 / 9;
+            fitIframeToCover(container, iframe, ratio, 1.02);
+            if (typeof ResizeObserver === 'function') {
+              const ro = new ResizeObserver(() => fitIframeToCover(container, iframe, ratio, 1.02));
+              ro.observe(container);
+              cleanupCallbacks.push(() => ro.disconnect());
+            } else {
+              console.warn('[VIMEO] ⚠️ ResizeObserver not supported; skipping container observer');
+            }
+            const handleResize = () => fitIframeToCover(container, iframe, ratio, 1.02);
+            window.addEventListener('resize', handleResize, { passive: true });
+            cleanupCallbacks.push(() => window.removeEventListener('resize', handleResize));
+          })
+          .catch(() => {
+            fitIframeToCover(container, iframe, 16 / 9, 1.02);
+          });
+
+        const startOps = [];
+        if (typeof startAt === 'number' && !Number.isNaN(startAt)) {
+          const clampedStart = Math.max(0, startAt);
+          startOps.push(
+            player.setCurrentTime(clampedStart).then(() => {
+              console.log(`[VIMEO] 🎯 Seeked to ${clampedStart}s`);
+            }).catch(err => {
+              console.warn('[VIMEO] ⚠️ Could not set start time:', err?.message || err);
+            })
+          );
+        }
+
+        if (unmuteOnStart) {
+          startOps.push(
+            player.setVolume(typeof desiredVolume === 'number' ? desiredVolume : 1)
+              .then(() => player.setMuted(false).catch(() => {}))
+              .catch(err => {
+                console.warn('[VIMEO] ⚠️ Could not set volume:', err?.message || err);
+              })
+          );
+        } else if (typeof desiredVolume === 'number') {
+          startOps.push(
+            player.setVolume(desiredVolume).catch(err => {
+              console.warn('[VIMEO] ⚠️ Could not set desired volume:', err?.message || err);
+            })
+          );
+        }
+
+        return Promise.all([ratioPromise, ...startOps]);
       })
-      .catch(() => {
-        fitIframeToCover(container, iframe, 16 / 9, 1.02);
+      .then(() => {
+        if (playOnReady) {
+          return player.play().catch(err => {
+            console.warn('[VIMEO] ⚠️ Playback blocked by browser policy:', err?.message || err);
+          });
+        }
+        return null;
+      })
+      .catch(err => {
+        console.warn('[VIMEO] ⚠️ Player initialization issue:', err?.message || err);
       });
   });
+
+  cleanupCallbacks.push(() => {
+    // Restore original overflow if mountVimeo is re-run for same container
+    container.style.overflow = prevOverflow;
+  });
+
+  return iframe;
 }
 
 /**

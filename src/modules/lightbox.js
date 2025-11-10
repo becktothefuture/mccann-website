@@ -422,17 +422,20 @@ export function initLightbox({
     // Mount Vimeo video
     if (videoArea) {
       if (!project.vimeoId || project.vimeoId === '000000000') {
-        console.error(`[LIGHTBOX] ❌ Missing or invalid vimeoId for project "${projectId}"`);
+        console.error(`[LIGHTBOX] ❌ Missing or invalid vimeoId for project "${project?.title || 'unknown'}"`);
       } else {
-        mountVimeo(videoArea, project.vimeoId, { 
-          autoplay: 1, 
-          muted: 1,
-          autopause: 0,
-          controls: 0, 
-          background: 1,
-          playsinline: 1, 
-          loop: 1,
-          dnt: 1 
+        mountVimeo(videoArea, project.vimeoId, {
+          query: {
+            autoplay: 1,
+            muted: 0,
+            controls: 1,
+            autopause: 1,
+            playsinline: 1,
+            dnt: 1
+          },
+          startAt: 1,
+          playOnReady: true,
+          unmuteOnStart: true
         });
       }
     }
