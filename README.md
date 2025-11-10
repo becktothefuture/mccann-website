@@ -81,6 +81,7 @@
 npm run build
 # → Output: dist/app.js (minified IIFE)
 # → Deploy to your CDN and reference in Webflow
+# → Use npm run publish:assets to push updates to GitHub Pages
 ```
 
 ---
