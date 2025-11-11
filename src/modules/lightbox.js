@@ -170,31 +170,32 @@ export function initLightbox({
     validationErrors.push('#close-btn missing');
   }
   
-  console.log(`\n4️⃣  Slide Triggers & Links`);
+  console.log(`\n4️⃣  Slide Triggers`);
   console.log(`   ${slides.length > 0 ? '✓' : '❌'} Found: ${slides.length} .slide element${slides.length !== 1 ? 's' : ''}`);
   
   if (slides.length === 0) {
     validationErrors.push('No .slide elements found');
   } else {
-    // Validate each slide has a .slide__link
-    let slidesWithLinks = 0;
-    let slidesWithoutLinks = [];
+    // Validate each slide has data-project attribute (required for lightbox)
+    let slidesWithData = 0;
+    let slidesWithoutData = [];
     
     slides.forEach((slide, index) => {
-      const link = slide.querySelector('.slide__link');
-      if (link) {
-        slidesWithLinks++;
+      if (slide.dataset.project) {
+        slidesWithData++;
       } else {
-        slidesWithoutLinks.push(index);
+        slidesWithoutData.push(index);
       }
     });
     
-    console.log(`   ${slidesWithLinks === slides.length ? '✓' : '⚠️'} ${slidesWithLinks}/${slides.length} slides have .slide__link`);
+    console.log(`   ${slidesWithData === slides.length ? '✓' : '⚠️'} ${slidesWithData}/${slides.length} slides have data-project attribute`);
     
-    if (slidesWithoutLinks.length > 0) {
-      console.log(`   ⚠️  Missing .slide__link in slide indices: ${slidesWithoutLinks.join(', ')}`);
-      validationWarnings.push(`${slidesWithoutLinks.length} slides missing .slide__link`);
+    if (slidesWithoutData.length > 0) {
+      console.log(`   ⚠️  Missing data-project in slide indices: ${slidesWithoutData.join(', ')}`);
+      validationWarnings.push(`${slidesWithoutData.length} slides missing data-project attribute`);
     }
+    
+    console.log(`   ℹ️  Entire .slide element is clickable (not just .slide__link)`);
   }
   
   // Validate slide data immediately (data is already loaded)
@@ -294,16 +295,15 @@ export function initLightbox({
   }
 
   function setPageInert(on) {
+    // Block background page interaction when lightbox is open
+    // Must use removeAttribute() not setAttribute('inert', false) → still blocks interaction
     const siblings = Array.from(document.body.children).filter(n => n !== lb);
     siblings.forEach(n => {
       try {
         if (on) {
-          // Set inert when opening lightbox
           n.setAttribute('inert', '');
           n.setAttribute('aria-hidden', 'true');
         } else {
-          // REMOVE inert attribute completely when closing
-          // Setting inert=false still blocks interaction!
           n.removeAttribute('inert');
           n.removeAttribute('aria-hidden');
         }
@@ -464,27 +464,20 @@ export function initLightbox({
   }
 
   function disableSlideInteractions() {
+    // Prevent double-clicks during opening transition
     slides.forEach(slide => {
-      const link = slide.querySelector('.slide__link');
-      if (link) {
-        link.classList.add('is-disabled');
-        link.setAttribute('aria-disabled', 'true');
-        link.style.pointerEvents = 'none'; // Extra safety against race conditions
-      }
+      slide.style.pointerEvents = 'none';
+      slide.setAttribute('aria-disabled', 'true');
     });
-    console.log('[LIGHTBOX] 🚫 Slide links disabled');
+    console.log('[LIGHTBOX] 🚫 Slide interactions disabled');
   }
 
   function enableSlideInteractions() {
     slides.forEach(slide => {
-      const link = slide.querySelector('.slide__link');
-      if (link) {
-        link.classList.remove('is-disabled');
-        link.removeAttribute('aria-disabled');
-        link.style.pointerEvents = ''; // Restore pointer events
-      }
+      slide.style.pointerEvents = '';
+      slide.removeAttribute('aria-disabled');
     });
-    console.log('[LIGHTBOX] ✓ Slide links re-enabled');
+    console.log('[LIGHTBOX] ✓ Slide interactions re-enabled');
   }
 
   // ============================================================
@@ -623,27 +616,19 @@ export function initLightbox({
   function finishClose() {
     console.log('[LIGHTBOX] ✓ Close animation complete');
     
-    // Update ARIA
     lb.setAttribute('aria-hidden', 'true');
     
-    // Make page accessible again
+    // Reset details state first → prevents event handlers from firing during cleanup
+    detailsOpen = false;
+    
+    // Restore page interactivity → remove inert, unlock scroll, re-enable slides
     setPageInert(false);
-    
-    // DISABLED: Lenis cleanup disabled (Lenis is disabled globally)
-    // No need to destroy overlay scroll instance
-    
-    // Unlock scroll
     unlockScroll({ delayMs: 0 });
-    console.log('[LIGHTBOX] ✓ Scroll unlocked');
-    
-    // DISABLED: Smooth scroll restart disabled (Lenis is disabled globally)
-    
-    // Re-enable slide interactions (after scroll is unlocked)
     enableSlideInteractions();
     
-    // Clear content
+    // Clear injected content
     if (videoArea) videoArea.innerHTML = '';
-    renderAwards([]); // Hide all awards
+    renderAwards([]);
     if (clientEl) clientEl.textContent = '';
     if (titleEl) titleEl.textContent = '';
     if (truthEl) truthEl.textContent = '';
@@ -651,21 +636,25 @@ export function initLightbox({
     if (descriptionEl) descriptionEl.textContent = '';
     if (impactEl) impactEl.textContent = '';
     
-    // Reset details overlay state
-    if (detailsOpen) {
-      closeDetails({ silent: true });
+    // Reset overlay to initial state
+    if (overlay) {
+      overlay.style.pointerEvents = 'none';
+      overlay.style.overflow = '';
+      overlay.style.overflowY = '';
+      overlay.style.height = '';
+      overlay.style.maxHeight = '';
     }
     
-    // Disable pointer events on lightbox (hide it completely)
+    // Hide lightbox completely
     lb.style.display = 'none';
     lb.style.pointerEvents = 'none';
     
-    // Restore focus to element that opened lightbox
+    // Restore focus
     if (lastFocus && document.body.contains(lastFocus)) {
       lastFocus.focus();
     }
     
-    // Change state to IDLE → ready to open again (LAST STEP)
+    // Ready for next open → state change LAST
     setState(STATE.IDLE);
     
     emit('LIGHTBOX_CLOSED', lb);
@@ -675,32 +664,27 @@ export function initLightbox({
   // EVENT LISTENERS
   // ============================================================
   
-  // Use event delegation for slide link clicks (more scalable)
+  // Use event delegation for slide clicks (entire slide is clickable)
   const slidesContainer = slides[0]?.parentElement;
   
   function handleSlideClick(e) {
-    // Find clicked .slide__link
-    const link = e.target.closest('.slide__link');
-    if (!link) return;
+    const slide = e.target.closest('.slide');
+    if (!slide) return;
     
-    // Early state check - prevent any interaction if not IDLE
+    // Guard against interactions during transitions
     if (currentState !== STATE.IDLE) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
     
-    // Find parent .slide
-    const slide = link.closest('.slide');
-    if (!slide) {
-      console.warn('[LIGHTBOX] ⚠️  .slide__link found but parent .slide missing');
+    if (!slide.dataset.project) {
+      console.warn('[LIGHTBOX] ⚠️  .slide found but missing data-project attribute');
       return;
     }
     
     e.preventDefault();
     e.stopPropagation();
-    
-    // Open lightbox with parent slide data
     openFromSlide(slide);
   }
   
@@ -737,17 +721,14 @@ export function initLightbox({
     console.log('[LIGHTBOX] 🎯 Details overlay opening');
     emitWebflowEvent('details:show');
 
+    // Enable overlay scrolling → native scrolling (Lenis disabled)
     requestAnimationFrame(() => {
       if (overlay) {
-        // Ensure overlay is scrollable with native scrolling
         overlay.style.pointerEvents = 'auto';
         overlay.style.overflow = 'auto';
         overlay.style.overflowY = 'auto';
         overlay.style.height = '100%';
         overlay.style.maxHeight = '100vh';
-        
-        // DISABLED: Lenis container scroll disabled for debugging
-        console.log('[LIGHTBOX] ✓ Overlay native scrolling enabled (Lenis disabled)');
       }
       if (lb) {
         lb.style.pointerEvents = 'auto';
@@ -765,12 +746,10 @@ export function initLightbox({
       emitWebflowEvent('details:hide');
     }
 
+    // Maintain interactivity → lightbox still open, overlay must remain scrollable
     requestAnimationFrame(() => {
       if (overlay) {
-        // Keep pointer events enabled to maintain scrollability
-        // Click handlers will manage interaction behavior
         overlay.style.pointerEvents = 'auto';
-        // Maintain scroll settings
         overlay.style.overflow = 'auto';
         overlay.style.overflowY = 'auto';
       }
@@ -796,27 +775,14 @@ export function initLightbox({
     }
   }
 
-  function handleOverlayClick(e) {
-    if (!detailsOpen || currentState !== STATE.OPEN) {
-      return;
-    }
+  function handleDetailsOverlayClick(e) {
+    if (!detailsOpen || currentState !== STATE.OPEN) return;
+    
+    // Allow clicks on interactive elements to propagate normally
+    if (e.target.closest('a, button, [role="button"], input, select, textarea')) return;
 
-    console.log('[LIGHTBOX] 🔍 Overlay click while details open:', {
-      tag: e.target.tagName,
-      id: e.target.id,
-      classes: (e.target.className || '').toString().substring(0, 80)
-    });
-
-    closeDetails();
-    // Do NOT prevent default so underlying elements remain clickable
-  }
-
-  function handleLightboxClick(e) {
-    if (!detailsOpen || currentState !== STATE.OPEN) {
-      return;
-    }
-
-    console.log('[LIGHTBOX] 🔍 Lightbox click while details open');
+    e.preventDefault();
+    e.stopPropagation();
     closeDetails();
   }
   
@@ -844,14 +810,11 @@ export function initLightbox({
   
   if (overlay) {
     overlay.style.pointerEvents = 'none';
-    overlay.addEventListener('click', handleOverlayClick, { passive: false });
-    console.log('[LIGHTBOX] ✓ Overlay click handler attached (click anywhere to close details)');
+    overlay.addEventListener('click', handleDetailsOverlayClick, { passive: false });
+    console.log('[LIGHTBOX] ✓ Overlay click handler attached (click background to close details)');
   } else {
     console.warn('[LIGHTBOX] ⚠️  Overlay not found - details close-on-click disabled');
   }
-  
-  lb.addEventListener('click', handleLightboxClick, { passive: false });
-  console.log('[LIGHTBOX] ✓ Lightbox container click handler attached');
 
   document.addEventListener('keydown', handleKeydown);
   
@@ -873,10 +836,9 @@ export function initLightbox({
       detailsBtn.removeEventListener('click', handleDetailsClick);
     }
     if (overlay) {
-      overlay.removeEventListener('click', handleOverlayClick);
+      overlay.removeEventListener('click', handleDetailsOverlayClick);
       overlay.style.pointerEvents = 'none';
     }
-    lb.removeEventListener('click', handleLightboxClick);
     document.removeEventListener('keydown', handleKeydown);
     
     // Reset state
