@@ -85,13 +85,13 @@ export function initSlides(options = {}) {
     slide.setAttribute('aria-label', `${project.client || ''} — ${project.title || ''}`.trim());
 
     // Populate text content
-    const clientEl = slide.querySelector('.slide__client');
-    const titleEl = slide.querySelector('.slide__title');
+    const clientEl = slide.querySelector('[data-field="slide-client"]');
+    const titleEl = slide.querySelector('[data-field="slide-title"]');
     if (clientEl) clientEl.textContent = project.client || '';
     if (titleEl) titleEl.textContent = project.title || '';
 
     // Mount preview video (always)
-    const previewContainer = slide.querySelector('.slide__preview');
+    const previewContainer = slide.querySelector('[data-field="slide-preview"]');
     if (previewContainer) {
       if (!project.vimeoPreviewId || project.vimeoPreviewId === '000000000') {
         console.warn(`[SLIDES] ⚠️  Missing vimeoPreviewId for "${projectId}"`);

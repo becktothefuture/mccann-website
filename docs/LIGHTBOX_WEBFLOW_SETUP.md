@@ -9,7 +9,7 @@
 3. **Create Custom Event `lb:close`:**
    - Step 1 (1s): Opacity 100→0%, Scale 1.0→0.95
    - Step 2 (instant at end): Display flex → none
-4. **Add IDs:** `lightbox-client`, `lightbox-title`, `lightbox-truth`, `lightbox-truthwelltold`, `lightbox-description`, `lightbox-awards`
+4. **Add data attributes:** `data-field="lightbox-client"`, `data-field="lightbox-title"`, etc. to content elements
 5. **Add data attributes:** `data-project="project-id"` to each `.slide`
 6. **Sync durations:** Update `openDuration`/`closeDuration` in `/src/app.js`
 
@@ -45,39 +45,85 @@ Ensure your `#lightbox` element has this structure:
         └── container (Content scrolls here)
 ```
 
-### 2. **Content Injection Target IDs** ⚠️ CRITICAL
+### 2. **Content Injection Target Attributes** ⚠️ CRITICAL
 
-Add these IDs to elements inside the lightbox (not classes - IDs!):
+Add these `data-field` attributes to elements inside the lightbox:
 
-| Content Field | Element ID | Example Location |
-|---------------|------------|------------------|
-| Client Name | `#lightbox-client` | Inside `.lightbox__inner` or overlay |
-| Title | `#lightbox-title` | Inside `.lightbox__inner` or overlay |
-| Truth | `#lightbox-truth` | Inside overlay content |
-| Truth Well Told | `#lightbox-truthwelltold` | Inside overlay content |
-| Description | `#lightbox-description` | Inside overlay content |
-| Awards Container | `#lightbox-awards` | Inside overlay content (will be populated with `<img>` elements) |
-| Video Area | `.video-area` | Already exists ✓ (class, not ID) |
+| Content Field | Data Attribute | Example Location |
+|---------------|----------------|------------------|
+| Client Name | `data-field="lightbox-client"` | Inside `.lightbox__inner` or overlay |
+| Title | `data-field="lightbox-title"` | Inside `.lightbox__inner` or overlay |
+| Truth | `data-field="lightbox-truth"` | Inside overlay content |
+| Truth Well Told | `data-field="lightbox-truthwelltold"` | Inside overlay content |
+| Description | `data-field="lightbox-description"` | Inside overlay content |
+| Impact | `data-field="lightbox-impact"` | Inside overlay content |
+| Awards Container | `data-field="lightbox-awards"` | Inside overlay content (container for awards) |
+| Video Area | `.video-area` | Already exists ✓ (class, not data attribute) |
 
 **Example:**
 ```html
 <div class="lightbox__overlay">
   <section>
     <div class="container">
-      <h2 id="lightbox-client">Client name goes here</h2>
-      <h1 id="lightbox-title">Project title goes here</h1>
-      <p id="lightbox-truth">Truth goes here</p>
-      <p id="lightbox-truthwelltold">Truth well told goes here</p>
-      <p id="lightbox-description">Description goes here</p>
-      <div id="lightbox-awards">
-        <!-- Award images will be injected here -->
+      <h2 data-field="lightbox-client">Client name goes here</h2>
+      <h1 data-field="lightbox-title">Project title goes here</h1>
+      <p data-field="lightbox-truth">Truth goes here</p>
+      <p data-field="lightbox-truthwelltold">Truth well told goes here</p>
+      <p data-field="lightbox-description">Description goes here</p>
+      <p data-field="lightbox-impact">Impact goes here</p>
+      <div data-field="lightbox-awards">
+        <!-- Award elements will be shown/hidden here -->
       </div>
     </div>
   </section>
 </div>
 ```
 
-**Important:** These must be IDs (set in Webflow Settings panel → ID field), not classes!
+**Important:** These are `data-field` attributes, not IDs or classes!
+
+### 2a. **Awards Structure** 🏆
+
+For awards to display correctly, create award elements with these attributes:
+
+```html
+<div data-field="lightbox-awards">
+  <!-- Award elements (hidden by default, shown based on project data) -->
+  <div data-award-type="gold" style="display: none;">
+    <img src="/award-gold-icon.svg" alt="Award">
+    <span data-field="award-label">Award name here</span>
+  </div>
+  <div data-award-type="silver" style="display: none;">
+    <img src="/award-silver-icon.svg" alt="Award">
+    <span data-field="award-label">Award name here</span>
+  </div>
+  <!-- Add more award types as needed -->
+</div>
+```
+
+**Award attributes:**
+- `data-award-type="gold"` - Identifies the award type (must match JSON data)
+- `data-field="award-label"` - Where the award text will be injected
+
+### 2b. **Slide Content Attributes** 🎬
+
+Each slide template should have these data attributes for content population:
+
+```html
+<div class="slide" data-project="project-id">
+  <div class="slide__content">
+    <h3 data-field="slide-client">Client name</h3>
+    <h2 data-field="slide-title">Project title</h2>
+    <div data-field="slide-preview">
+      <!-- Vimeo preview video will mount here -->
+    </div>
+  </div>
+</div>
+```
+
+**Slide attributes:**
+- `data-field="slide-client"` - Client name text
+- `data-field="slide-title"` - Project title text
+- `data-field="slide-preview"` - Container for preview video
 
 ### 3. **Slide Triggers** ⚠️ CRITICAL
 
@@ -339,10 +385,12 @@ Edit projects in `/src/data/project-data.json` and rebuild:
     "truth": "A sentence about truth",
     "truthWellTold": "A sentence about truth well told",
     "description": "Long form description text...",
+    "impact": "Achieved 50% increase in brand awareness",
     "vimeoId": "123456789",
+    "vimeoPreviewId": "987654321",
     "awards": [
-      "/path/to/award1.jpg",
-      "/path/to/award2.jpg"
+      { "type": "gold", "label": "Gold Lion - Cannes" },
+      { "type": "silver", "label": "Silver Pencil - D&AD" }
     ]
   }
 }
@@ -354,8 +402,16 @@ Edit projects in `/src/data/project-data.json` and rebuild:
 - `truth` (string): Truth statement
 - `truthWellTold` (string): Truth well told statement
 - `description` (string): Long description
-- `vimeoId` (string): Vimeo video ID (numbers only)
-- `awards` (array): Array of image URLs
+- `impact` (string): Impact statement or metric
+- `vimeoId` (string): Vimeo video ID for lightbox (numbers only)
+- `vimeoPreviewId` (string): Vimeo video ID for slide preview (numbers only)
+- `awards` (array): Array of award objects with `type` and `label`:
+  ```json
+  "awards": [
+    { "type": "gold", "label": "Gold Award Name" },
+    { "type": "silver", "label": "Silver Award Name" }
+  ]
+  ```
 
 **Important:** After editing `src/data/project-data.json`, run `npm run build` to bundle the changes into `app.js`
 
@@ -396,8 +452,13 @@ When you load the page, check the console for:
    ⏱️  Close duration: 1000ms
 
 2️⃣  Content Injection Targets
-   ✓ .lightbox--client
-   ✓ .lightbox--title
+   ✓ [data-field="lightbox-client"]
+   ✓ [data-field="lightbox-title"]
+   ✓ [data-field="lightbox-truth"]
+   ✓ [data-field="lightbox-truthwelltold"]
+   ✓ [data-field="lightbox-description"]
+   ✓ [data-field="lightbox-impact"]
+   ✓ [data-field="lightbox-awards"]
    ...
 
 3️⃣  Slide Triggers
@@ -417,7 +478,7 @@ When you load the page, check the console for:
 ```
 
 **If you see warnings:**
-- ⚠️ Check that all content target classes exist in your Webflow structure
+- ⚠️ Check that all content target elements have correct `data-field` attributes
 - ⚠️ Check that slides have `data-project` attributes
 - ⚠️ Check that project IDs match JSON keys
 
@@ -437,7 +498,7 @@ When you load the page, check the console for:
 - Check that target is `#lightbox` element
 
 ### **Content doesn't show**
-- Check that content target classes exist (`.lightbox--client`, etc.)
+- Check that content target elements have `data-field` attributes
 - Verify JSON data structure matches expected format
 - Check console for "Content injected" message
 
@@ -478,7 +539,7 @@ After you've configured everything in Webflow:
 2. Add `data-project` attributes to all your `.slide` elements
 3. Test each slide to ensure correct content loads
 4. Adjust animation durations in Webflow and sync to `src/app.js`
-5. Style the content injection targets (`.lightbox--client`, `.lightbox--title`, etc.)
+5. Style the content injection targets using their classes or the `[data-field]` attribute selectors
 
 Need help? Check the console for validation messages and warnings! 🎯
 

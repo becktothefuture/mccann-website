@@ -58,13 +58,13 @@ export function initLightbox({
   const slides = document.querySelectorAll('.slide');
   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const clientEl = document.querySelector('#lightbox-client');
-  const titleEl = document.querySelector('#lightbox-title');
-  const truthEl = document.querySelector('#lightbox-truth');
-  const truthWellToldEl = document.querySelector('#lightbox-truthwelltold');
-  const descriptionEl = document.querySelector('#lightbox-description');
-  const impactEl = document.querySelector('#lightbox-impact');
-  const awardsContainer = document.querySelector('#lightbox-awards');
+  const clientEl = lb.querySelector('[data-field="lightbox-client"]');
+  const titleEl = lb.querySelector('[data-field="lightbox-title"]');
+  const truthEl = lb.querySelector('[data-field="lightbox-truth"]');
+  const truthWellToldEl = lb.querySelector('[data-field="lightbox-truthwelltold"]');
+  const descriptionEl = lb.querySelector('[data-field="lightbox-description"]');
+  const impactEl = lb.querySelector('[data-field="lightbox-impact"]');
+  const awardsContainer = lb.querySelector('[data-field="lightbox-awards"]');
 
   // ============================================================
   // INITIALIZATION
@@ -140,13 +140,13 @@ export function initLightbox({
   
   console.log('\n2️⃣  Content Injection Targets');
   const contentTargets = [
-    { el: clientEl, id: '#lightbox-client', required: true },
-    { el: titleEl, id: '#lightbox-title', required: true },
-    { el: truthEl, id: '#lightbox-truth', required: false },
-    { el: truthWellToldEl, id: '#lightbox-truthwelltold', required: false },
-    { el: descriptionEl, id: '#lightbox-description', required: true },
-    { el: impactEl, id: '#lightbox-impact', required: false },
-    { el: awardsContainer, id: '#lightbox-awards', required: true }
+    { el: clientEl, id: '[data-field="lightbox-client"]', required: true },
+    { el: titleEl, id: '[data-field="lightbox-title"]', required: true },
+    { el: truthEl, id: '[data-field="lightbox-truth"]', required: false },
+    { el: truthWellToldEl, id: '[data-field="lightbox-truthwelltold"]', required: false },
+    { el: descriptionEl, id: '[data-field="lightbox-description"]', required: true },
+    { el: impactEl, id: '[data-field="lightbox-impact"]', required: false },
+    { el: awardsContainer, id: '[data-field="lightbox-awards"]', required: true }
   ];
   
   contentTargets.forEach(({ el, id, required }) => {
@@ -345,7 +345,7 @@ export function initLightbox({
     console.log(`[LIGHTBOX] 🏆 Rendering awards: ${awardsData?.length || 0} awards`);
     
     // First hide all award elements
-    const allAwards = document.querySelectorAll('[id^="award-"]');
+    const allAwards = lb.querySelectorAll('[data-award-type]');
     allAwards.forEach(el => {
       el.style.display = 'none';
     });
@@ -358,10 +358,10 @@ export function initLightbox({
     
     // Show and populate each award
     awardsData.forEach((award, index) => {
-      const awardEl = document.getElementById(`award-${award.type}`);
+      const awardEl = lb.querySelector(`[data-award-type="${award.type}"]`);
       
       if (!awardEl) {
-        console.warn(`[LIGHTBOX] ⚠️  Award element #award-${award.type} not found in DOM`);
+        console.warn(`[LIGHTBOX] ⚠️  Award element [data-award-type="${award.type}"] not found in DOM`);
         return;
       }
       
@@ -369,11 +369,11 @@ export function initLightbox({
       awardEl.style.display = 'flex';
       
       // Find and populate the label
-      const labelEl = awardEl.querySelector('.award__label');
+      const labelEl = awardEl.querySelector('[data-field="award-label"]');
       if (labelEl) {
         labelEl.textContent = award.label || '';
       } else {
-        console.warn(`[LIGHTBOX] ⚠️  Label element not found for #award-${award.type}`);
+        console.warn(`[LIGHTBOX] ⚠️  Label element not found for [data-award-type="${award.type}"]`);
       }
       
       console.log(`[LIGHTBOX] ✓ Award ${index + 1}: ${award.type} displayed`);
