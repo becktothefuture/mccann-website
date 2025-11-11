@@ -848,17 +848,16 @@ export function initLightbox({
 
     requestAnimationFrame(() => {
       if (overlay) {
+        overlay.style.pointerEvents = 'none';
         if (resetOverlay) {
-          overlay.style.pointerEvents = 'none';
           overlay.style.overflow = '';
           overlay.style.overflowY = '';
         } else {
-          overlay.style.pointerEvents = 'auto';
           overlay.style.overflow = 'auto';
           overlay.style.overflowY = 'auto';
         }
       }
-      if (lb && !resetOverlay) {
+      if (lb) {
         lb.style.pointerEvents = 'auto';
       }
       debugPointerSnapshot(`closeDetails → raf resetOverlay=${resetOverlay}`);
