@@ -12,6 +12,7 @@ import { initSlides } from './modules/slides.js';
 import { initLightbox } from './modules/lightbox.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
 import { initSmoothScroll } from './modules/smooth-scroll.js';
+import { initNavTransition } from './modules/nav-transition.js';
 
 // ============================================================
 // HELPERS
@@ -53,7 +54,7 @@ function init(options = {}) {
     vimeoPreload: 'prefetch',
     vimeoBufferLimit: 5,
     minLoadTime: 1000,
-    pulseDuration: 3000,
+    pulseDuration: 2200,
     pulseOpacity: 0.2,
     ...preloader
   };
@@ -73,7 +74,7 @@ function init(options = {}) {
     containerSelector: '.perspective-wrapper',
     replaceExisting: true
   });
-  
+
   // Then initialize lightbox (it will find the newly created slides)
   initLightbox({ 
     root: lightboxRoot, 
@@ -91,6 +92,13 @@ function init(options = {}) {
   } catch (err) {
     // Silent fail - no logo animation if ScrollTrigger unavailable
   }
+
+  // Initialize navigation transitions
+  initNavTransition({
+    containerSelector: '.nav',
+    linkSelector: 'a.nav__link',
+    transitionDelay: 300
+  });
 }
 
 window.App = window.App || {};

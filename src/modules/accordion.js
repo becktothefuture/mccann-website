@@ -1,8 +1,8 @@
 /**
  * ==================================================
  *  McCann Website — Accordion Module
- *  Purpose: ARIA-compliant nested accordion with GSAP animations
- *  Date: 2025-11-06
+ *  Purpose: ARIA-compliant nested accordion with native staggered animation
+ *  Date: 2025-11-10
  * ==================================================
  */
 
@@ -12,16 +12,23 @@ console.log('[ACCORDION] Module loaded');
 // EXPORTS
 // ============================================================
 
-export function initAccordion(options = {}){
-  const { selector = '.accordeon' } = options;
-  
+export function initAccordion(options = {}) {
+  const {
+    selector = '.accordeon',
+    openDuration = 360,
+    closeDuration = 260,
+    itemDuration = 320,
+    itemOverlap = 100,
+    itemDistance = 16
+  } = options;
+
   const root = document.querySelector(selector);
-  if (!root){ 
-    console.log('[ACCORDION] ❌ Root element not found:', selector); 
-    return; 
+  if (!root) {
+    console.log('[ACCORDION] ❌ Root element not found:', selector);
+    return;
   }
   console.log('[ACCORDION] ✓ Root element found:', selector);
-  
+
   window._accordionRoot = root;
   window._accordionDebug = true;
 
@@ -29,69 +36,287 @@ export function initAccordion(options = {}){
   // HELPERS
   // ============================================================
 
-  const panelOf = item => item?.querySelector(':scope > .acc-list');
-  const groupOf = item => {
+  const panelOf = (item) => item?.querySelector(':scope > .acc-list');
+  const groupOf = (item) => {
     const parent = item.parentElement;
     return parent?.classList.contains('acc-list') ? parent : root;
   };
-  const dbg = (...args) => { try { console.log('[ACCORDION]', ...args); } catch(_) {} };
+  const dbg = (...args) => { try { console.log('[ACCORDION]', ...args); } catch (_) {} };
   const itemKind = (el) => el?.classList?.contains('acc-section') ? 'section' : 'item';
   const labelOf = (el) => {
     const t = el?.querySelector(':scope > .acc-trigger');
-    return (t?.textContent || '').trim().replace(/\s+/g,' ').slice(0,80);
+    return (t?.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80);
   };
-  const ACTIVE_TRIGGER_CLASS = 'acc-trigger--active';
-  
-  function markItemsForAnimation(panel, show = true) {
-    const items = panel.querySelectorAll(':scope > .acc-item');
-    items.forEach(item => {
-      if (show) {
-        item.classList.add('acc-animate-target');
-      } else {
-        item.classList.remove('acc-animate-target');
-      }
-    });
-    dbg(`Marked ${items.length} items for ${show ? 'show' : 'hide'} animation in panel ${panel.id}`);
+  const ACTIVE_TRIGGER_CLASS = 'is-active';
+  const PANEL_STATES = {
+    COLLAPSED: 'collapsed',
+    CLOSING: 'closing',
+    OPENING: 'opening',
+    OPEN: 'open'
+  };
+
+  const motionReduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  const resolvedOpenDuration = motionReduce ? 0 : Math.max(openDuration, 16);
+  const resolvedCloseDuration = motionReduce ? 0 : Math.max(closeDuration, 16);
+  const resolvedItemDuration = motionReduce ? 0 : Math.max(itemDuration, 16);
+  const resolvedOverlap = motionReduce ? 0 : Math.min(Math.max(itemOverlap, 0), resolvedItemDuration);
+  const itemStep = resolvedItemDuration > 0 ? Math.max(resolvedItemDuration - resolvedOverlap, 0) : 0;
+  const resolvedDistance = Math.max(itemDistance, 0);
+
+  root.style.setProperty('--acc-item-distance', `${resolvedDistance}px`);
+
+  const panelRafMap = new WeakMap();
+  const itemRafMap = new WeakMap();
+
+  const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+  const easeInCubic = (t) => t * t * t;
+
+  function setPanelState(panel, state) {
+    panel.dataset.state = state;
+    panel.setAttribute('data-accordion-state', state);
   }
-  
-  function clearAllAnimationMarkers() {
-    root.querySelectorAll('.acc-animate-target').forEach(el => {
-      el.classList.remove('acc-animate-target');
-    });
+
+  function ensurePanelRegistration(panel) {
+    if (!panel.dataset.accDisplay) {
+      const computedDisplay = window.getComputedStyle(panel).display;
+      panel.dataset.accDisplay = computedDisplay === 'none' ? 'block' : computedDisplay;
+    }
+    panel.style.display = panel.dataset.accDisplay || 'block';
   }
 
   // ============================================================
-  // WEBFLOW IX INTEGRATION
+  // ANIMATION
   // ============================================================
 
-  const wfIx = (window.Webflow && window.Webflow.require)
-    ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
-    : null;
-  dbg('Webflow IX available:', !!wfIx);
-
-  function emitIx(name){
-    try {
-      if (wfIx && typeof wfIx.emit === 'function') {
-        dbg(`🎯 EMITTING via wfIx.emit: "${name}"`);
-        wfIx.emit(name);
-      }
-    } catch(err) {
-      dbg('wfIx.emit error', err && err.message);
+  function cancelPanelAnimation(panel) {
+    const raf = panelRafMap.get(panel);
+    if (typeof raf === 'number') {
+      cancelAnimationFrame(raf);
     }
-    
-    try {
-      window.dispatchEvent(new CustomEvent(name));
-      dbg(`📢 EMITTING via window.dispatchEvent: "${name}"`);
-    } catch(err) { 
-      dbg('window.dispatchEvent error', err && err.message);
-    }
+    panelRafMap.delete(panel);
+    panel.style.willChange = '';
   }
 
-  function emitAll(primary){
+  function animatePanelHeight(panel, direction, onComplete) {
+    cancelPanelAnimation(panel);
+
+    const duration = direction === 'open' ? resolvedOpenDuration : resolvedCloseDuration;
+    const startHeight = panel.getBoundingClientRect().height;
+    const targetHeight = direction === 'open' ? panel.scrollHeight : 0;
+
+    if (duration <= 16) {
+      panel.style.height = direction === 'open' ? 'auto' : '0px';
+      panel.style.overflow = direction === 'open' ? 'visible' : 'hidden';
+      onComplete?.();
+      return;
+    }
+
+    const startTime = performance.now();
+    const ease = direction === 'open' ? easeOutCubic : easeInCubic;
+
+    if (direction === 'open' && startHeight === 0) {
+      panel.style.height = '0px';
+    } else if (direction === 'close' && (panel.style.height === 'auto' || panel.style.height === '')) {
+      panel.style.height = `${startHeight}px`;
+    }
+
+    panel.style.overflow = 'hidden';
+    panel.style.willChange = 'height';
+
+    const step = (now) => {
+      const elapsed = now - startTime;
+      const progress = duration === 0 ? 1 : Math.min(elapsed / duration, 1);
+      const eased = ease(progress);
+      const current = startHeight + (targetHeight - startHeight) * eased;
+      panel.style.height = `${current}px`;
+
+      if (progress < 1) {
+        panelRafMap.set(panel, requestAnimationFrame(step));
+        return;
+      }
+
+      panelRafMap.delete(panel);
+      panel.style.height = direction === 'open' ? 'auto' : '0px';
+      panel.style.overflow = direction === 'open' ? 'visible' : 'hidden';
+      panel.style.willChange = '';
+      onComplete?.();
+    };
+
+    panelRafMap.set(panel, requestAnimationFrame(step));
+  }
+
+  function cancelItemAnimation(item) {
+    const raf = itemRafMap.get(item);
+    if (typeof raf === 'number') {
+      cancelAnimationFrame(raf);
+    }
+    itemRafMap.delete(item);
+    item.style.willChange = '';
+  }
+
+  function animateItem(item, direction, delayMs) {
+    cancelItemAnimation(item);
+
+    const duration = resolvedItemDuration;
+    const stored = parseFloat(item.style.getPropertyValue('--acc-progress'));
+    const startValue = Number.isFinite(stored) ? stored : (direction === 'open' ? 0 : 1);
+    const endValue = direction === 'open' ? 1 : 0;
+
+    if (duration <= 16) {
+      item.style.setProperty('--acc-progress', endValue.toString());
+      return;
+    }
+
+    const startTime = performance.now() + delayMs;
+    const ease = direction === 'open' ? easeOutCubic : easeInCubic;
+
+    item.style.willChange = 'transform, opacity';
+
+    const step = (now) => {
+      if (now < startTime) {
+        itemRafMap.set(item, requestAnimationFrame(step));
+        return;
+      }
+
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = ease(progress);
+      const current = startValue + (endValue - startValue) * eased;
+      item.style.setProperty('--acc-progress', current.toFixed(3));
+
+      if (progress < 1) {
+        itemRafMap.set(item, requestAnimationFrame(step));
+        return;
+      }
+
+      itemRafMap.delete(item);
+      item.style.setProperty('--acc-progress', endValue.toString());
+      item.style.willChange = '';
+    };
+
+    itemRafMap.set(item, requestAnimationFrame(step));
+  }
+
+  function animateItems(panel, direction) {
+    const items = Array.from(panel.querySelectorAll(':scope > .acc-item'));
+    if (!items.length) return;
+
+    const total = items.length;
+    items.forEach((item, index) => {
+      const order = direction === 'open' ? index : total - index - 1;
+      const delay = Math.max(itemStep * order, 0);
+      animateItem(item, direction, delay);
+    });
+  }
+
+  function setItemsProgress(panel, value) {
+    const clamped = Math.max(0, Math.min(1, value));
+    panel.querySelectorAll(':scope > .acc-item').forEach(item => {
+      cancelItemAnimation(item);
+      item.style.setProperty('--acc-progress', clamped.toFixed(3));
+    });
+  }
+
+  function emitAll(primary, detail = {}) {
     const aliases = [];
     if (primary === 'acc-open') aliases.push('accordeon-open');
     if (primary === 'acc-close') aliases.push('accordeon-close');
-    [primary, ...aliases].forEach(ev => emitIx(ev));
+    [primary, ...aliases].forEach(name => {
+      try {
+        window.dispatchEvent(new CustomEvent(name, { detail }));
+        dbg(`📢 EMITTING: "${name}"`, detail);
+      } catch (err) {
+        dbg('emit error', err?.message);
+      }
+    });
+  }
+
+  function finalizeOpen(panel) {
+    setPanelState(panel, PANEL_STATES.OPEN);
+    panel.style.height = 'auto';
+    panel.style.overflow = 'visible';
+    setItemsProgress(panel, 1);
+    dbg('expanded', { id: panel.id });
+  }
+
+  function finalizeClose(panel) {
+    setPanelState(panel, PANEL_STATES.COLLAPSED);
+    panel.classList.remove('is-active');
+    panel.setAttribute('aria-hidden', 'true');
+    panel.style.height = '0px';
+    panel.style.overflow = 'hidden';
+    setItemsProgress(panel, 0);
+    dbg('collapsed', { id: panel.id });
+  }
+
+  function openPanel(panel) {
+    ensurePanelRegistration(panel);
+    cancelPanelAnimation(panel);
+    setPanelState(panel, PANEL_STATES.OPENING);
+    panel.classList.add('is-active');
+    panel.setAttribute('aria-hidden', 'false');
+    panel.style.display = panel.dataset.accDisplay || 'block';
+    panel.style.overflow = 'hidden';
+    if (panel.style.height === '' || panel.style.height === 'auto') {
+      panel.style.height = '0px';
+    }
+    setItemsProgress(panel, 0);
+    animateItems(panel, 'open');
+    emitAll('acc-open', { id: panel.id });
+    animatePanelHeight(panel, 'open', () => finalizeOpen(panel));
+  }
+
+  function closePanel(panel) {
+    ensurePanelRegistration(panel);
+    cancelPanelAnimation(panel);
+    setPanelState(panel, PANEL_STATES.CLOSING);
+    panel.style.overflow = 'hidden';
+    panel.style.height = `${panel.getBoundingClientRect().height}px`;
+    animateItems(panel, 'close');
+    emitAll('acc-close', { id: panel.id });
+    animatePanelHeight(panel, 'close', () => finalizeClose(panel));
+  }
+
+  function forceCollapse(panel) {
+    ensurePanelRegistration(panel);
+    cancelPanelAnimation(panel);
+    setPanelState(panel, PANEL_STATES.COLLAPSED);
+    panel.classList.remove('is-active');
+    panel.setAttribute('aria-hidden', 'true');
+    panel.style.display = panel.dataset.accDisplay || 'block';
+    panel.style.height = '0px';
+    panel.style.overflow = 'hidden';
+    setItemsProgress(panel, 0);
+  }
+
+  function collapseDescendants(container) {
+    const scope = container || root;
+    scope.querySelectorAll('.acc-item > .acc-list').forEach(panel => {
+      if (panel.dataset.state === PANEL_STATES.COLLAPSED) return;
+      forceCollapse(panel);
+      const owner = panel.closest('.acc-item');
+      const trigger = owner?.querySelector(':scope > .acc-trigger');
+      trigger?.setAttribute('aria-expanded', 'false');
+      trigger?.classList?.remove(ACTIVE_TRIGGER_CLASS);
+    });
+  }
+
+  function closeSiblings(item) {
+    const group = groupOf(item);
+    if (!group) return;
+    const targetClass = item.matches('.acc-section') ? 'acc-section' : 'acc-item';
+    Array.from(group.children).forEach(sibling => {
+      if (sibling === item || !sibling.classList.contains(targetClass)) return;
+      const panel = panelOf(sibling);
+      if (!panel) return;
+      const state = panel.dataset.state;
+      if (state === PANEL_STATES.COLLAPSED || state === PANEL_STATES.CLOSING) return;
+      dbg('close sibling', { kind: targetClass, label: labelOf(sibling), id: panel.id });
+      closePanel(panel);
+      const trigger = sibling.querySelector(':scope > .acc-trigger');
+      trigger?.setAttribute('aria-expanded', 'false');
+      trigger?.classList?.remove(ACTIVE_TRIGGER_CLASS);
+    });
   }
 
   // ============================================================
@@ -99,204 +324,128 @@ export function initAccordion(options = {}){
   // ============================================================
 
   const triggers = root.querySelectorAll('.acc-trigger');
-  triggers.forEach((t, i) => {
-    const item = t.closest('.acc-section, .acc-item');
-    const p = panelOf(item);
-    if (p){
-      const pid = p.id || `acc-panel-${i}`;
-      p.id = pid;
-      t.setAttribute('aria-controls', pid);
-      t.setAttribute('aria-expanded', 'false');
+  triggers.forEach((trigger, index) => {
+    const item = trigger.closest('.acc-section, .acc-item');
+    const panel = panelOf(item);
+    if (!panel) return;
+
+    const pid = panel.id || `acc-panel-${index}`;
+    panel.id = pid;
+    trigger.setAttribute('aria-controls', pid);
+
+    const initiallyExpanded = panel.classList.contains('is-active');
+    trigger.setAttribute('aria-expanded', initiallyExpanded ? 'true' : 'false');
+    if (initiallyExpanded) {
+      trigger.classList.add(ACTIVE_TRIGGER_CLASS);
+    } else {
+      trigger.classList.remove(ACTIVE_TRIGGER_CLASS);
     }
   });
   dbg('bootstrapped', triggers.length, 'triggers');
-
-  // ============================================================
-  // CORE FUNCTIONS
-  // ============================================================
-
-  function expand(p){
-    dbg('expand start', { id: p.id, children: p.children?.length });
-    p.classList.add('is-active', 'acc-list--expanding');
-    p.dataset.state = 'opening';
-    
-    const onEnd = (e) => {
-      if (e.propertyName !== 'max-height') return;
-      if (p.dataset.state === 'opening'){
-        p.classList.remove('acc-list--expanding');
-        p.classList.add('acc-list--expanded');
-        p.dataset.state = 'open';
-        dbg('expanded', { id: p.id });
-      }
-    };
-    p.addEventListener('transitionend', onEnd, { once: true });
-  }
-
-  function collapse(p){
-    dbg('collapse start', { id: p.id });
-    p.classList.remove('acc-list--expanding', 'acc-list--expanded');
-    p.dataset.state = 'closing';
-    
-    const onEnd = (e) => {
-      if (e.propertyName !== 'max-height') return;
-      if (p.dataset.state === 'closing'){
-        p.dataset.state = 'collapsed';
-        p.classList.remove('is-active');
-        markItemsForAnimation(p, false);
-        dbg('collapsed', { id: p.id });
-      }
-    };
-    p.addEventListener('transitionend', onEnd, { once: true });
-  }
-
-  function closeSiblings(item){
-    const group = groupOf(item);
-    if (!group) return;
-    const want = item.matches('.acc-section') ? 'acc-section' : 'acc-item';
-    Array.from(group.children).forEach(sib => {
-      if (sib === item || !sib.classList.contains(want)) return;
-      const p = panelOf(sib);
-      if (p && (p.dataset.state === 'open' || p.dataset.state === 'opening')){
-        dbg('close sibling', { kind: want, label: labelOf(sib), id: p.id });
-        clearAllAnimationMarkers();
-        markItemsForAnimation(p, true);
-        requestAnimationFrame(() => emitAll('acc-close'));
-        collapse(p);
-        const trig = sib.querySelector(':scope > .acc-trigger');
-        trig?.setAttribute('aria-expanded', 'false');
-        trig?.classList?.remove(ACTIVE_TRIGGER_CLASS);
-      }
-    });
-  }
-
-  function resetAllL2Under(container){
-    const scope = container || root;
-    scope.querySelectorAll('.acc-item > .acc-list').forEach(p => {
-      if (p.dataset.state === 'open' || p.dataset.state === 'opening'){
-        collapse(p);
-        const it = p.closest('.acc-item');
-        const t = it?.querySelector(':scope > .acc-trigger');
-        t?.setAttribute('aria-expanded', 'false');
-        t?.classList?.remove(ACTIVE_TRIGGER_CLASS);
-      }
-    });
-  }
-
-  function toggle(item){
-    const p = panelOf(item);
-    if (!p) return;
-    const trig = item.querySelector(':scope > .acc-trigger');
-    const opening = !(p.dataset.state === 'open' || p.dataset.state === 'opening');
-    dbg('toggle', { kind: itemKind(item), opening, label: labelOf(item), id: p.id });
-    
-    if (opening) closeSiblings(item);
-
-    if (itemKind(item) === 'section'){
-      if (opening) resetAllL2Under(root);
-      else resetAllL2Under(item);
-    }
-
-    if (opening){
-      clearAllAnimationMarkers();
-      markItemsForAnimation(p, true);
-      requestAnimationFrame(() => {
-        dbg('emit acc-open', { id: p.id });
-        emitAll('acc-open');
-      });
-      expand(p);
-      trig?.setAttribute('aria-expanded', 'true');
-      trig?.classList?.add(ACTIVE_TRIGGER_CLASS);
-    } else {
-      clearAllAnimationMarkers();
-      markItemsForAnimation(p, true);
-      requestAnimationFrame(() => {
-        dbg('emit acc-close', { id: p.id });
-        emitAll('acc-close');
-      });
-      collapse(p);
-      trig?.setAttribute('aria-expanded', 'false');
-      trig?.classList?.remove(ACTIVE_TRIGGER_CLASS);
-    }
-  }
 
   // ============================================================
   // INITIALIZATION
   // ============================================================
 
   document.body.classList.add('js-prep');
-  root.querySelectorAll('.acc-list').forEach(p => { 
-    p.dataset.state = 'collapsed'; 
+  root.querySelectorAll('.acc-list').forEach(panel => {
+    ensurePanelRegistration(panel);
+    const isActive = panel.classList.contains('is-active');
+    const state = isActive ? PANEL_STATES.OPEN : PANEL_STATES.COLLAPSED;
+    setPanelState(panel, state);
+    panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+    panel.style.height = isActive ? 'auto' : '0px';
+    panel.style.overflow = isActive ? 'visible' : 'hidden';
+    setItemsProgress(panel, isActive ? 1 : 0);
   });
   requestAnimationFrame(() => {
     document.body.classList.remove('js-prep');
   });
 
   // ============================================================
+  // CORE FUNCTIONS
+  // ============================================================
+
+  function toggle(item) {
+    const panel = panelOf(item);
+    if (!panel) return;
+    const trigger = item.querySelector(':scope > .acc-trigger');
+    const state = panel.dataset.state;
+    const opening = !(state === PANEL_STATES.OPEN || state === PANEL_STATES.OPENING);
+
+    dbg('toggle', { kind: itemKind(item), opening, label: labelOf(item), id: panel.id });
+
+    if (opening) closeSiblings(item);
+
+    if (itemKind(item) === 'section') {
+      if (opening) {
+        collapseDescendants(root);
+      } else {
+        collapseDescendants(item);
+      }
+    }
+
+    if (opening) {
+      openPanel(panel);
+      trigger?.setAttribute('aria-expanded', 'true');
+      trigger?.classList?.add(ACTIVE_TRIGGER_CLASS);
+      return;
+    }
+
+    closePanel(panel);
+    trigger?.setAttribute('aria-expanded', 'false');
+    trigger?.classList?.remove(ACTIVE_TRIGGER_CLASS);
+  }
+
+  // ============================================================
   // EVENT LISTENERS
   // ============================================================
 
-  function handleInteraction(e) {
-    const t = e.target.closest('.acc-trigger');
-    if (!t || !root.contains(t)) return;
-    
-    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
-    
-    e.preventDefault();
-    const item = t.closest('.acc-section, .acc-item');
+  function handleInteraction(event) {
+    const trigger = event.target.closest('.acc-trigger');
+    if (!trigger || !root.contains(trigger)) return;
+
+    if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+
+    event.preventDefault();
+    const item = trigger.closest('.acc-section, .acc-item');
     if (item) {
-      dbg(e.type, { label: (t.textContent || '').trim().replace(/\s+/g,' ').slice(0,80) });
+      dbg(event.type, { label: (trigger.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80) });
       toggle(item);
     }
   }
-  
+
   root.addEventListener('click', handleInteraction);
   root.addEventListener('keydown', handleInteraction);
 
-  const ro = new ResizeObserver(entries => {
-    entries.forEach(({ target: p }) => {
-      if (p.dataset.state === 'open'){ 
-        if (!p.classList.contains('acc-list--expanded')) {
-          p.classList.add('acc-list--expanded');
-        }
-      }
-    });
-  });
-  root.querySelectorAll('.acc-list').forEach(p => ro.observe(p));
-  
   // ============================================================
   // DEBUG API
   // ============================================================
 
   window._accordionTest = {
-    markItems: (panelId) => {
-      const panel = document.getElementById(panelId) || root.querySelector('.acc-list');
-      if (panel) {
-        markItemsForAnimation(panel, true);
-        console.log('Marked items in panel:', panel);
-      }
+    open: (panelId) => {
+      const panel = document.getElementById(panelId);
+      if (panel) openPanel(panel);
     },
-    clearMarks: () => {
-      clearAllAnimationMarkers();
-      console.log('Cleared all marks');
+    close: (panelId) => {
+      const panel = document.getElementById(panelId);
+      if (panel) closePanel(panel);
     },
-    emitOpen: () => {
-      emitAll('acc-open');
-      console.log('Emitted acc-open');
+    forceCloseAll: () => {
+      root.querySelectorAll('.acc-list').forEach(panel => forceCollapse(panel));
+      root.querySelectorAll('.acc-trigger').forEach(trigger => {
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.classList.remove(ACTIVE_TRIGGER_CLASS);
+      });
     },
-    emitClose: () => {
-      emitAll('acc-close');
-      console.log('Emitted acc-close');
-    },
-    checkWebflow: () => {
-      console.log('Webflow object:', window.Webflow);
-      console.log('wfIx:', wfIx);
-    },
-    getMarkedItems: () => {
-      const items = root.querySelectorAll('.acc-animate-target');
-      console.log(`Found ${items.length} items with .acc-animate-target class`);
-      return items;
+    state: () => {
+      return Array.from(root.querySelectorAll('.acc-list')).map(panel => ({
+        id: panel.id,
+        state: panel.dataset.state,
+        height: panel.style.height
+      }));
     }
   };
-  
+
   console.log('[ACCORDION] Debug functions available at window._accordionTest');
 }

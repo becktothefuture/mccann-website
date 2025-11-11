@@ -94,54 +94,32 @@ body.modal-open { overflow: hidden; }
 }
 
 /* ============================================================
-   Accordion
+   Accordion Runtime (JS-driven)
    ============================================================ */
 
-/* Panel states: collapsed (default) → expanding → expanded */
-.acc-list {
+.accordeon .acc-list {
+  height: 0;
   overflow: hidden;
-  max-height: 0;
-  transition: max-height .28s cubic-bezier(.25,.8,.25,1);
-  will-change: max-height;
 }
 
-.acc-list--expanding {
-  max-height: 9999px;
-}
-
-.acc-list--expanded {
-  max-height: none;
+.accordeon .acc-list[data-accordion-state="open"] {
   overflow: visible;
 }
 
-/* Item visibility controlled by panel state */
-.acc-list .acc-item {
-  opacity: 0;
-  transition: none;
+.accordeon .acc-list > .acc-item {
+  --acc-progress: 0;
+  transform: translate3d(0, calc((1 - var(--acc-progress)) * var(--acc-item-distance, 16px)), 0);
+  opacity: var(--acc-progress);
+  pointer-events: none;
 }
 
-.acc-list.is-active .acc-item {
-  opacity: 1;
-  transform: none;
+.accordeon .acc-list[data-accordion-state="opening"] > .acc-item,
+.accordeon .acc-list[data-accordion-state="open"] > .acc-item {
+  pointer-events: auto;
 }
 
-/* Top-level items always visible */
-.accordeon > .acc-item,
-.accordeon > .acc-section {
-  opacity: 1 !important;
-  visibility: visible !important;
-  transform: none !important;
-}
-
-/* GSAP animation target marker */
-.acc-animate-target {
-  will-change: transform, opacity;
-}
-
-/* Debug mode */
-.debug-mode .acc-animate-target {
-  outline: 2px solid orange !important;
-  background: rgba(255, 165, 0, 0.1) !important;
+.debug-mode .accordeon .acc-list {
+  outline: 1px dashed rgba(255, 165, 0, 0.4);
 }
 
 /* ============================================================
@@ -200,19 +178,37 @@ body.preloader-active {
 }
 
 /* TruthWellTold signet */
+@keyframes preloader-pulse {
+  0%,
+  100% {
+    opacity: var(--pulse-min-opacity, 0.4);
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .preloader__signet {
+  --pulse-duration: 1s;
+  --pulse-min-opacity: 0.4;
   min-height: 10vh;
   min-width: 10vh;
   height: 10vh;
   width: auto;
   color: currentColor; /* SVG inherits text color */
-  opacity: var(--pulse-opacity, 1);
-  will-change: opacity, transform;
-  transform-origin: center center;
+  will-change: opacity;
+  animation: preloader-pulse var(--pulse-duration) ease-in-out infinite;
   
   /* GPU acceleration for smooth pulse */
-  transform: translateZ(0) scale(var(--pulse-scale, 1));
+  transform: translateZ(0);
   backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader__signet {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* SVG rendering optimizations */

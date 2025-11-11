@@ -2,7 +2,7 @@
 
 **Purpose:** Developer cheat sheet for common patterns, troubleshooting, and quick lookups.
 
-**Last Updated:** 2025-11-05
+**Last Updated:** 2025-11-10
 
 ---
 
@@ -12,9 +12,43 @@
 |--------|---------|--------------|--------------|
 | `accordion.js` | Two-level accordion with ARIA | `.accordeon` | GSAP (Webflow IX) |
 | `lightbox.js` | Modal lightbox with Vimeo | `#lightbox` | Scroll lock, Vimeo helper |
+| `nav-transition.js` | Navigation overlay for page transitions | `.nav a.nav__link` | Preloader module |
+| `slides.js` | Builds slides from JSON | `.perspective-wrapper .slide` | Vimeo helper |
 | `smooth-scroll.js` | Lenis momentum scrolling | Auto-detects | Lenis library |
-| `slide-transition-observer.js` | Logo animation (new) | `#intro-slide` | Webflow IX |
 | `webflow-scrolltrigger.js` | Logo animation (legacy) | `.perspective-wrapper` | GSAP ScrollTrigger |
+
+---
+
+## Navigation Overlay
+
+The navigation transition module intercepts clicks on navigation links and shows the preloader overlay during page transitions.
+
+### Behavior
+
+- Shows preloader overlay when clicking nav links (`a.nav__link`)
+- Excludes: anchors (`#`), `mailto:`, `tel:`, downloads, external links, same-page links
+- Respects `prefers-reduced-motion` (instant navigation if enabled)
+- Emits `navigation:start` event via Webflow IX and window
+- Guards against concurrent navigations
+- Aborts on browser back/forward navigation
+
+### Configuration
+
+```javascript
+initNavTransition({
+  containerSelector: '.nav',       // Navigation container
+  linkSelector: 'a.nav__link',    // Navigation link selector
+  transitionDelay: 300            // Delay before navigation (ms)
+});
+```
+
+### Opt-out
+
+Add `data-no-transition` attribute to any link to skip the overlay:
+
+```html
+<a href="/page" class="nav__link" data-no-transition>Instant Navigation</a>
+```
 
 ---
 
@@ -351,6 +385,9 @@ document.querySelectorAll('.slide').length;
 - `lb:open` (Webflow IX)
 - `lb:close` (Webflow IX)
 
+**Slides:**
+- `slides:built` (window + container)
+
 **Logo Animation:**
 - `logo-appear` (IntersectionObserver)
 - `logo-disappear` (IntersectionObserver)
@@ -371,8 +408,11 @@ src/
 └── modules/
     ├── accordion.js           # Accordion component
     ├── lightbox.js            # Lightbox/modal
+    ├── nav-transition.js      # Navigation overlay
+    ├── preloader.js           # Preloader controller
+    ├── slides.js              # Slide generation from JSON
     ├── smooth-scroll.js       # Lenis smooth scroll
-    ├── slide-transition-observer.js  # Logo animation (new)
+    ├── vimeo.js               # Vimeo helper
     └── webflow-scrolltrigger.js      # Logo animation (legacy)
 
 docs/

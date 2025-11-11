@@ -210,8 +210,9 @@ window.App.init({
     videoSelector: 'video[autoplay], video[data-autoplay]',     // Videos to prefetch
     
     // Animation
-    pulseDuration: 2400,                                         // Pulse cycle duration (ms) — mechanical double-beat
-    pulseOpacity: 0.35,                                          // Pulse amplitude (0-1) — deeper troughs for visibility
+    pulseDuration: 2400,                                         // Pulse cycle duration (ms) — sine wave loop
+    pulseOpacity: 0.42,                                          // Legacy amplitude (0-1) — still supported for backwards compatibility
+    pulseMinOpacity: 0.4,                                        // Minimum opacity for CSS pulse (0-1)
     
     // Timing
     minLoadTime: 1000,                                          // Minimum display time (ms)
@@ -224,6 +225,8 @@ window.App.init({
   }
 });
 ```
+
+> Pulse animation is handled entirely in CSS. The options above simply update custom properties (`--pulse-duration`, `--pulse-min-opacity`) so the animation remains GPU-friendly and independent from JavaScript loops. Passing a `pulseDuration` value ≤ 10 interprets it as seconds (e.g. `pulseDuration: 1` → `1s`).
 
 ### CSS Customization
 

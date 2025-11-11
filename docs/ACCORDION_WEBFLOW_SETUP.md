@@ -1,10 +1,12 @@
-# Accordion Webflow GSAP Setup
+# Accordion Runtime Setup
 
-## The Simplest Approach That Actually Works
+## Overview
 
-After extensive testing, here's the most reliable way to set up accordion animations in Webflow:
+The accordion module now owns its animation lifecycle—no Webflow IX timelines required. Height expansion, staggered item reveals, and overlap timing are baked into the script so every panel opens/closes smoothly straight from custom code.
 
-### DOM Structure Required
+Use this guide to wire the HTML correctly, tune the animation timings, and understand the runtime behaviour.
+
+## DOM Structure (unchanged)
 
 ```html
 <div class="accordeon">
@@ -18,8 +20,8 @@ After extensive testing, here's the most reliable way to set up accordion animat
       <div class="acc-item">Item 3</div>
     </div>
   </div>
-  
-  <!-- Can have nested accordions -->
+
+  <!-- Nested accordion example -->
   <div class="acc-section">
     <a href="#" class="acc-trigger">Another Section</a>
     <div class="acc-list">
@@ -35,83 +37,84 @@ After extensive testing, here's the most reliable way to set up accordion animat
 </div>
 ```
 
-### How It Works
+## Runtime Behaviour
 
-1. **JavaScript adds `.acc-animate-target` class** to `.acc-item` elements that should animate
-2. **JavaScript emits `acc-open` and `acc-close` events** via Webflow IX3
-3. **Webflow GSAP targets `.acc-animate-target`** for animations
-4. **JavaScript removes `.acc-animate-target` class** after animation completes
+1. `data-accordion-state` on each `.acc-list` tracks the lifecycle (`collapsed → opening → open → closing`).
+2. Height is animated directly via `style.height`, easing with `cubic` curves for smooth expansion/collapse.
+3. `.acc-item` elements receive a `--acc-progress` custom property driven by `requestAnimationFrame`; CSS translates/fades them into place.
+4. Items stagger with 0.1 s overlap by default (configurable).
+5. `CustomEvent` notifications (`acc-open`, `acc-close`, `accordeon-open`, `accordeon-close`) still fire on `window` for anyone listening.
+6. Nested panels auto-collapse when their parent closes, preserving the original one-at-a-time behaviour.
 
-### Webflow GSAP Configuration
+## Configuration Options
 
-#### Opening Animation
-1. **Add GSAP Timeline**
-2. **Trigger**: Custom Event → `acc-open`
-3. **Target**: Use selector `.acc-animate-target`
-4. **Animation**:
-   - Set initial state: Opacity 0, Y transform 20px
-   - Animate to: Opacity 1, Y transform 0px
-   - Stagger: 0.05s or 0.1s
-   - Duration: 0.3s
+All timing is customisable. Call `initAccordion` with overrides:
 
-#### Closing Animation  
-1. **Add GSAP Timeline**
-2. **Trigger**: Custom Event → `acc-close`
-3. **Target**: Use selector `.acc-animate-target`
-4. **Animation**:
-   - Animate to: Opacity 0, Y transform -10px
-   - Stagger: 0.05s
-   - Duration: 0.2s
+```javascript
+import { initAccordion } from './modules/accordion.js';
 
-### Why This Works
+initAccordion({
+  selector: '.accordeon',  // Root element
+  openDuration: 380,       // ms
+  closeDuration: 260,      // ms
+  itemDuration: 320,       // ms per item
+  itemOverlap: 100,        // ms overlap between items
+  itemDistance: 18         // px vertical travel for each item
+});
+```
 
-- **Class-based targeting**: `.acc-animate-target` is a simple class selector that Webflow handles well
-- **Dynamic class addition**: JavaScript adds the class only to items that should animate
-- **Clean separation**: Animation targets are marked explicitly, not inferred from structure
-- **Webflow-friendly**: Class selectors are the most reliable way to target elements in Webflow GSAP
+`prefers-reduced-motion` is respected automatically—when enabled, transitions snap to their final state.
 
-### CSS Required
+## Styling Checklist
 
-Add this to your Webflow custom CSS:
+The bundle ships minimal functional CSS (see `style.css`). If you customise in Webflow Designer, stay consistent with these expectations:
+
+1. `.acc-list` stays rendered (display `block`/`flex` etc.); the module handles height + overflow.
+2. `.acc-list[data-accordion-state="open"]` should allow `overflow: visible`.
+3. `.acc-trigger.is-active` still marks the active trigger—style as needed in Webflow.
+4. Provide enough vertical space so translating items (default `16px`) do not clip; adjust with the `itemDistance` option if needed.
+
+_Optional_: add debug styling to inspect panel states quickly.
 
 ```css
-.acc-list {
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-}
-
-.acc-list.is-active {
-  overflow: visible;
-}
-
-.acc-trigger.is-active {
-  /* Style for active trigger */
-  font-weight: 600;
-}
-
-/* Initial state for items (GSAP will override) */
-.acc-item {
-  opacity: 1;
+.debug-mode .accordeon .acc-list[data-accordion-state="opening"] {
+  outline: 1px dashed rgba(255, 165, 0, 0.6);
 }
 ```
 
-### Testing
+## Testing Checklist
 
-1. **Publish to staging** (Designer has limitations)
-2. **Open browser console**
-3. **Click accordion triggers**
-4. **Look for**: `[ACCORDION] Emitted via Webflow: acc-open`
-5. **Check**: Only items in the opened panel should animate
+1. Load the published page (Designer preview may skip JS).
+2. Open DevTools console and ensure the module logs appear:
+   - `[ACCORDION] Module loaded`
+   - `[ACCORDION] ✓ Root element found: .accordeon`
+3. Toggle a section: expect smooth height expansion plus staggered item fade/slide.
+4. Toggle quickly between panels: animations should adjust mid-flight without jumps.
+5. Test nested items to confirm parent closing collapses descendants instantly.
+6. Emulate reduced motion (`CMD+SHIFT+P → Show Rendering → Emulate CSS prefers-reduced-motion`) to ensure instant toggles.
 
-### Common Issues
+## Debug Utilities
 
-**Nothing animates**: Check that events are firing in console and `.acc-animate-target` class is being added
-**All items animate**: Make sure you're using `.acc-animate-target` selector, not `.acc-item`
-**Items stay hidden**: Remove any global GSAP initial states on `.acc-item`
-**Debug functions not available**: The accordion must initialize first - wait for page load
+Available via `window._accordionTest` in the console:
 
-### The Key Insight
+- `open(panelId)` – force-open a panel by ID.
+- `close(panelId)` – force-close a panel by ID.
+- `forceCloseAll()` – collapse every panel and reset triggers.
+- `state()` – inspect panel IDs, state, and inline height.
 
-Webflow's GSAP works best with simple class selectors. By using `.acc-animate-target`, we're explicitly marking which items should animate at any given moment. The JavaScript manages adding/removing this class to the right items, and Webflow handles the animation. 
+Example:
 
-This approach avoids complex selectors and dynamic attributes that Webflow struggles with, resulting in reliable, predictable animations.
+```javascript
+window._accordionTest.state();
+// → [{ id: 'acc-panel-0', state: 'open', height: 'auto' }, …]
+```
+
+## Advanced Notes
+
+- Animations rely on rAF; avoid manually mutating `style.height`/`--acc-progress` unless you pause the module first.
+- If your content height changes while a panel is open, trigger a close/open cycle or set `panel.style.height = 'auto'` so the next close reads the correct start height.
+- Listening for `acc-open` / `acc-close` on `window` is now the recommended integration point for cross-module coordination.
+
+## Summary
+
+This accordion is self-contained: drop it into Webflow, wire the HTML classes, and tune durations from the init call. No IX timelines, no GSAP dependency, and no reliance on `.acc-animate-target`. The result is a predictable, performant accordion that still honours accessibility and nested behaviour requirements.

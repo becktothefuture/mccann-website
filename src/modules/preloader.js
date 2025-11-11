@@ -18,7 +18,6 @@ let preloaderEl = null;
 let signetEl = null;
 let progressEl = null;
 let logEl = null;
-let animationFrameId = null;
 let showDebugLog = true; // Toggle to show/hide real-time log
 let resizeTimeoutId = null;
 let isResizing = false;
@@ -78,7 +77,8 @@ function restoreBodyOverflow() {
  * @param {number} options.minLoadTime - Minimum time to show preloader (ms)
  * @param {boolean} options.showDebugLog - Show real-time debug log (default: true)
  * @param {number} options.pulseDuration - Pulse cycle duration in ms (default: 2400)
- * @param {number} options.pulseOpacity - Opacity variation amplitude (0-1, default: 0.35)
+ * @param {number} options.pulseOpacity - Legacy amplitude setting (0-1, default: 0.42)
+ * @param {number} options.pulseMinOpacity - Minimum opacity for CSS pulse (0-1, default: 0.4)
  * @param {boolean} options.enableResizeCover - Show preloader during resize (default: true)
  * @param {number} options.resizeFadeDuration - Fade in/out duration during resize (ms, default: 150)
  * @param {number} options.resizeShowDelay - Delay before showing cover again after hiding (ms, default: 800)
@@ -93,7 +93,8 @@ export function initPreloader({
   minLoadTime = 1000,
   showDebugLog: debugLogOption = true,
   pulseDuration = 2400,
-  pulseOpacity = 0.35,
+  pulseOpacity = 0.42,
+  pulseMinOpacity = 0.4,
   enableResizeCover = true,
   resizeFadeDuration: fadeDuration = 150,
   resizeShowDelay: showDelay = 800,
@@ -146,10 +147,12 @@ export function initPreloader({
   }
 
   log('✓ Elements found', 'success');
-  log('✓ Pulse animation starting', 'info');
-
-  // Start pulse animation
-  animatePulse(pulseDuration, pulseOpacity);
+  log('✓ Pulse animation (CSS-driven) configured', 'info');
+  applyPulseVariables({
+    duration: pulseDuration,
+    minOpacity: pulseMinOpacity,
+    amplitude: pulseOpacity
+  });
 
   // Begin loading process
   const startTime = performance.now();
@@ -717,8 +720,6 @@ function hidePreloader() {
   }
 
   log('🎯 Hiding preloader...', 'info');
-  stopAnimations();
-
   // Check for prefers-reduced-motion
   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -795,107 +796,35 @@ function hidePreloader() {
 // ============================================================
 
 /**
- * Pulse animation — mechanical double-beat with deliberate holds
- * Creates a quick high-energy strike, a secondary pulse, then a long rest to feel engineered
+ * Pulse animation — pure opacity sine wave
+ * Minimal RAF loop with options for duration and amplitude
  * @param {number} duration - Cycle duration in ms
  * @param {number} opacityRange - Pulse amplitude control (0-1)
  */
-function animatePulse(duration = 2400, opacityRange = 0.35) {
+function applyPulseVariables({
+  duration = 2400,
+  minOpacity,
+  amplitude = 0.42
+} = {}) {
   if (!signetEl) return;
   
-  const prefersReduced = typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const durationValue = typeof duration === 'number' && !Number.isNaN(duration)
+    ? duration
+    : 2400;
+  const interpretedDuration = durationValue > 0 && durationValue <= 10
+    ? durationValue * 1000
+    : durationValue;
+  const safeDuration = Math.max(400, interpretedDuration);
 
-  if (prefersReduced) {
-    signetEl.style.setProperty('--pulse-opacity', '1');
-    signetEl.style.setProperty('--pulse-scale', '1');
-    log('⚠️ Prefers-reduced-motion detected — pulse disabled', 'warning');
-    return;
-  }
+  const hasExplicitMin = typeof minOpacity === 'number' && !Number.isNaN(minOpacity);
+  const normalizedAmplitude = Math.min(Math.max(amplitude, 0), 0.95);
+  const derivedMin = 1 - normalizedAmplitude;
+  const resolvedMin = hasExplicitMin ? minOpacity : derivedMin;
+  const clampedMin = Math.min(Math.max(resolvedMin, 0), 0.95);
 
-  const normalizedDuration = Math.max(1200, duration);
-  const normalizedRange = Math.min(Math.max(opacityRange, 0.15), 0.65);
-  const peakOpacity = 1;
-  const floorOpacity = Math.max(0.25, peakOpacity - normalizedRange * 1.6);
-  const opacitySpan = peakOpacity - floorOpacity;
-
-  const scaleRange = 0.04 + normalizedRange * 0.06;
-  const scaleFloor = 1 - scaleRange * 0.45;
-  const scalePeak = 1 + scaleRange;
-
-  const segments = [
-    { start: 0.0, end: 0.12, from: 0.35, to: 1.0, ease: 'outCubic' },   // Snap up
-    { start: 0.12, end: 0.20, from: 1.0, to: 0.75, ease: 'inOutQuad' }, // Mechanical settle
-    { start: 0.20, end: 0.32, from: 0.75, to: 0.05, ease: 'inCubic' },  // Hard drop
-    { start: 0.32, end: 0.44, from: 0.05, to: 0.30, ease: 'outQuad' },  // Recovery glide
-    { start: 0.44, end: 0.50, from: 0.30, to: 0.30, ease: 'hold' },     // Hold low
-    { start: 0.50, end: 0.60, from: 0.30, to: 0.85, ease: 'outBack' },  // Secondary pulse
-    { start: 0.60, end: 0.68, from: 0.85, to: 0.55, ease: 'inQuad' },   // Step down
-    { start: 0.68, end: 0.82, from: 0.55, to: 0.08, ease: 'inCubic' },  // Drop to idle
-    { start: 0.82, end: 1.00, from: 0.08, to: 0.35, ease: 'outQuad' }   // Idle ramp
-  ];
-
-  const easingFns = {
-    hold: () => 0,
-    outCubic: t => 1 - Math.pow(1 - t, 3),
-    inCubic: t => t * t * t,
-    inOutQuad: t => (t < 0.5) ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
-    outQuad: t => 1 - (1 - t) * (1 - t),
-    inQuad: t => t * t,
-    outBack: t => {
-      const c1 = 1.70158;
-      const c3 = c1 + 1;
-      const x = t - 1;
-      return 1 + c3 * x * x * x + c1 * x * x;
-    }
-  };
-
-  const clamp01 = value => Math.max(0, Math.min(1, value));
-
-  const sampleEnergy = progress => {
-    const segment = segments.find(s => progress >= s.start && progress < s.end) || segments[segments.length - 1];
-    const { start, end, from, to, ease } = segment;
-    if (end <= start) return from;
-    const localProgress = clamp01((progress - start) / (end - start));
-    if (ease === 'hold') return from;
-    const eased = easingFns[ease] ? easingFns[ease](localProgress) : localProgress;
-    return from + (to - from) * eased;
-  };
-
-  const startTime = performance.now();
-
-  function loop(currentTime) {
-    const elapsed = (currentTime - startTime) % normalizedDuration;
-    const progress = elapsed / normalizedDuration;
-    const energy = clamp01(sampleEnergy(progress));
-
-    const opacity = floorOpacity + opacitySpan * energy;
-    const scale = scaleFloor + (scalePeak - scaleFloor) * energy;
-
-    signetEl.style.setProperty('--pulse-opacity', opacity.toFixed(3));
-    signetEl.style.setProperty('--pulse-scale', scale.toFixed(3));
-
-    animationFrameId = requestAnimationFrame(loop);
-  }
-
-  animationFrameId = requestAnimationFrame(loop);
-  log(`✓ Pulse animation started (duration: ${Math.round(normalizedDuration)}ms, opacity: ${floorOpacity.toFixed(2)}-1.00)`, 'success');
-}
-
-/**
- * Stop animation
- */
-function stopAnimations() {
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId);
-    animationFrameId = null;
-  }
-
-  if (signetEl) {
-    signetEl.style.removeProperty('--pulse-opacity');
-    signetEl.style.removeProperty('--pulse-scale');
-  }
+  signetEl.style.setProperty('--pulse-duration', `${safeDuration}ms`);
+  signetEl.style.setProperty('--pulse-min-opacity', clampedMin.toFixed(3));
+  log(`✓ Pulse variables applied (duration: ${safeDuration}ms, min opacity: ${clampedMin.toFixed(2)})`, 'success');
 }
 
 // ============================================================
@@ -1016,6 +945,7 @@ function showResizeCover() {
     preloaderEl.classList.add('is-resizing', 'is-resize-visible');
     preloaderEl.style.opacity = '1';
     preloaderEl.style.visibility = 'visible';
+    preloaderEl.style.pointerEvents = 'auto';
     return;
   }
   
@@ -1027,6 +957,7 @@ function showResizeCover() {
   preloaderEl.style.display = 'flex';
   preloaderEl.style.position = 'fixed';
   preloaderEl.style.zIndex = '999999';
+  preloaderEl.style.pointerEvents = 'auto';
   
   // Remove any reveal class that might be hiding it
   preloaderEl.classList.remove('is-revealing');
@@ -1067,6 +998,7 @@ function hideResizeCover() {
   if (prefersReduced) {
     // Instant hide for reduced motion
     preloaderEl.classList.remove('is-resizing', 'is-resize-visible');
+    preloaderEl.style.pointerEvents = 'none';
     // Only hide if not in initial preload state
     if (!isInitialPreload) {
       preloaderEl.style.display = 'none';
@@ -1095,6 +1027,7 @@ function hideResizeCover() {
       preloaderEl.style.opacity = '';
       preloaderEl.style.visibility = '';
       preloaderEl.style.transition = '';
+      preloaderEl.style.pointerEvents = 'none';
       // Only hide if not in initial preload state
       if (!isInitialPreload) {
         preloaderEl.style.display = 'none';
@@ -1103,6 +1036,86 @@ function hideResizeCover() {
       lastResizeCoverHideTime = performance.now();
     }
   }, resizeFadeDuration);
+}
+
+// ============================================================
+// NAVIGATION COVER
+// ============================================================
+
+let isNavigating = false;
+let navigationTimeoutId = null;
+
+/**
+ * Show navigation cover for page transitions
+ * Reuses resize fade logic but with navigation-specific guards
+ * 
+ * @param {Object} options
+ * @param {number} options.delay - Delay before navigation proceeds (ms)
+ * @returns {Promise} Resolves when cover is fully shown
+ */
+export function showNavigationCover({ delay = 300 } = {}) {
+  return new Promise((resolve) => {
+    // Guard against concurrent navigation or missing preloader
+    if (isNavigating || !preloaderEl) {
+      resolve();
+      return;
+    }
+    
+    // Guard against concurrent resize operations
+    if (isResizing) {
+      log('[NAV-COVER] ⚠️ Resize in progress, skipping navigation cover', 'warning');
+      resolve();
+      return;
+    }
+    
+    isNavigating = true;
+    log('[NAV-COVER] 🎯 Showing navigation cover', 'info');
+    
+    // Check for prefers-reduced-motion
+    const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    
+    if (prefersReduced) {
+      log('[NAV-COVER] ⚡ Reduced motion: instant navigation', 'info');
+      resolve();
+      isNavigating = false;
+      return;
+    }
+    
+    // Reuse resize cover show logic
+    showResizeCover();
+    
+    // Wait for fade-in to complete before resolving
+    navigationTimeoutId = setTimeout(() => {
+      log('[NAV-COVER] ✓ Navigation cover ready', 'success');
+      resolve();
+      // Keep isNavigating true - will be cleared on page unload
+    }, Math.min(delay, resizeFadeInDuration));
+    
+    // Safety timeout: clear navigation state if navigation fails
+    setTimeout(() => {
+      if (isNavigating) {
+        isNavigating = false;
+      }
+    }, 5000);
+  });
+}
+
+/**
+ * Abort navigation cover (e.g., if navigation was cancelled)
+ */
+export function abortNavigationCover() {
+  if (!isNavigating) return;
+  
+  log('[NAV-COVER] ❌ Navigation aborted', 'warning');
+  isNavigating = false;
+  
+  if (navigationTimeoutId) {
+    clearTimeout(navigationTimeoutId);
+    navigationTimeoutId = null;
+  }
+  
+  // Hide cover immediately using resize hide logic
+  hideResizeCover();
 }
 
 // ============================================================
@@ -1131,6 +1144,18 @@ export function cleanupPreloader() {
     resizeHideDelayTimeoutId = null;
   }
   
+  // Cleanup navigation handlers
+  if (navigationTimeoutId) {
+    clearTimeout(navigationTimeoutId);
+    navigationTimeoutId = null;
+  }
+  isNavigating = false;
+  
+  if (signetEl) {
+    signetEl.style.removeProperty('--pulse-duration');
+    signetEl.style.removeProperty('--pulse-min-opacity');
+  }
+
   preloaderEl = null;
   signetEl = null;
   progressEl = null;
