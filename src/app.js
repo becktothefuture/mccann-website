@@ -62,12 +62,17 @@ function init(options = {}) {
   
   initPreloader(preloaderConfig);
 
-  // Around line 65-70, uncomment:
-  initSmoothScroll({
-    lerp,
-    snapLerp,
-    ...smoothScroll
-  });
+  // Enable smooth scroll only on non-homepage pages (homepage has .perspective-wrapper)
+  const isHomepage = document.querySelector('.perspective-wrapper') !== null;
+  if (!isHomepage) {
+    initSmoothScroll({
+      lerp,
+      snapLerp,
+      ...smoothScroll
+    });
+  } else {
+    console.log('[APP] Homepage detected - using native scrolling');
+  }
 
   // Build locations accordion from JSON FIRST (before accordion initializes)
   initLocations({

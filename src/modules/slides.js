@@ -84,14 +84,14 @@ export function initSlides(options = {}) {
     slide.setAttribute('tabindex', '0');
     slide.setAttribute('aria-label', `${project.client || ''} — ${project.title || ''}`.trim());
 
-    // Populate text content
-    const clientEl = slide.querySelector('[data-field="slide-client"]');
-    const titleEl = slide.querySelector('[data-field="slide-title"]');
+    // Populate text content (with fallback to class selectors for backward compatibility)
+    const clientEl = slide.querySelector('[data-field="slide-client"]') || slide.querySelector('.slide__client');
+    const titleEl = slide.querySelector('[data-field="slide-title"]') || slide.querySelector('.slide__title');
     if (clientEl) clientEl.textContent = project.client || '';
     if (titleEl) titleEl.textContent = project.title || '';
 
-    // Mount preview video (always)
-    const previewContainer = slide.querySelector('[data-field="slide-preview"]');
+    // Mount preview video (always) - with fallback to class selector
+    const previewContainer = slide.querySelector('[data-field="slide-preview"]') || slide.querySelector('.slide__preview');
     if (previewContainer) {
       if (!project.vimeoPreviewId || project.vimeoPreviewId === '000000000') {
         console.warn(`[SLIDES] ⚠️  Missing vimeoPreviewId for "${projectId}"`);

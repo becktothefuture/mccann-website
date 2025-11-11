@@ -58,13 +58,14 @@ export function initLightbox({
   const slides = document.querySelectorAll('.slide');
   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const clientEl = lb.querySelector('[data-field="lightbox-client"]');
-  const titleEl = lb.querySelector('[data-field="lightbox-title"]');
-  const truthEl = lb.querySelector('[data-field="lightbox-truth"]');
-  const truthWellToldEl = lb.querySelector('[data-field="lightbox-truthwelltold"]');
-  const descriptionEl = lb.querySelector('[data-field="lightbox-description"]');
-  const impactEl = lb.querySelector('[data-field="lightbox-impact"]');
-  const awardsContainer = lb.querySelector('[data-field="lightbox-awards"]');
+  // Content elements with fallback to ID selectors for backward compatibility
+  const clientEl = lb.querySelector('[data-field="lightbox-client"]') || document.querySelector('#lightbox-client');
+  const titleEl = lb.querySelector('[data-field="lightbox-title"]') || document.querySelector('#lightbox-title');
+  const truthEl = lb.querySelector('[data-field="lightbox-truth"]') || document.querySelector('#lightbox-truth');
+  const truthWellToldEl = lb.querySelector('[data-field="lightbox-truthwelltold"]') || document.querySelector('#lightbox-truthwelltold');
+  const descriptionEl = lb.querySelector('[data-field="lightbox-description"]') || document.querySelector('#lightbox-description');
+  const impactEl = lb.querySelector('[data-field="lightbox-impact"]') || document.querySelector('#lightbox-impact');
+  const awardsContainer = lb.querySelector('[data-field="lightbox-awards"]') || document.querySelector('#lightbox-awards');
 
   // ============================================================
   // INITIALIZATION
@@ -344,8 +345,8 @@ export function initLightbox({
   function renderAwards(awardsData) {
     console.log(`[LIGHTBOX] 🏆 Rendering awards: ${awardsData?.length || 0} awards`);
     
-    // First hide all award elements
-    const allAwards = lb.querySelectorAll('[data-award-type]');
+    // First hide all award elements (check both new data attributes and old ID pattern)
+    const allAwards = [...lb.querySelectorAll('[data-award-type]'), ...document.querySelectorAll('[id^="award-"]')];
     allAwards.forEach(el => {
       el.style.display = 'none';
     });
@@ -358,22 +359,23 @@ export function initLightbox({
     
     // Show and populate each award
     awardsData.forEach((award, index) => {
-      const awardEl = lb.querySelector(`[data-award-type="${award.type}"]`);
+      // Try new data attribute first, then fallback to old ID pattern
+      const awardEl = lb.querySelector(`[data-award-type="${award.type}"]`) || document.getElementById(`award-${award.type}`);
       
       if (!awardEl) {
-        console.warn(`[LIGHTBOX] ⚠️  Award element [data-award-type="${award.type}"] not found in DOM`);
+        console.warn(`[LIGHTBOX] ⚠️  Award element [data-award-type="${award.type}"] or #award-${award.type} not found in DOM`);
         return;
       }
       
       // Show the award element
       awardEl.style.display = 'flex';
       
-      // Find and populate the label
-      const labelEl = awardEl.querySelector('[data-field="award-label"]');
+      // Find and populate the label (try new data attribute first, then old class)
+      const labelEl = awardEl.querySelector('[data-field="award-label"]') || awardEl.querySelector('.award__label');
       if (labelEl) {
         labelEl.textContent = award.label || '';
       } else {
-        console.warn(`[LIGHTBOX] ⚠️  Label element not found for [data-award-type="${award.type}"]`);
+        console.warn(`[LIGHTBOX] ⚠️  Label element not found for [data-award-type="${award.type}"] or #award-${award.type}`);
       }
       
       console.log(`[LIGHTBOX] ✓ Award ${index + 1}: ${award.type} displayed`);
@@ -518,10 +520,7 @@ export function initLightbox({
       setPageInert(true);
       lockScroll();
       
-      // Stop smooth scroll if active
-      if (window.App?.smoothScroll?.stop) {
-        window.App.smoothScroll.stop();
-      }
+      // DISABLED: Smooth scroll stop disabled (Lenis is disabled globally)
       
       // Update ARIA
       lb.setAttribute('aria-hidden', 'false');
@@ -556,19 +555,23 @@ export function initLightbox({
     // Change state to OPEN → allow closing
     setState(STATE.OPEN);
     
-    // Initialize smooth scroll for overlay if it exists
-    // CRITICAL: Ensure overlay is always scrollable and clickable
+    // Enable native scrolling for overlay if it exists
+    // CRITICAL: Ensure overlay is scrollable independently of locked body
     if (overlay) {
-      overlay.style.pointerEvents = detailsOpen ? 'auto' : 'none';
+      // Enable native scrolling on overlay - it should scroll independently of locked body
+      // The overlay needs explicit overflow and height to enable scrolling
       overlay.style.overflow = 'auto';
+      overlay.style.overflowY = 'auto';
+      overlay.style.height = '100%';
+      overlay.style.maxHeight = '100vh';
       
-      requestAnimationFrame(() => {
-        overlayLenis = initContainerScroll(overlay, {
-          lerp: 0.08,
-          smoothWheel: true,
-          smoothTouch: false
-        });
-      });
+      // Pointer events: always enable when overlay exists and lightbox is open
+      // This allows scrolling to work. Click handlers manage interaction behavior.
+      overlay.style.pointerEvents = 'auto';
+      
+      // DISABLED: Lenis container scroll disabled for debugging
+      // Using native scrolling instead
+      console.log('[LIGHTBOX] ✓ Overlay native scrolling enabled (Lenis disabled)');
     }
     
     // Set focus to lightbox for keyboard navigation
@@ -617,28 +620,14 @@ export function initLightbox({
     // Make page accessible again
     setPageInert(false);
     
-    // Destroy overlay smooth scroll instance FIRST (before unlocking scroll)
-    if (overlayLenis) {
-      try {
-        overlayLenis.destroy();
-        overlayLenis = null;
-        console.log('[LIGHTBOX] ✓ Overlay smooth scroll destroyed');
-      } catch (err) {
-        console.warn('[LIGHTBOX] Error destroying overlay scroll:', err);
-      }
-    }
+    // DISABLED: Lenis cleanup disabled (Lenis is disabled globally)
+    // No need to destroy overlay scroll instance
     
-    // Unlock scroll (must happen after overlay scroll is destroyed)
+    // Unlock scroll
     unlockScroll({ delayMs: 0 });
     console.log('[LIGHTBOX] ✓ Scroll unlocked');
     
-    // Restart main smooth scroll if it exists
-    if (window.App?.smoothScroll?.start) {
-      requestAnimationFrame(() => {
-        window.App.smoothScroll.start();
-        console.log('[LIGHTBOX] ✓ Main smooth scroll restarted');
-      });
-    }
+    // DISABLED: Smooth scroll restart disabled (Lenis is disabled globally)
     
     // Re-enable slide interactions (after scroll is unlocked)
     enableSlideInteractions();
@@ -741,8 +730,15 @@ export function initLightbox({
 
     requestAnimationFrame(() => {
       if (overlay) {
+        // Ensure overlay is scrollable with native scrolling
         overlay.style.pointerEvents = 'auto';
         overlay.style.overflow = 'auto';
+        overlay.style.overflowY = 'auto';
+        overlay.style.height = '100%';
+        overlay.style.maxHeight = '100vh';
+        
+        // DISABLED: Lenis container scroll disabled for debugging
+        console.log('[LIGHTBOX] ✓ Overlay native scrolling enabled (Lenis disabled)');
       }
       if (lb) {
         lb.style.pointerEvents = 'auto';
@@ -762,7 +758,12 @@ export function initLightbox({
 
     requestAnimationFrame(() => {
       if (overlay) {
-        overlay.style.pointerEvents = 'none';
+        // Keep pointer events enabled to maintain scrollability
+        // Click handlers will manage interaction behavior
+        overlay.style.pointerEvents = 'auto';
+        // Maintain scroll settings
+        overlay.style.overflow = 'auto';
+        overlay.style.overflowY = 'auto';
       }
       if (lb) {
         lb.style.pointerEvents = 'auto';
@@ -872,15 +873,7 @@ export function initLightbox({
     // Reset state
     detailsOpen = false;
     
-    // Destroy overlay scroll if exists
-    if (overlayLenis) {
-      try {
-        overlayLenis.destroy();
-        overlayLenis = null;
-      } catch (err) {
-        console.warn('[LIGHTBOX] Error destroying overlay scroll on cleanup:', err);
-      }
-    }
+    // DISABLED: Overlay scroll cleanup disabled (Lenis is disabled globally)
     
     // Unlock scroll and reset state
     unlockScroll({ delayMs: 0 });

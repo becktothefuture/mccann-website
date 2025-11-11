@@ -17,6 +17,11 @@ let lenisInstance = null;
 // ============================================================
 
 export function initSmoothScroll(options = {}) {
+  // DISABLED: Lenis scrolling disabled for debugging
+  console.log('[SMOOTH-SCROLL] ⚠️ DISABLED - Using native scrolling');
+  return null;
+  
+  /* DISABLED CODE - Re-enable when needed
   if (lenisInstance) {
     console.log('[SMOOTH-SCROLL] Already initialized');
     return lenisInstance;
@@ -87,6 +92,7 @@ export function initSmoothScroll(options = {}) {
     console.error('[SMOOTH-SCROLL] ❌ Init error:', err);
     return null;
   }
+  */
 }
 
 // ============================================================
@@ -124,6 +130,11 @@ export function scrollTo(target, options = {}) {
 // ============================================================
 
 export function initContainerScroll(container, options = {}) {
+  // DISABLED: Container scroll disabled for debugging
+  console.log('[SMOOTH-SCROLL] ⚠️ Container scroll DISABLED - Using native scrolling');
+  return null;
+  
+  /* DISABLED CODE - Re-enable when needed
   const element = typeof container === 'string' 
     ? document.querySelector(container) 
     : container;
@@ -181,4 +192,5 @@ export function initContainerScroll(container, options = {}) {
     console.error('[SMOOTH-SCROLL] ❌ Container scroll init error:', err);
     return null;
   }
+  */
 }
