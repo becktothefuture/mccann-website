@@ -34,6 +34,7 @@ let projectData = null;
 let lastFocus = null;
 let overlayLenis = null;
 let detailsOpen = false; // Track details overlay state
+let overlayHideTimeout = null; // Fallback timer to hide overlay if Webflow animation misses
 
 export function initLightbox({ 
   root = '#lightbox',
@@ -375,8 +376,15 @@ export function initLightbox({
   function debugPointerSnapshot(label) {
     const overlayPointer = overlay ? (overlay.style.pointerEvents || '(unset)') : 'n/a';
     const overlayOverflow = overlay ? (overlay.style.overflowY || '(unset)') : 'n/a';
+    const overlayDisplay = overlay ? (overlay.style.display || '(unset)') : 'n/a';
     const lbPointer = lb ? (lb.style.pointerEvents || '(unset)') : 'n/a';
-    console.log(`[LIGHTBOX] 🧪 ${label} → state=${currentState} detailsOpen=${detailsOpen} overlay.pointerEvents=${overlayPointer} overlay.overflowY=${overlayOverflow} lb.pointerEvents=${lbPointer}`);
+    console.log(`[LIGHTBOX] 🧪 ${label} → state=${currentState} detailsOpen=${detailsOpen} overlay.display=${overlayDisplay} overlay.pointerEvents=${overlayPointer} overlay.overflowY=${overlayOverflow} lb.pointerEvents=${lbPointer}`);
+  }
+
+  function clearOverlayHideTimeout() {
+    if (!overlayHideTimeout) return;
+    clearTimeout(overlayHideTimeout);
+    overlayHideTimeout = null;
   }
 
   function trapFocus(e) {
@@ -670,6 +678,10 @@ export function initLightbox({
         overlay.style.pointerEvents = 'none';
         overlay.style.overflow = '';
         overlay.style.overflowY = '';
+        overlay.style.height = '';
+        overlay.style.maxHeight = '';
+        overlay.style.display = 'none';
+        debugPointerSnapshot('requestClose → overlay hidden (no details open)');
       }
     }
     debugPointerSnapshot('requestClose → after details cleanup');
@@ -699,6 +711,7 @@ export function initLightbox({
     
     // Reset details state first → prevents event handlers from firing during cleanup
     detailsOpen = false;
+    clearOverlayHideTimeout();
     
     // Restore page interactivity → remove inert, unlock scroll, re-enable slides
     setPageInert(false);
@@ -722,6 +735,7 @@ export function initLightbox({
       overlay.style.overflowY = '';
       overlay.style.height = '';
       overlay.style.maxHeight = '';
+      overlay.style.display = 'none';
     }
     debugPointerSnapshot('finishClose → after overlay reset');
     
@@ -808,6 +822,11 @@ export function initLightbox({
     detailsOpen = true;
     console.log('[LIGHTBOX] 🎯 Details overlay opening');
     emitWebflowEvent('details:show');
+    clearOverlayHideTimeout();
+    if (overlay) {
+      overlay.style.display = 'block';
+      debugPointerSnapshot('openDetails → display set to block');
+    }
 
     // Enable overlay scrolling → native scrolling (Lenis disabled)
     requestAnimationFrame(() => {
@@ -825,16 +844,31 @@ export function initLightbox({
     });
   }
 
+  const detailsHideFallbackMs = Math.max(400, Math.min(2000, closeDuration || 1500)); // Safety net for overlay hide timing
+
   function closeDetails({ silent = false, resetOverlay = false } = {}) {
+    const hideOverlayNow = () => {
+      if (!overlay) return;
+      overlayHideTimeout = null;
+      overlay.style.pointerEvents = 'none';
+      overlay.style.overflow = '';
+      overlay.style.overflowY = '';
+      overlay.style.height = '';
+      overlay.style.maxHeight = '';
+      overlay.style.display = 'none';
+      debugPointerSnapshot(`closeDetails → forced overlay hide resetOverlay=${resetOverlay}`);
+    };
+
     if (!detailsOpen) {
       if (!silent) {
         emitWebflowEvent('details:hide');
       }
-      if (resetOverlay && overlay) {
-        overlay.style.pointerEvents = 'none';
-        overlay.style.overflow = '';
-        overlay.style.overflowY = '';
-        debugPointerSnapshot('closeDetails → already closed (reset overlay)');
+      clearOverlayHideTimeout();
+      if (resetOverlay) {
+        hideOverlayNow();
+      } else if (overlay) {
+        overlay.style.display = 'none';
+        debugPointerSnapshot('closeDetails → already closed fallback hide');
       }
       return;
     }
@@ -846,18 +880,35 @@ export function initLightbox({
       emitWebflowEvent('details:hide');
     }
 
+    clearOverlayHideTimeout();
+    if (overlay) {
+      if (resetOverlay) {
+        hideOverlayNow();
+      } else {
+        overlayHideTimeout = setTimeout(() => {
+          if (!detailsOpen && overlay) {
+            overlay.style.display = 'none';
+            debugPointerSnapshot('closeDetails → fallback hide (timeout)');
+          }
+          overlayHideTimeout = null;
+        }, detailsHideFallbackMs);
+      }
+    }
+
     requestAnimationFrame(() => {
       if (overlay) {
-        overlay.style.pointerEvents = 'none';
         if (resetOverlay) {
+          overlay.style.pointerEvents = 'none';
           overlay.style.overflow = '';
           overlay.style.overflowY = '';
+          overlay.style.display = 'none';
         } else {
+          overlay.style.pointerEvents = 'auto';
           overlay.style.overflow = 'auto';
           overlay.style.overflowY = 'auto';
         }
       }
-      if (lb) {
+      if (lb && !resetOverlay) {
         lb.style.pointerEvents = 'auto';
       }
       debugPointerSnapshot(`closeDetails → raf resetOverlay=${resetOverlay}`);
@@ -959,6 +1010,7 @@ export function initLightbox({
       overlay.removeEventListener('click', handleDetailsOverlayClick);
       overlay.style.pointerEvents = 'none';
     }
+    clearOverlayHideTimeout();
     document.removeEventListener('keydown', handleKeydown);
     
     // Reset state
