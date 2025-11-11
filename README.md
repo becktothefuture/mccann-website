@@ -31,7 +31,7 @@
 - **Accordion** — Two-level nested accordion with full ARIA support and smooth transitions
 - **Locations** — Dynamic office locations accordion built from JSON data
 - **Lightbox** — Focus-trapped modal with Vimeo mounting and scroll lock
-- **Smooth Scroll** — Weighted momentum scrolling via Lenis with GSAP integration
+- **Smooth Scroll** — Weighted momentum scrolling via Lenis with GSAP integration *(currently disabled while scroll-snap pages are stabilized)*
 - **Logo Animations** — Scroll-triggered logo animations via Webflow IX
 - **Accessibility First** — Full ARIA, keyboard support, focus management, `prefers-reduced-motion`
 - **Privacy Conscious** — No analytics, no storage, Vimeo DNT enabled
@@ -211,6 +211,13 @@ Two custom event interactions on `#lightbox` handle modal animations:
   - Animation: Reverse or configured close animation
   - Control: **Play from start** or **Reverse** (depending on setup)
 
+Details overlay toggles reuse the same pattern:
+
+- **`details:show`** — triggered by the JavaScript lightbox module when the Details button is pressed. Targets `.lightbox__overlay` (or child elements) to animate the overlay in.
+- **`details:hide`** — emitted on overlay close (button, overlay click, Escape, or lightbox close) to reverse the animation and hide `.lightbox__overlay`.
+
+> The JavaScript module controls overlay visibility (display/pointer states) while Webflow animates opacity/position in response to these events.
+
 For detailed setup instructions including markup requirements and troubleshooting, see:
 - `docs/ACCORDION_WEBFLOW_SETUP.md`
 - `docs/LIGHTBOX_WEBFLOW_SETUP.md`
@@ -274,9 +281,14 @@ Two-level nested accordion with full ARIA implementation, keyboard navigation, s
 
 Modal overlay with focus trap, scroll lock (iOS-safe), outside-click and Escape to close, Vimeo video mounting. Coordinates with Webflow IX via `lb:open`/`lb:close` events for GSAP animations. Respects `prefers-reduced-motion`.
 
+**Overlay orchestration**  
+JavaScript now owns overlay visibility and pointer state. Before emitting `lb:open`, the module sets the overlay to `display: block` with scrolling enabled; when `lb:close` fires the overlay is immediately made non-interactive and then hidden once the Webflow animation completes. This removes the need for timeout fallbacks and keeps the visual timeline in sync with the state machine while still using the existing `lb:show`/`lb:hide` custom events.
+
 **Events**:
 - `lb:open` — emitted to Webflow IX for open animation
 - `lb:close` — emitted to Webflow IX for close animation
+- `details:show` — toggles the details overlay animation (Webflow IX)
+- `details:hide` — reverses the details overlay animation (Webflow IX)
 - `LIGHTBOX_OPEN` — bubbles to window with video/title/text details
 - `LIGHTBOX_CLOSE` — bubbles to window
 - `LIGHTBOX_CLOSED_DONE` — bubbles after close animation completes
@@ -294,6 +306,8 @@ Modal overlay with focus trap, scroll lock (iOS-safe), outside-click and Escape 
 ### Smooth Scroll
 
 Weighted momentum scrolling via Lenis. Auto-detects pages with scroll-snap containers (`.perspective-wrapper`) and disables itself to preserve native snap behavior. Configurable `lerp` (0.05–0.2; lower = heavier). Syncs with GSAP ScrollTrigger. Pauses during lightbox interaction.
+
+**Status**: The module is bundled but currently disabled globally while the scroll-snap experience is finalized. Leave it wired for future reactivation; the API remains the same.
 
 **Auto-detection**: Disables on pages with `.perspective-wrapper` (scroll-snap container)
 
@@ -407,7 +421,7 @@ window.addEventListener('PRELOADER_COMPLETE', () => {
 ```
 
 **Accordion Events**: `acc-open`, `acc-close` (also legacy: `accordeon-open`, `accordeon-close`)  
-**Lightbox Events**: `lb:open`, `lb:close`, `LIGHTBOX_OPEN`, `LIGHTBOX_CLOSE`, `LIGHTBOX_CLOSED_DONE`  
+**Lightbox Events**: `lb:open`, `lb:close`, `details:show`, `details:hide`, `LIGHTBOX_OPEN`, `LIGHTBOX_CLOSE`, `LIGHTBOX_CLOSED_DONE`  
 **Preloader Events**: `PRELOADER_COMPLETE`  
 **Logo Events**: `logo-appear`, `logo-hide`
 
