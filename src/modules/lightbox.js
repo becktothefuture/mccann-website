@@ -297,10 +297,19 @@ export function initLightbox({
     const siblings = Array.from(document.body.children).filter(n => n !== lb);
     siblings.forEach(n => {
       try {
-        if ('inert' in n) n.inert = !!on;
-      } catch {}
-      if (on) n.setAttribute('aria-hidden', 'true');
-      else n.removeAttribute('aria-hidden');
+        if (on) {
+          // Set inert when opening lightbox
+          n.setAttribute('inert', '');
+          n.setAttribute('aria-hidden', 'true');
+        } else {
+          // REMOVE inert attribute completely when closing
+          // Setting inert=false still blocks interaction!
+          n.removeAttribute('inert');
+          n.removeAttribute('aria-hidden');
+        }
+      } catch (err) {
+        console.warn('[LIGHTBOX] Error setting inert:', err);
+      }
     });
   }
 
