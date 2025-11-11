@@ -55,8 +55,12 @@ export function initLightbox({
   const overlay = lb.querySelector('.lightbox__overlay');
   const closeBtn = document.querySelector('#close-btn');
   const detailsBtn = document.querySelector('#details-btn');
-  const slides = document.querySelectorAll('.slide');
   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const inertTargets = new Set();
+  
+  // Get slides dynamically (they're built before lightbox initializes)
+  const getSlides = () => document.querySelectorAll('.slide');
+  const slides = getSlides();
 
   // Content elements with fallback to ID selectors for backward compatibility
   const clientEl = lb.querySelector('[data-field="lightbox-client"]') || document.querySelector('#lightbox-client');
@@ -171,16 +175,17 @@ export function initLightbox({
   }
   
   console.log(`\n4️⃣  Slide Triggers`);
-  console.log(`   ${slides.length > 0 ? '✓' : '❌'} Found: ${slides.length} .slide element${slides.length !== 1 ? 's' : ''}`);
+  const currentSlides = getSlides();
+  console.log(`   ${currentSlides.length > 0 ? '✓' : '❌'} Found: ${currentSlides.length} .slide element${currentSlides.length !== 1 ? 's' : ''}`);
   
-  if (slides.length === 0) {
+  if (currentSlides.length === 0) {
     validationErrors.push('No .slide elements found');
   } else {
     // Validate each slide has data-project attribute (required for lightbox)
     let slidesWithData = 0;
     let slidesWithoutData = [];
     
-    slides.forEach((slide, index) => {
+    currentSlides.forEach((slide, index) => {
       if (slide.dataset.project) {
         slidesWithData++;
       } else {
@@ -188,7 +193,7 @@ export function initLightbox({
       }
     });
     
-    console.log(`   ${slidesWithData === slides.length ? '✓' : '⚠️'} ${slidesWithData}/${slides.length} slides have data-project attribute`);
+    console.log(`   ${slidesWithData === currentSlides.length ? '✓' : '⚠️'} ${slidesWithData}/${currentSlides.length} slides have data-project attribute`);
     
     if (slidesWithoutData.length > 0) {
       console.log(`   ⚠️  Missing data-project in slide indices: ${slidesWithoutData.join(', ')}`);
@@ -244,10 +249,11 @@ export function initLightbox({
   function validateSlideData() {
     if (!projectData) return;
     
+    const currentSlides = getSlides();
     let validSlides = 0;
     let missingData = [];
     
-    slides.forEach((slide, index) => {
+    currentSlides.forEach((slide, index) => {
       const projectId = slide.dataset.project;
       if (!projectId) {
         missingData.push(`Slide ${index}: missing data-project attribute`);
@@ -266,7 +272,7 @@ export function initLightbox({
       }
     });
     
-    console.log(`[LIGHTBOX] ✓ Valid slides: ${validSlides}/${slides.length}`);
+    console.log(`[LIGHTBOX] ✓ Valid slides: ${validSlides}/${currentSlides.length}`);
     if (missingData.length > 0) {
       console.warn('[LIGHTBOX] ⚠️  Issues found:');
       missingData.forEach(msg => console.warn(`   - ${msg}`));
@@ -297,20 +303,80 @@ export function initLightbox({
   function setPageInert(on) {
     // Block background page interaction when lightbox is open
     // Must use removeAttribute() not setAttribute('inert', false) → still blocks interaction
-    const siblings = Array.from(document.body.children).filter(n => n !== lb);
-    siblings.forEach(n => {
+    if (on) {
+      inertTargets.clear();
+      const siblings = Array.from(document.body.children).filter(node => node !== lb);
+      siblings.forEach(node => {
+        try {
+          node.setAttribute('inert', '');
+          node.setAttribute('aria-hidden', 'true');
+          inertTargets.add(node);
+        } catch (err) {
+          console.warn('[LIGHTBOX] Error setting inert:', err);
+        }
+      });
+      console.log(`[LIGHTBOX] 🚫 Inert applied to ${inertTargets.size} element${inertTargets.size === 1 ? '' : 's'}`);
+      return;
+    }
+
+    let removedFromTracked = 0;
+    inertTargets.forEach(node => {
       try {
-        if (on) {
-          n.setAttribute('inert', '');
-          n.setAttribute('aria-hidden', 'true');
-        } else {
-          n.removeAttribute('inert');
-          n.removeAttribute('aria-hidden');
+        if (!node.parentNode) {
+          return;
+        }
+        if (node.hasAttribute('inert')) {
+          node.removeAttribute('inert');
+          node.removeAttribute('aria-hidden');
+          removedFromTracked++;
         }
       } catch (err) {
-        console.warn('[LIGHTBOX] Error setting inert:', err);
+        console.warn('[LIGHTBOX] Error removing inert from tracked element:', err);
       }
     });
+
+    // Defensive sweep in case DOM mutated while lightbox was open
+    const siblings = Array.from(document.body.children).filter(node => node !== lb);
+    let sweepCount = 0;
+    siblings.forEach(node => {
+      try {
+        if (node.hasAttribute('inert')) {
+          node.removeAttribute('inert');
+          node.removeAttribute('aria-hidden');
+          sweepCount++;
+        }
+      } catch (err) {
+        console.warn('[LIGHTBOX] Error removing inert during sweep:', err);
+      }
+    });
+
+    inertTargets.clear();
+    console.log(`[LIGHTBOX] ✓ Inert removed (${removedFromTracked} tracked, ${sweepCount} swept)`);
+
+    // Final verification on next frame → catches late mutations from Webflow/GSAP
+    requestAnimationFrame(() => {
+      const lingering = Array.from(document.body.children).filter(node => node !== lb && node.hasAttribute('inert'));
+      if (lingering.length > 0) {
+        console.error(`[LIGHTBOX] ❌ Found ${lingering.length} lingering inert element${lingering.length === 1 ? '' : 's'}:`, lingering);
+        lingering.forEach(node => {
+          try {
+            node.removeAttribute('inert');
+            node.removeAttribute('aria-hidden');
+          } catch (err) {
+            console.warn('[LIGHTBOX] Error removing lingering inert element:', err);
+          }
+        });
+      } else {
+        console.log('[LIGHTBOX] ✓ Verified no lingering inert attributes');
+      }
+    });
+  }
+
+  function debugPointerSnapshot(label) {
+    const overlayPointer = overlay ? (overlay.style.pointerEvents || '(unset)') : 'n/a';
+    const overlayOverflow = overlay ? (overlay.style.overflowY || '(unset)') : 'n/a';
+    const lbPointer = lb ? (lb.style.pointerEvents || '(unset)') : 'n/a';
+    console.log(`[LIGHTBOX] 🧪 ${label} → state=${currentState} detailsOpen=${detailsOpen} overlay.pointerEvents=${overlayPointer} overlay.overflowY=${overlayOverflow} lb.pointerEvents=${lbPointer}`);
   }
 
   function trapFocus(e) {
@@ -465,7 +531,7 @@ export function initLightbox({
 
   function disableSlideInteractions() {
     // Prevent double-clicks during opening transition
-    slides.forEach(slide => {
+    getSlides().forEach(slide => {
       slide.style.pointerEvents = 'none';
       slide.setAttribute('aria-disabled', 'true');
     });
@@ -473,7 +539,7 @@ export function initLightbox({
   }
 
   function enableSlideInteractions() {
-    slides.forEach(slide => {
+    getSlides().forEach(slide => {
       slide.style.pointerEvents = '';
       slide.removeAttribute('aria-disabled');
     });
@@ -594,6 +660,19 @@ export function initLightbox({
     
     // Change state to CLOSING
     setState(STATE.CLOSING);
+
+    if (detailsOpen) {
+      console.log('[LIGHTBOX] ⚠️  Details open during close request → forcing hide');
+      closeDetails({ resetOverlay: true });
+    } else {
+      emitWebflowEvent('details:hide');
+      if (overlay) {
+        overlay.style.pointerEvents = 'none';
+        overlay.style.overflow = '';
+        overlay.style.overflowY = '';
+      }
+    }
+    debugPointerSnapshot('requestClose → after details cleanup');
     
     // Emit event for external listeners
     emit('LIGHTBOX_CLOSE', lb);
@@ -644,6 +723,7 @@ export function initLightbox({
       overlay.style.height = '';
       overlay.style.maxHeight = '';
     }
+    debugPointerSnapshot('finishClose → after overlay reset');
     
     // Hide lightbox completely
     lb.style.display = 'none';
@@ -665,16 +745,26 @@ export function initLightbox({
   // ============================================================
   
   // Use event delegation for slide clicks (entire slide is clickable)
-  const slidesContainer = slides[0]?.parentElement;
+  // Find container dynamically - slides might be in .perspective-wrapper or elsewhere
+  const getSlidesContainer = () => {
+    const firstSlide = getSlides()[0];
+    return firstSlide?.parentElement || document.querySelector('.perspective-wrapper') || document.body;
+  };
+  const slidesContainer = getSlidesContainer();
   
   function handleSlideClick(e) {
     const slide = e.target.closest('.slide');
     if (!slide) return;
     
+    // Prevent any link navigation → entire slide opens lightbox
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('[LIGHTBOX] 🎯 Slide clicked:', slide.dataset.project);
+    
     // Guard against interactions during transitions
     if (currentState !== STATE.IDLE) {
-      e.preventDefault();
-      e.stopPropagation();
+      console.log('[LIGHTBOX] ⚠️  Click ignored - lightbox not idle');
       return;
     }
     
@@ -683,8 +773,6 @@ export function initLightbox({
       return;
     }
     
-    e.preventDefault();
-    e.stopPropagation();
     openFromSlide(slide);
   }
   
@@ -733,11 +821,23 @@ export function initLightbox({
       if (lb) {
         lb.style.pointerEvents = 'auto';
       }
+      debugPointerSnapshot('openDetails → raf');
     });
   }
 
-  function closeDetails({ silent = false } = {}) {
-    if (!detailsOpen) return;
+  function closeDetails({ silent = false, resetOverlay = false } = {}) {
+    if (!detailsOpen) {
+      if (!silent) {
+        emitWebflowEvent('details:hide');
+      }
+      if (resetOverlay && overlay) {
+        overlay.style.pointerEvents = 'none';
+        overlay.style.overflow = '';
+        overlay.style.overflowY = '';
+        debugPointerSnapshot('closeDetails → already closed (reset overlay)');
+      }
+      return;
+    }
 
     detailsOpen = false;
     console.log('[LIGHTBOX] 🎯 Details overlay closing');
@@ -746,16 +846,22 @@ export function initLightbox({
       emitWebflowEvent('details:hide');
     }
 
-    // Maintain interactivity → lightbox still open, overlay must remain scrollable
     requestAnimationFrame(() => {
       if (overlay) {
-        overlay.style.pointerEvents = 'auto';
-        overlay.style.overflow = 'auto';
-        overlay.style.overflowY = 'auto';
+        if (resetOverlay) {
+          overlay.style.pointerEvents = 'none';
+          overlay.style.overflow = '';
+          overlay.style.overflowY = '';
+        } else {
+          overlay.style.pointerEvents = 'auto';
+          overlay.style.overflow = 'auto';
+          overlay.style.overflowY = 'auto';
+        }
       }
-      if (lb) {
+      if (lb && !resetOverlay) {
         lb.style.pointerEvents = 'auto';
       }
+      debugPointerSnapshot(`closeDetails → raf resetOverlay=${resetOverlay}`);
     });
   }
 
@@ -769,8 +875,10 @@ export function initLightbox({
     }
 
     if (detailsOpen) {
+      console.log('[LIGHTBOX] 🧪 handleDetailsClick → toggling OFF');
       closeDetails();
     } else {
+      console.log('[LIGHTBOX] 🧪 handleDetailsClick → toggling ON');
       openDetails();
     }
   }
@@ -783,29 +891,47 @@ export function initLightbox({
 
     e.preventDefault();
     e.stopPropagation();
+    console.log('[LIGHTBOX] 🧪 handleDetailsOverlayClick → closing details');
     closeDetails();
   }
   
   // Attach delegated listener to slides container
+  const slideCount = getSlides().length;
+  console.log(`[LIGHTBOX] 🔍 Found ${slideCount} slide${slideCount !== 1 ? 's' : ''}, container:`, slidesContainer?.tagName || 'null');
+  
   if (slidesContainer) {
     slidesContainer.addEventListener('click', handleSlideClick, { passive: false });
-    console.log(`[LIGHTBOX] ✓ Delegated click handler attached to container (${slides.length} slides)`);
+    console.log(`[LIGHTBOX] ✓ Delegated click handler attached to ${slidesContainer.tagName} (${slideCount} slide${slideCount !== 1 ? 's' : ''})`);
   } else {
-    console.warn('[LIGHTBOX] ⚠️  Could not find slides container for event delegation');
+    console.error('[LIGHTBOX] ❌ Could not find slides container for event delegation');
   }
 
-  if (closeBtn) {
-    closeBtn.addEventListener('click', handleCloseBtnClick);
-  } else {
+  function handleLightboxClick(e) {
+    const closeTarget = e.target.closest('#close-btn');
+    if (closeTarget) {
+      console.log('[LIGHTBOX] 🧪 Delegated click → close-btn');
+      handleCloseBtnClick(e);
+      return;
+    }
+
+    const detailsTarget = e.target.closest('#details-btn');
+    if (detailsTarget) {
+      console.log('[LIGHTBOX] 🧪 Delegated click → details-btn');
+      handleDetailsClick(e);
+    }
+  }
+
+  lb.addEventListener('click', handleLightboxClick, { passive: false });
+  console.log('[LIGHTBOX] ✓ Delegated handlers attached for close/details buttons');
+
+  if (!closeBtn) {
     console.warn('[LIGHTBOX] ⚠️  #close-btn not found - only Escape key will close');
   }
-  
-  // Details button - triggers details overlay
-  if (detailsBtn) {
-    detailsBtn.addEventListener('click', handleDetailsClick, { passive: false });
-    console.log('[LIGHTBOX] ✓ Details button handler attached');
-  } else {
+
+  if (!detailsBtn) {
     console.warn('[LIGHTBOX] ⚠️  Details button (#details-btn) not found');
+  } else {
+    console.log('[LIGHTBOX] ✓ Details button detected in DOM');
   }
   
   if (overlay) {
@@ -829,12 +955,7 @@ export function initLightbox({
     if (slidesContainer) {
       slidesContainer.removeEventListener('click', handleSlideClick);
     }
-    if (closeBtn) {
-      closeBtn.removeEventListener('click', handleCloseBtnClick);
-    }
-    if (detailsBtn) {
-      detailsBtn.removeEventListener('click', handleDetailsClick);
-    }
+    lb.removeEventListener('click', handleLightboxClick);
     if (overlay) {
       overlay.removeEventListener('click', handleDetailsOverlayClick);
       overlay.style.pointerEvents = 'none';
@@ -856,7 +977,7 @@ export function initLightbox({
   }
   
   function openProjectById(projectId) {
-    const slide = Array.from(slides).find(s => s.dataset.project === projectId);
+    const slide = Array.from(getSlides()).find(s => s.dataset.project === projectId);
     if (!slide) {
       console.error(`[LIGHTBOX] ❌ No slide found for project: "${projectId}"`);
       return false;

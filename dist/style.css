@@ -69,7 +69,19 @@ svg {
    Layout & Utilities
    ============================================================ */
 
-.slide { contain: layout paint; }
+.slide { 
+  contain: layout paint; 
+  cursor: pointer;
+  position: relative;
+}
+
+/* Disable any links inside slides → entire slide is clickable */
+.slide .slide__link,
+.slide a {
+  pointer-events: none;
+  cursor: inherit;
+  text-decoration: none;
+}
 
 /* ============================================================
    Navigation Styles

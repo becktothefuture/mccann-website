@@ -78,6 +78,14 @@ export function initSlides(options = {}) {
     // Clone template for this slide
     const slide = baseTemplate.cloneNode(true);
     
+    // Remove any .slide__link elements → entire slide is now clickable
+    const links = slide.querySelectorAll('.slide__link');
+    links.forEach(link => {
+      link.removeAttribute('href');
+      link.style.pointerEvents = 'none';
+      link.style.cursor = 'inherit';
+    });
+    
     // Set data-project attribute (lightbox reads this)
     slide.dataset.project = projectId;
     slide.setAttribute('role', 'button');
