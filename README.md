@@ -29,6 +29,7 @@
 
 - **Preloader** — Prefetches autoplay videos (HTML5 + Vimeo) with progress tracking, includes resize cover to prevent visual jank during window resizing
 - **Accordion** — Two-level nested accordion with full ARIA support and smooth transitions
+- **Locations** — Dynamic office locations accordion built from JSON data
 - **Lightbox** — Focus-trapped modal with Vimeo mounting and scroll lock
 - **Smooth Scroll** — Weighted momentum scrolling via Lenis with GSAP integration
 - **Logo Animations** — Scroll-triggered logo animations via Webflow IX
@@ -560,15 +561,18 @@ src/
 ├── modules/
 │   ├── preloader.js                    Video prefetching with TruthWellTold signet
 │   ├── accordion.js                    Two-level ARIA accordion with smooth transitions
+│   ├── locations.js                    Dynamic office locations accordion builder
 │   ├── lightbox.js                     Focus-trapped modal with Vimeo mounting
 │   ├── smooth-scroll.js                Lenis-powered weighted momentum scroll
 │   ├── webflow-scrolltrigger.js        GSAP ScrollTrigger bridge for logo animation
 │   └── vimeo.js                        Vimeo ID parser and iframe mounter
 └── data/
-    └── project-data.json               Project metadata for preloader
+    ├── project-data.json               Project metadata for preloader
+    └── mccann-locations.json           Office locations hierarchy
 
 docs/
 ├── ACCORDION_WEBFLOW_SETUP.md          Complete accordion setup guide
+├── OFFICES_ACCORDION_WEBFLOW_SETUP.md  Office locations accordion setup guide
 ├── LIGHTBOX_WEBFLOW_SETUP.md           Complete lightbox setup guide
 ├── PRELOADER_WEBFLOW_SETUP.md          Complete preloader setup guide
 ├── WEBFLOW_ANIMATION_SETUP.md          Animation coordination guide

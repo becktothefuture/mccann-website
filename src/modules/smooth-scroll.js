@@ -68,8 +68,17 @@ export function initSmoothScroll(options = {}) {
     window.App.smoothScroll = {
       stop: () => lenisInstance.stop(),
       start: () => lenisInstance.start(),
+      resize: () => lenisInstance.resize(),
       instance: lenisInstance
     };
+
+    window.addEventListener('acc-open', () => {
+      requestAnimationFrame(() => lenisInstance.resize());
+    });
+
+    window.addEventListener('acc-close', () => {
+      requestAnimationFrame(() => lenisInstance.resize());
+    });
 
     console.log(`[SMOOTH-SCROLL] ✓ Initialized with momentum scrolling (lerp: ${defaultLerp})`);
     return lenisInstance;

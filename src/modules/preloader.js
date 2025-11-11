@@ -9,6 +9,7 @@
 console.log('[PRELOADER] Module loaded');
 
 import projectDataJson from '../data/project-data.json';
+import { lockScroll, unlockScroll } from '../core/scrolllock.js';
 
 // ============================================================
 // STATE
@@ -29,8 +30,6 @@ let lastResizeCoverHideTime = 0;
 let resizeShowDelay = 800; // Delay before showing again (ms)
 let resizeHideDelay = 1200; // Delay before hiding after resize stops (ms)
 let eventLeadMs = 100; // Time before hide to emit load-completed event (ms)
-let bodyOverflowBeforePreloader = '';
-let hasStoredBodyOverflow = false;
 
 // Webflow IX helper (ix3 or ix2)
 const wfIx = (window.Webflow && window.Webflow.require)
@@ -40,25 +39,6 @@ const wfIx = (window.Webflow && window.Webflow.require)
 // ============================================================
 // HELPER FUNCTIONS
 // ============================================================
-
-function storeBodyOverflow() {
-  if (typeof document === 'undefined' || !document.body) return;
-  if (!hasStoredBodyOverflow) {
-    // Preserve author's overflow setting so we can restore later → prevents permanent scroll lock
-    bodyOverflowBeforePreloader = document.body.style.overflow || '';
-    hasStoredBodyOverflow = true;
-  }
-}
-
-function restoreBodyOverflow() {
-  if (typeof document === 'undefined' || !document.body) return;
-  if (hasStoredBodyOverflow) {
-    document.body.style.overflow = bodyOverflowBeforePreloader;
-  } else {
-    document.body.style.overflow = '';
-  }
-  hasStoredBodyOverflow = false;
-}
 
 // ============================================================
 // INITIALIZATION
@@ -108,17 +88,16 @@ export function initPreloader({
   
   log('Initializing preloader...');
 
-  // Ensure preloader appears first - lock body scroll immediately
-  storeBodyOverflow();
+  // Lock scroll immediately using robust scroll lock mechanism (iOS compatible)
+  lockScroll();
   document.body.classList.add('preloader-active');
-  document.body.style.overflow = 'hidden';
 
   // Find elements
   preloaderEl = document.querySelector(selector);
   if (!preloaderEl) {
     console.error('[PRELOADER] ❌ Preloader element not found');
     document.body.classList.remove('preloader-active');
-    restoreBodyOverflow();
+    unlockScroll();
     return;
   }
 
@@ -715,7 +694,7 @@ function emitLoadCompleted() {
 function hidePreloader() {
   if (!preloaderEl) {
     document.body.classList.remove('preloader-active');
-    restoreBodyOverflow();
+    unlockScroll();
     return;
   }
 
@@ -729,7 +708,7 @@ function hidePreloader() {
     
     // IMMEDIATELY unlock scroll for reduced motion
     document.body.classList.remove('preloader-active');
-    restoreBodyOverflow();
+    unlockScroll();
     
     setTimeout(() => {
       if (preloaderEl) {
@@ -739,14 +718,7 @@ function hidePreloader() {
       
       // Double-check unlock
       document.body.classList.remove('preloader-active');
-      restoreBodyOverflow();
-      
-      // Also unlock perspective wrapper if it exists
-      const wrapper = document.querySelector('.perspective-wrapper');
-      if (wrapper) {
-        wrapper.classList.remove('modal-open');
-        wrapper.style.overflow = '';
-      }
+      unlockScroll();
       
       window.dispatchEvent(new CustomEvent('preloader:complete'));
       log('✓ Preloader complete', 'success');
@@ -765,7 +737,7 @@ function hidePreloader() {
   // IMMEDIATELY unlock scroll (don't wait for animation)
   // This prevents the page from staying frozen if animation fails
   document.body.classList.remove('preloader-active');
-  restoreBodyOverflow();
+  unlockScroll();
   
   // Start fade-out after a brief delay to ensure event is processed
   setTimeout(() => {
@@ -777,14 +749,7 @@ function hidePreloader() {
     
     // Double-check scroll is unlocked
     document.body.classList.remove('preloader-active');
-    restoreBodyOverflow();
-    
-    // Also unlock perspective wrapper if it exists
-    const wrapper = document.querySelector('.perspective-wrapper');
-    if (wrapper) {
-      wrapper.classList.remove('modal-open');
-      wrapper.style.overflow = '';
-    }
+    unlockScroll();
     
     window.dispatchEvent(new CustomEvent('preloader:complete'));
     log('✓ Preloader complete', 'success');
@@ -1164,7 +1129,7 @@ export function cleanupPreloader() {
   lastResizeCoverHideTime = 0;
   
   document.body?.classList.remove('preloader-active');
-  restoreBodyOverflow();
+  unlockScroll();
   log('Cleaned up', 'info');
 }
 

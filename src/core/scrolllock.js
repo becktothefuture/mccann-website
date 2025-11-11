@@ -7,7 +7,6 @@
  */
 
 let isLocked = false;
-let savedY = 0;
 let wrapper = null;
 
 // ============================================================
@@ -21,14 +20,8 @@ export function lockScroll(){
   wrapper = document.querySelector('.perspective-wrapper') || document.body;
   
   if (wrapper === document.body) {
-    savedY = window.scrollY || document.documentElement.scrollTop || 0;
-  } else {
-    savedY = wrapper.scrollTop || 0;
-  }
-  
-  if (wrapper === document.body) {
+    // iOS-compatible scroll lock using position: fixed
     document.body.style.position = 'fixed';
-    document.body.style.top = `-${savedY}px`;
     document.body.style.left = '0';
     document.body.style.right = '0';
     document.body.style.width = '100%';
@@ -49,13 +42,9 @@ export function unlockScroll({ delayMs = 0 } = {}){
     
     if (wrapper === document.body) {
       document.body.style.position = '';
-      document.body.style.top = '';
       document.body.style.left = '';
       document.body.style.right = '';
       document.body.style.width = '';
-      window.scrollTo(0, savedY);
-    } else {
-      wrapper.scrollTop = savedY;
     }
     
     isLocked = false;

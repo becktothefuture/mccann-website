@@ -72,6 +72,15 @@ svg {
 .slide { contain: layout paint; }
 
 /* ============================================================
+   Navigation Styles
+   ============================================================ */
+
+/* When nav-bar has is-light class, make nav__background transparent */
+.nav-bar.is-light > .nav__background {
+  background: transparent;
+}
+
+/* ============================================================
    Lightbox Slide States
    ============================================================ */
 
@@ -106,18 +115,6 @@ body.modal-open { overflow: hidden; }
   overflow: visible;
 }
 
-.accordeon .acc-list > .acc-item {
-  --acc-progress: 0;
-  transform: translate3d(0, calc((1 - var(--acc-progress)) * var(--acc-item-distance, 16px)), 0);
-  opacity: var(--acc-progress);
-  pointer-events: none;
-}
-
-.accordeon .acc-list[data-accordion-state="opening"] > .acc-item,
-.accordeon .acc-list[data-accordion-state="open"] > .acc-item {
-  pointer-events: auto;
-}
-
 .debug-mode .accordeon .acc-list {
   outline: 1px dashed rgba(255, 165, 0, 0.4);
 }
@@ -133,6 +130,7 @@ body.modal-open { overflow: hidden; }
   inset: 0;
   z-index: 999999; /* Maximum z-index - above everything */
   background-color: #f8f8f8; /* Off-white */
+  color:rgb(28, 28, 28);
   display: flex;
   align-items: center;
   justify-content: center;

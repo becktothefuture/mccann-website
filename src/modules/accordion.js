@@ -1,7 +1,7 @@
 /**
  * ==================================================
  *  McCann Website — Accordion Module
- *  Purpose: ARIA-compliant nested accordion with native staggered animation
+ *  Purpose: ARIA-compliant nested accordion with GSAP-driven stagger
  *  Date: 2025-11-10
  * ==================================================
  */
@@ -15,12 +15,20 @@ console.log('[ACCORDION] Module loaded');
 export function initAccordion(options = {}) {
   const {
     selector = '.accordeon',
-    openDuration = 360,
-    closeDuration = 260,
-    itemDuration = 320,
-    itemOverlap = 100,
-    itemDistance = 16
+    panelOpenDuration: openOpt,
+    panelCloseDuration: closeOpt,
+    itemDuration: itemDurationOpt,
+    itemStagger: itemStaggerOpt,
+    itemDistance: itemDistanceOpt,
+    openDuration,
+    closeDuration
   } = options;
+
+  let panelOpenDuration = openOpt ?? openDuration ?? 200;
+  let panelCloseDuration = closeOpt ?? closeDuration ?? 150;
+  let itemDuration = itemDurationOpt ?? 50; // ms per item
+  let itemStagger = itemStaggerOpt ?? 20;   // ms between items
+  let itemDistance = itemDistanceOpt ?? 6;  // px travel
 
   const root = document.querySelector(selector);
   if (!root) {
@@ -36,6 +44,23 @@ export function initAccordion(options = {}) {
   // HELPERS
   // ============================================================
 
+  const hasGSAP = Boolean(window.gsap && typeof window.gsap.timeline === 'function');
+  const motionReduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  const toSeconds = (ms) => ms / 1000;
+
+  panelOpenDuration = motionReduce ? 0 : Math.max(panelOpenDuration ?? 200, 0);
+  panelCloseDuration = motionReduce ? 0 : Math.max(panelCloseDuration ?? 150, 0);
+  itemDuration = motionReduce ? 0 : Math.max(itemDuration ?? 50, 0);
+  itemStagger = motionReduce ? 0 : Math.max(itemStagger ?? 20, 0);
+  itemDistance = motionReduce ? 0 : Math.max(itemDistance ?? 6, 0);
+
+  const openDurationSec = toSeconds(panelOpenDuration);
+  const closeDurationSec = toSeconds(panelCloseDuration);
+  const itemDurationSec = toSeconds(itemDuration);
+  const itemStaggerSec = toSeconds(itemStagger);
+
+  const panelTimelines = new WeakMap();
+
   const panelOf = (item) => item?.querySelector(':scope > .acc-list');
   const groupOf = (item) => {
     const parent = item.parentElement;
@@ -44,8 +69,8 @@ export function initAccordion(options = {}) {
   const dbg = (...args) => { try { console.log('[ACCORDION]', ...args); } catch (_) {} };
   const itemKind = (el) => el?.classList?.contains('acc-section') ? 'section' : 'item';
   const labelOf = (el) => {
-    const t = el?.querySelector(':scope > .acc-trigger');
-    return (t?.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+    const trigger = el?.querySelector(':scope > .acc-trigger');
+    return (trigger?.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80);
   };
   const ACTIVE_TRIGGER_CLASS = 'is-active';
   const PANEL_STATES = {
@@ -54,22 +79,6 @@ export function initAccordion(options = {}) {
     OPENING: 'opening',
     OPEN: 'open'
   };
-
-  const motionReduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-  const resolvedOpenDuration = motionReduce ? 0 : Math.max(openDuration, 16);
-  const resolvedCloseDuration = motionReduce ? 0 : Math.max(closeDuration, 16);
-  const resolvedItemDuration = motionReduce ? 0 : Math.max(itemDuration, 16);
-  const resolvedOverlap = motionReduce ? 0 : Math.min(Math.max(itemOverlap, 0), resolvedItemDuration);
-  const itemStep = resolvedItemDuration > 0 ? Math.max(resolvedItemDuration - resolvedOverlap, 0) : 0;
-  const resolvedDistance = Math.max(itemDistance, 0);
-
-  root.style.setProperty('--acc-item-distance', `${resolvedDistance}px`);
-
-  const panelRafMap = new WeakMap();
-  const itemRafMap = new WeakMap();
-
-  const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-  const easeInCubic = (t) => t * t * t;
 
   function setPanelState(panel, state) {
     panel.dataset.state = state;
@@ -84,216 +93,156 @@ export function initAccordion(options = {}) {
     panel.style.display = panel.dataset.accDisplay || 'block';
   }
 
-  // ============================================================
-  // ANIMATION
-  // ============================================================
-
-  function cancelPanelAnimation(panel) {
-    const raf = panelRafMap.get(panel);
-    if (typeof raf === 'number') {
-      cancelAnimationFrame(raf);
-    }
-    panelRafMap.delete(panel);
-    panel.style.willChange = '';
-  }
-
-  function animatePanelHeight(panel, direction, onComplete) {
-    cancelPanelAnimation(panel);
-
-    const duration = direction === 'open' ? resolvedOpenDuration : resolvedCloseDuration;
-    const startHeight = panel.getBoundingClientRect().height;
-    const targetHeight = direction === 'open' ? panel.scrollHeight : 0;
-
-    if (duration <= 16) {
-      panel.style.height = direction === 'open' ? 'auto' : '0px';
-      panel.style.overflow = direction === 'open' ? 'visible' : 'hidden';
-      onComplete?.();
-      return;
-    }
-
-    const startTime = performance.now();
-    const ease = direction === 'open' ? easeOutCubic : easeInCubic;
-
-    if (direction === 'open' && startHeight === 0) {
-      panel.style.height = '0px';
-    } else if (direction === 'close' && (panel.style.height === 'auto' || panel.style.height === '')) {
-      panel.style.height = `${startHeight}px`;
-    }
-
-    panel.style.overflow = 'hidden';
-    panel.style.willChange = 'height';
-
-    const step = (now) => {
-      const elapsed = now - startTime;
-      const progress = duration === 0 ? 1 : Math.min(elapsed / duration, 1);
-      const eased = ease(progress);
-      const current = startHeight + (targetHeight - startHeight) * eased;
-      panel.style.height = `${current}px`;
-
-      if (progress < 1) {
-        panelRafMap.set(panel, requestAnimationFrame(step));
-        return;
-      }
-
-      panelRafMap.delete(panel);
-      panel.style.height = direction === 'open' ? 'auto' : '0px';
-      panel.style.overflow = direction === 'open' ? 'visible' : 'hidden';
-      panel.style.willChange = '';
-      onComplete?.();
-    };
-
-    panelRafMap.set(panel, requestAnimationFrame(step));
-  }
-
-  function cancelItemAnimation(item) {
-    const raf = itemRafMap.get(item);
-    if (typeof raf === 'number') {
-      cancelAnimationFrame(raf);
-    }
-    itemRafMap.delete(item);
-    item.style.willChange = '';
-  }
-
-  function animateItem(item, direction, delayMs) {
-    cancelItemAnimation(item);
-
-    const duration = resolvedItemDuration;
-    const stored = parseFloat(item.style.getPropertyValue('--acc-progress'));
-    const startValue = Number.isFinite(stored) ? stored : (direction === 'open' ? 0 : 1);
-    const endValue = direction === 'open' ? 1 : 0;
-
-    if (duration <= 16) {
-      item.style.setProperty('--acc-progress', endValue.toString());
-      return;
-    }
-
-    const startTime = performance.now() + delayMs;
-    const ease = direction === 'open' ? easeOutCubic : easeInCubic;
-
-    item.style.willChange = 'transform, opacity';
-
-    const step = (now) => {
-      if (now < startTime) {
-        itemRafMap.set(item, requestAnimationFrame(step));
-        return;
-      }
-
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = ease(progress);
-      const current = startValue + (endValue - startValue) * eased;
-      item.style.setProperty('--acc-progress', current.toFixed(3));
-
-      if (progress < 1) {
-        itemRafMap.set(item, requestAnimationFrame(step));
-        return;
-      }
-
-      itemRafMap.delete(item);
-      item.style.setProperty('--acc-progress', endValue.toString());
-      item.style.willChange = '';
-    };
-
-    itemRafMap.set(item, requestAnimationFrame(step));
-  }
-
-  function animateItems(panel, direction) {
-    const items = Array.from(panel.querySelectorAll(':scope > .acc-item'));
-    if (!items.length) return;
-
-    const total = items.length;
-    items.forEach((item, index) => {
-      const order = direction === 'open' ? index : total - index - 1;
-      const delay = Math.max(itemStep * order, 0);
-      animateItem(item, direction, delay);
-    });
-  }
-
-  function setItemsProgress(panel, value) {
-    const clamped = Math.max(0, Math.min(1, value));
-    panel.querySelectorAll(':scope > .acc-item').forEach(item => {
-      cancelItemAnimation(item);
-      item.style.setProperty('--acc-progress', clamped.toFixed(3));
-    });
+  function killTimeline(panel) {
+    const tl = panelTimelines.get(panel);
+    if (!tl) return;
+    tl.eventCallback('onComplete', null);
+    tl.kill();
+    panelTimelines.delete(panel);
   }
 
   function emitAll(primary, detail = {}) {
     const aliases = [];
     if (primary === 'acc-open') aliases.push('accordeon-open');
     if (primary === 'acc-close') aliases.push('accordeon-close');
-    [primary, ...aliases].forEach(name => {
+    [primary, ...aliases].forEach((name) => {
       try {
         window.dispatchEvent(new CustomEvent(name, { detail }));
-        dbg(`📢 EMITTING: "${name}"`, detail);
-      } catch (err) {
-        dbg('emit error', err?.message);
+        dbg(`📢 EMIT: "${name}"`, detail);
+      } catch (error) {
+        dbg('emit error', error?.message);
       }
     });
   }
 
   function finalizeOpen(panel) {
+    panelTimelines.delete(panel);
     setPanelState(panel, PANEL_STATES.OPEN);
     panel.style.height = 'auto';
     panel.style.overflow = 'visible';
-    setItemsProgress(panel, 1);
+    if (hasGSAP) {
+      const items = panel.querySelectorAll(':scope > .acc-item');
+      window.gsap.set(items, { clearProps: 'transform,opacity' });
+    }
     dbg('expanded', { id: panel.id });
   }
 
   function finalizeClose(panel) {
+    panelTimelines.delete(panel);
     setPanelState(panel, PANEL_STATES.COLLAPSED);
     panel.classList.remove('is-active');
     panel.setAttribute('aria-hidden', 'true');
     panel.style.height = '0px';
     panel.style.overflow = 'hidden';
-    setItemsProgress(panel, 0);
+    if (hasGSAP) {
+      const items = panel.querySelectorAll(':scope > .acc-item');
+      window.gsap.set(items, { y: -itemDistance, opacity: 0 });
+    }
     dbg('collapsed', { id: panel.id });
+  }
+
+  function openInstant(panel) {
+    finalizeOpen(panel);
+  }
+
+  function closeInstant(panel) {
+    finalizeClose(panel);
   }
 
   function openPanel(panel) {
     ensurePanelRegistration(panel);
-    cancelPanelAnimation(panel);
+    killTimeline(panel);
+
     setPanelState(panel, PANEL_STATES.OPENING);
     panel.classList.add('is-active');
     panel.setAttribute('aria-hidden', 'false');
     panel.style.display = panel.dataset.accDisplay || 'block';
-    panel.style.overflow = 'hidden';
-    if (panel.style.height === '' || panel.style.height === 'auto') {
-      panel.style.height = '0px';
-    }
-    setItemsProgress(panel, 0);
-    animateItems(panel, 'open');
+
     emitAll('acc-open', { id: panel.id });
-    animatePanelHeight(panel, 'open', () => finalizeOpen(panel));
+
+    if (!hasGSAP || (openDurationSec === 0 && itemDurationSec === 0)) {
+      openInstant(panel);
+      return;
+    }
+
+    const items = Array.from(panel.querySelectorAll(':scope > .acc-item'));
+    window.gsap.set(panel, {
+      height: panel.getBoundingClientRect().height,
+      overflow: 'hidden'
+    });
+    window.gsap.set(items, { y: -itemDistance, opacity: 0 });
+
+    const tl = window.gsap.timeline({
+      defaults: { ease: 'power2.out' },
+      onComplete: () => finalizeOpen(panel)
+    });
+
+    tl.to(panel, {
+      height: () => panel.scrollHeight,
+      duration: openDurationSec || 0
+    });
+
+    if (items.length && itemDurationSec >= 0) {
+      tl.to(items, {
+        y: 0,
+        opacity: 1,
+        duration: Math.max(itemDurationSec, 0.05),
+        stagger: Math.max(itemStaggerSec || 0.02, 0),
+        ease: 'power1.out'
+      }, 0);
+    }
+
+    panelTimelines.set(panel, tl);
   }
 
   function closePanel(panel) {
     ensurePanelRegistration(panel);
-    cancelPanelAnimation(panel);
-    setPanelState(panel, PANEL_STATES.CLOSING);
-    panel.style.overflow = 'hidden';
-    panel.style.height = `${panel.getBoundingClientRect().height}px`;
-    animateItems(panel, 'close');
-    emitAll('acc-close', { id: panel.id });
-    animatePanelHeight(panel, 'close', () => finalizeClose(panel));
-  }
+    killTimeline(panel);
 
-  function forceCollapse(panel) {
-    ensurePanelRegistration(panel);
-    cancelPanelAnimation(panel);
-    setPanelState(panel, PANEL_STATES.COLLAPSED);
-    panel.classList.remove('is-active');
-    panel.setAttribute('aria-hidden', 'true');
-    panel.style.display = panel.dataset.accDisplay || 'block';
-    panel.style.height = '0px';
-    panel.style.overflow = 'hidden';
-    setItemsProgress(panel, 0);
+    setPanelState(panel, PANEL_STATES.CLOSING);
+    emitAll('acc-close', { id: panel.id });
+
+    if (!hasGSAP || (closeDurationSec === 0 && itemDurationSec === 0)) {
+      closeInstant(panel);
+      return;
+    }
+
+    const items = Array.from(panel.querySelectorAll(':scope > .acc-item'));
+    window.gsap.set(panel, {
+      height: panel.getBoundingClientRect().height,
+      overflow: 'hidden'
+    });
+    window.gsap.set(items, { y: 0, opacity: 1 });
+
+    const tl = window.gsap.timeline({
+      defaults: { ease: 'power2.in' },
+      onComplete: () => finalizeClose(panel)
+    });
+
+    if (items.length && itemDurationSec >= 0) {
+      tl.to([...items].reverse(), {
+        y: -itemDistance,
+        opacity: 0,
+        duration: Math.max(itemDurationSec, 0.05),
+        stagger: Math.max(itemStaggerSec || 0.02, 0),
+        ease: 'power1.in'
+      });
+    }
+
+    tl.to(panel, {
+      height: 0,
+      duration: closeDurationSec || 0
+    }, 0);
+
+    panelTimelines.set(panel, tl);
   }
 
   function collapseDescendants(container) {
     const scope = container || root;
-    scope.querySelectorAll('.acc-item > .acc-list').forEach(panel => {
+    scope.querySelectorAll('.acc-item > .acc-list').forEach((panel) => {
       if (panel.dataset.state === PANEL_STATES.COLLAPSED) return;
-      forceCollapse(panel);
+      killTimeline(panel);
+      closeInstant(panel);
       const owner = panel.closest('.acc-item');
       const trigger = owner?.querySelector(':scope > .acc-trigger');
       trigger?.setAttribute('aria-expanded', 'false');
@@ -305,12 +254,14 @@ export function initAccordion(options = {}) {
     const group = groupOf(item);
     if (!group) return;
     const targetClass = item.matches('.acc-section') ? 'acc-section' : 'acc-item';
-    Array.from(group.children).forEach(sibling => {
+    Array.from(group.children).forEach((sibling) => {
       if (sibling === item || !sibling.classList.contains(targetClass)) return;
       const panel = panelOf(sibling);
       if (!panel) return;
+
       const state = panel.dataset.state;
       if (state === PANEL_STATES.COLLAPSED || state === PANEL_STATES.CLOSING) return;
+
       dbg('close sibling', { kind: targetClass, label: labelOf(sibling), id: panel.id });
       closePanel(panel);
       const trigger = sibling.querySelector(':scope > .acc-trigger');
@@ -348,15 +299,14 @@ export function initAccordion(options = {}) {
   // ============================================================
 
   document.body.classList.add('js-prep');
-  root.querySelectorAll('.acc-list').forEach(panel => {
+  root.querySelectorAll('.acc-list').forEach((panel) => {
     ensurePanelRegistration(panel);
     const isActive = panel.classList.contains('is-active');
-    const state = isActive ? PANEL_STATES.OPEN : PANEL_STATES.COLLAPSED;
-    setPanelState(panel, state);
-    panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
-    panel.style.height = isActive ? 'auto' : '0px';
-    panel.style.overflow = isActive ? 'visible' : 'hidden';
-    setItemsProgress(panel, isActive ? 1 : 0);
+    if (isActive) {
+      finalizeOpen(panel);
+    } else {
+      finalizeClose(panel);
+    }
   });
   requestAnimationFrame(() => {
     document.body.classList.remove('js-prep');
@@ -369,6 +319,7 @@ export function initAccordion(options = {}) {
   function toggle(item) {
     const panel = panelOf(item);
     if (!panel) return;
+
     const trigger = item.querySelector(':scope > .acc-trigger');
     const state = panel.dataset.state;
     const opening = !(state === PANEL_STATES.OPEN || state === PANEL_STATES.OPENING);
@@ -432,19 +383,20 @@ export function initAccordion(options = {}) {
       if (panel) closePanel(panel);
     },
     forceCloseAll: () => {
-      root.querySelectorAll('.acc-list').forEach(panel => forceCollapse(panel));
-      root.querySelectorAll('.acc-trigger').forEach(trigger => {
+      root.querySelectorAll('.acc-list').forEach((panel) => {
+        killTimeline(panel);
+        closeInstant(panel);
+      });
+      root.querySelectorAll('.acc-trigger').forEach((trigger) => {
         trigger.setAttribute('aria-expanded', 'false');
         trigger.classList.remove(ACTIVE_TRIGGER_CLASS);
       });
     },
-    state: () => {
-      return Array.from(root.querySelectorAll('.acc-list')).map(panel => ({
-        id: panel.id,
-        state: panel.dataset.state,
-        height: panel.style.height
-      }));
-    }
+    state: () => Array.from(root.querySelectorAll('.acc-list')).map((panel) => ({
+      id: panel.id,
+      state: panel.dataset.state,
+      height: panel.style.height
+    }))
   };
 
   console.log('[ACCORDION] Debug functions available at window._accordionTest');

@@ -13,6 +13,7 @@ import { initLightbox } from './modules/lightbox.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
 import { initSmoothScroll } from './modules/smooth-scroll.js';
 import { initNavTransition } from './modules/nav-transition.js';
+import { initLocations } from './modules/locations.js';
 
 // ============================================================
 // HELPERS
@@ -61,10 +62,16 @@ function init(options = {}) {
   
   initPreloader(preloaderConfig);
 
+  // Around line 65-70, uncomment:
   initSmoothScroll({
     lerp,
     snapLerp,
     ...smoothScroll
+  });
+
+  // Build locations accordion from JSON FIRST (before accordion initializes)
+  initLocations({
+    rootSelector: '.accordeon[data-locations-root="offices"]'
   });
 
   initAccordion({ selector: '.accordeon' });
