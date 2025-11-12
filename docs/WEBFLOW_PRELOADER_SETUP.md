@@ -90,8 +90,23 @@ The preloader **works automatically** on every page once you add the HTML struct
 **⚠️ Important:**
 - Add this to **EVERY page** that needs the preloader
 - Or add to **Site Settings → Custom Code → Before </body> tag** to apply site-wide
+- Add `preloader-active` to the `<body>` element's class list (Page Settings → Body Tag → Class) so the cover hides all content before JavaScript runs
 - The `#preloader` ID is **critical** - JavaScript finds it by this ID
 - Keep the exact class names: `.preloader__content`, `.preloader__signet`, `.preloader__progress`
+
+#### 🔒 Safety fallback (prevent stuck pages)
+
+Add this tiny script to **Site Settings → Custom Code → Head**. It removes `preloader-active` after load if `app.js` fails to hydrate (for example, CDN outage):
+
+```html
+<script>
+  window.addEventListener('load', () => {
+    if (!window.App?.preloader) {
+      document.body.classList.remove('preloader-active');
+    }
+  });
+</script>
+```
 
 ---
 

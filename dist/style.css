@@ -179,6 +179,17 @@ body.preloader-active {
   overflow: hidden;
 }
 
+/* Ensure preloader fully covers content during initial paint */
+body.preloader-active > :not(#preloader) {
+  display: none !important;
+}
+
+body.preloader-active #preloader {
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
 /* Preloader content wrapper */
 .preloader__content {
   display: flex;
