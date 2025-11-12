@@ -19,7 +19,7 @@ The lightbox module now includes comprehensive element validation with detailed 
    ⏱️  Open duration: 1000ms (must match Webflow 'lb:open' animation)
    ⏱️  Close duration: 1000ms (must match Webflow 'lb:close' animation)
    ✓ .lightbox__inner found
-   ✓ .lightbox__overlay found (smooth scroll container)
+   ✓ .lightbox__overlay found (details overlay container)
    ✓ .video-area found
 
 2️⃣  Content Injection Targets
@@ -124,7 +124,7 @@ These will cause the lightbox to malfunction:
 ### ⚠️ Warnings (Non-Critical)
 
 These are logged but won't break functionality:
-- Missing `.lightbox__overlay` (smooth scroll will be skipped)
+- Missing `.lightbox__overlay` (details overlay will not scroll independently)
 - Missing optional content targets (`#lightbox-truth`, `#lightbox-truthwelltold`)
 - Slides missing `.slide__link` (those slides won't be clickable)
 - Webflow IX not detected (animations won't work)
@@ -143,7 +143,7 @@ These are logged but won't break functionality:
 🎬 [LIGHTBOX] Triggered animation: "lb:open"
 [LIGHTBOX] ✓ Open animation complete
 [LIGHTBOX] State: open
-[SMOOTH-SCROLL] ✓ Container scroll initialized for lightbox__overlay lenis
+[LIGHTBOX] ✓ Overlay native scrolling enabled
 ```
 
 ### Closing Lightbox
@@ -153,9 +153,7 @@ These are logged but won't break functionality:
 [LIGHTBOX] State: closing
 🎬 [LIGHTBOX] Triggered animation: "lb:close"
 [LIGHTBOX] ✓ Close animation complete
-[LIGHTBOX] ✓ Overlay smooth scroll destroyed
 [LIGHTBOX] ✓ Scroll unlocked
-[LIGHTBOX] ✓ Main smooth scroll restarted
 [LIGHTBOX] ✓ Slide links re-enabled
 [LIGHTBOX] State: idle
 ```

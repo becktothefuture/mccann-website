@@ -4,6 +4,8 @@
 
 The preloader prefetches all autoplay videos before the site content is displayed, showing the TruthWellTold signet with a subtle animation during loading. This ensures smooth video playback from the moment users see the page. **Additionally, the preloader includes a resize cover feature** that automatically appears during browser window resizing to prevent visual jank and maintain a polished user experience.
 
+> **New:** `initPreloader` now accepts an optional `pageLoaders` map so you can define per-path loading strategies (e.g. skip Vimeo on lightweight subpages). See [Custom Page Loaders](#custom-page-loaders) below.
+
 ---
 
 ## Quick Start (TL;DR)
@@ -493,6 +495,37 @@ window.App.init({
 ```
 
 **Note:** iframes (Vimeo/YouTube) have different prefetch behavior. For best results, use native HTML5 `<video>` elements.
+
+---
+
+## Custom Page Loaders
+
+The default homepage flow preloads HTML5 videos, primes Vimeo embeds, waits for slides, then hides the overlay. You can override that behaviour on a per-path basis without touching the module internals.
+
+```js
+initPreloader({
+  pageLoaders: {
+    '/case-study': async ({ helpers }) => {
+      await helpers.prefetchVideos('video[data-case-study]');
+      // No Vimeo preload on this lightweight page
+    },
+    default: async ({ helpers }) => {
+      await helpers.prefetchVideos();
+      await helpers.preloadVimeoVideos();
+      await helpers.waitForSlidesBuilt();
+      await helpers.waitForPreviewVideosPlaying();
+    }
+  }
+});
+```
+
+How it works:
+
+1. `initPreloader` normalises `window.location.pathname` (trims query/hash, collapses `/index` → `/`).
+2. It builds a loader map by merging your `pageLoaders` with the built-in defaults.
+3. The matching loader receives a context object (`videoSelector`, `projectData`, `helpers`, etc.) and returns a promise. The preloader waits for the promise before running its hide logic.
+
+If you provide a non-function value, the preloader logs a warning and falls back to the built-in loader. Always include a `default` loader to catch any unmatched paths.
 
 ---
 

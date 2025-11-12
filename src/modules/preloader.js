@@ -28,6 +28,7 @@ let lastResizeCoverHideTime = 0;
 let resizeShowDelay = 800; // Delay before showing again (ms)
 let resizeHideDelay = 1200; // Delay before hiding after resize stops (ms)
 let eventLeadMs = 100; // Time before hide to emit load-completed event (ms)
+let isVerboseLogging = false;
 
 // Webflow IX helper (ix3 or ix2)
 const wfIx = (window.Webflow && window.Webflow.require)
@@ -74,14 +75,17 @@ export function initPreloader({
   enableResizeCover = true,
   resizeFadeDuration: fadeDuration = 150,
   resizeShowDelay: showDelay = 800,
-  eventLeadMs: leadMs = 100
+  eventLeadMs: leadMs = 100,
+  pageLoaders = {},
+  debug = false
 } = {}) {
 
   resizeFadeDuration = fadeDuration;
   resizeShowDelay = showDelay;
   eventLeadMs = leadMs;
+  isVerboseLogging = Boolean(debug);
   
-  log('Initializing preloader...');
+  log('Initializing preloader...', 'info', true);
 
   // Lock scroll immediately using robust scroll lock mechanism (iOS compatible)
   lockScroll();
@@ -125,29 +129,33 @@ export function initPreloader({
 
   // Begin loading process
   const startTime = performance.now();
+  const normalizedPath = normalizePath(window.location.pathname);
+  const loaderMap = buildPageLoaderMap(pageLoaders);
+  const { loader: selectedLoader, id: loaderId } = resolvePageLoader(normalizedPath, loaderMap);
   
-  // Step 1: Load HTML5 videos and Vimeo preload/prefetch
-  Promise.all([
-    prefetchVideos(videoSelector),
-    preloadVimeoVideos(projectData, vimeoPreload, vimeoBufferLimit)
-  ])
-    .then(() => {
-      log('✓ HTML5 videos and Vimeo preload complete', 'success');
-      
-      // Step 2: Wait for slides to be built (if slides module exists)
-      return waitForSlidesBuilt();
-    })
-    .then(() => {
-      log('✓ Slides built', 'success');
-      
-      // Step 3: Wait for all preview videos to be playing
-      return waitForPreviewVideosPlaying();
-    })
+  log(`🎯 Page loader selected "${loaderId}" for "${normalizedPath}"`, 'info');
+  
+  const loaderContext = {
+    videoSelector,
+    vimeoPreload,
+    vimeoBufferLimit,
+    projectData,
+    pathname: normalizedPath,
+    helpers: {
+      prefetchVideos,
+      preloadVimeoVideos,
+      waitForSlidesBuilt,
+      waitForPreviewVideosPlaying
+    }
+  };
+  
+  Promise.resolve()
+    .then(() => selectedLoader(loaderContext))
     .then(() => {
       const elapsed = performance.now() - startTime;
       const remaining = Math.max(0, minLoadTime - elapsed);
       
-      log(`✓ All media loaded and previews playing in ${Math.round(elapsed)}ms`, 'success');
+      log(`✓ Page loader completed in ${Math.round(elapsed)}ms`, 'success');
       
       if (remaining > 0) {
         log(`Waiting ${Math.round(remaining)}ms (min display time)...`, 'info');
@@ -159,7 +167,7 @@ export function initPreloader({
     })
     .catch(err => {
       console.error('[PRELOADER] ❌ Error:', err);
-      log(`❌ Error loading media: ${err.message}`, 'error');
+      log(`❌ Error during page loader: ${err.message}`, 'error');
       
       // Graceful degradation - still hide after min time
       const elapsed = performance.now() - startTime;
@@ -188,8 +196,13 @@ export function hidePreloaderManually() {
  * @param {string} message - Log message
  * @param {string} type - Log type: 'info', 'success', 'warning', 'error'
  */
-function log(message, type = 'info') {
+function log(message, type = 'info', force = false) {
   const consoleMessage = `[PRELOADER] ${message}`;
+  const alwaysVisible = type === 'error' || type === 'warning';
+
+  if (!force && !alwaysVisible && !isVerboseLogging) {
+    return;
+  }
   
   // Console output
   switch(type) {
@@ -218,7 +231,7 @@ async function prefetchVideos(selector) {
   const videos = Array.from(document.querySelectorAll(selector));
   
   if (videos.length === 0) {
-    log('⚠ No videos found to prefetch', 'warning');
+    log('ℹ No videos found to prefetch', 'info');
     return;
   }
 
@@ -319,6 +332,93 @@ function updateProgress(current, total) {
   
   progressEl.textContent = `${percentage}%`;
   progressEl.setAttribute('aria-valuenow', percentage);
+}
+
+// ============================================================
+// PAGE LOADER SUPPORT
+// ============================================================
+
+function buildPageLoaderMap(customLoaders = {}) {
+  const defaults = getDefaultPageLoaderMap();
+  const loaderMap = { ...defaults };
+  
+  Object.entries(customLoaders || {}).forEach(([key, candidate]) => {
+    if (typeof candidate === 'function') {
+      loaderMap[key] = candidate;
+    } else {
+      log(`⚠ Invalid page loader for "${key}" (expected function)`, 'warning');
+    }
+  });
+  
+  return loaderMap;
+}
+
+function getDefaultPageLoaderMap() {
+  return {
+    '/': loadHomepageMedia,
+    '/index': loadHomepageMedia,
+    '/index.html': loadHomepageMedia,
+    default: loadGenericMedia
+  };
+}
+
+function resolvePageLoader(pathname, loaderMap) {
+  if (loaderMap[pathname]) {
+    return { loader: loaderMap[pathname], id: pathname };
+  }
+  
+  return {
+    loader: loaderMap.default || loadGenericMedia,
+    id: 'default'
+  };
+}
+
+function normalizePath(pathname) {
+  if (!pathname) return '/';
+  
+  let normalized = pathname.split('#')[0].split('?')[0] || '/';
+  
+  if (!normalized.startsWith('/')) {
+    normalized = `/${normalized}`;
+  }
+  
+  if (normalized.length > 1 && normalized.endsWith('/')) {
+    normalized = normalized.slice(0, -1);
+  }
+  
+  if (normalized === '/index' || normalized === '/index.html') {
+    normalized = '/';
+  }
+  
+  return normalized || '/';
+}
+
+async function loadHomepageMedia(context) {
+  const {
+    videoSelector,
+    vimeoPreload,
+    vimeoBufferLimit,
+    projectData,
+    helpers
+  } = context;
+  
+  await Promise.all([
+    helpers.prefetchVideos(videoSelector),
+    helpers.preloadVimeoVideos(projectData, vimeoPreload, vimeoBufferLimit)
+  ]);
+  
+  log('✓ HTML5 videos and Vimeo preload complete', 'success');
+  
+  await helpers.waitForSlidesBuilt();
+  log('✓ Slides built', 'success');
+  
+  await helpers.waitForPreviewVideosPlaying();
+}
+
+async function loadGenericMedia(context) {
+  const { videoSelector, helpers } = context;
+  log('⏭ Skipping Vimeo preload for this page', 'info');
+  await helpers.prefetchVideos(videoSelector);
 }
 
 // ============================================================

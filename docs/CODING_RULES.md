@@ -687,7 +687,7 @@ while (current && depth < maxDepth) {
 
 - ✅ `accordion.js` - Accordion functionality only
 - ✅ `lightbox.js` - Lightbox functionality only
-- ✅ `smooth-scroll.js` - Smooth scroll functionality only
+- ✅ `nav-transition.js` - Navigation overlay transitions only
 - ❌ `ui-components.js` - Too broad
 
 ### Options Object with Defaults

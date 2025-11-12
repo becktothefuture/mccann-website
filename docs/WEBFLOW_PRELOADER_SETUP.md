@@ -4,10 +4,11 @@
 
 The preloader **works automatically** on every page once you add the HTML structure. It:
 1. ✅ Detects all autoplay videos (HTML5 + Vimeo)
-2. ✅ Preloads them before showing content
-3. ✅ Displays the TruthWellTold signet with subtle animation
-4. ✅ Hides automatically when loading is complete
-5. ✅ Requires **zero JavaScript configuration** - it's already set up!
+2. ✅ Chooses the right loader for each URL — the homepage waits for Vimeo previews, other pages skip heavy media
+3. ✅ Preloads the required media before showing content
+4. ✅ Displays the TruthWellTold signet with subtle animation
+5. ✅ Hides automatically when loading is complete
+6. ✅ Requires **zero JavaScript configuration** - it's already set up!
 
 ---
 
@@ -20,21 +21,20 @@ The preloader **works automatically** on every page once you add the HTML struct
 2. DOMContentLoaded fires
 3. app.js calls initPreloader() automatically
 4. Preloader finds #preloader element
-5. Scans for videos with selectors:
-   - video[data-wf-ignore]
-   - video[autoplay]
-   - video[data-autoplay]
-6. Preloads HTML5 videos
-7. Preloads Vimeo videos from project-data.json
-8. Shows progress (0% → 100%)
-9. Hides preloader with lift-off animation
-10. Unlocks scroll
+5. Resolves a page loader based on `window.location.pathname`
+6. Loader runs:
+   - Homepage → Prefetch HTML5 videos, preload Vimeo previews, wait for autoplay to start
+   - Other pages → Prefetch local HTML5 videos (if any) and respect the minimum 1s display time
+7. Shows progress (0% → 100%)
+8. Hides preloader with lift-off animation
+9. Unlocks scroll
 ```
 
 ### Key Points
 
 - **No manual JavaScript calls needed** - `app.js` initializes automatically
 - **Works on every page** - just add the HTML structure
+- **Homepage is the only heavy loader** - other pages can stay quick, or opt into custom loaders via `pageLoaders`
 - **Graceful degradation** - if preloader element missing, site still works
 - **Respects prefers-reduced-motion** - animations disabled for accessibility
 
@@ -159,9 +159,10 @@ Then reference them in Custom Code.
 
 [PRELOADER] Module loaded
 [PRELOADER] ✓ Elements found
-[PRELOADER] Animation: Jitter mode
+[PRELOADER] ✓ Pulse animation (CSS-driven) configured
+[PRELOADER] 🎯 Page loader selected "/" for "/"
 [PRELOADER] 🎬 Found X video(s)
-[PRELOADER] ✓ All media loaded in XXXms
+[PRELOADER] ✓ Page loader completed in XXXms
 
 ╔══════════════════════════════════════════════════════╗
 ║     ✅ All Systems Initialized Successfully         ║
@@ -201,6 +202,42 @@ By default, preloader uses **jitter animation** (60Hz micro-movement). To change
 
 **Note:** If you override, you need to call `window.App.init()` manually. Otherwise, defaults are used automatically.
 
+### Page-specific loaders
+
+`initPreloader` now routes through a page loader based on `window.location.pathname`:
+- `/`, `/index`, `/index.html` → full Vimeo workflow (prefetch HTML5, preload Vimeo previews, wait for autoplay)
+- Any other path → lightweight loader (prefetches page-local HTML5 videos, honours the 1 s minimum, skips Vimeo)
+
+You can extend or replace loaders without editing the module by passing a `pageLoaders` map. Keys are relative pathnames, plus an optional `default` fallback. Each loader receives `{ pathname, videoSelector, vimeoPreload, vimeoBufferLimit, projectData, helpers }`.
+
+```html
+<script>
+  window.App.init({
+    preloader: {
+      pageLoaders: {
+        '/': async (ctx) => {
+          await Promise.all([
+            ctx.helpers.prefetchVideos(ctx.videoSelector),
+            ctx.helpers.preloadVimeoVideos(ctx.projectData, ctx.vimeoPreload, ctx.vimeoBufferLimit)
+          ]);
+          await ctx.helpers.waitForSlidesBuilt();
+          await ctx.helpers.waitForPreviewVideosPlaying();
+        },
+        '/case-studies': async (ctx) => {
+          await ctx.helpers.prefetchVideos(ctx.videoSelector);
+          // Add any custom asset loading logic here
+        },
+        default: async (ctx) => {
+          await ctx.helpers.prefetchVideos(ctx.videoSelector);
+        }
+      }
+    }
+  });
+</script>
+```
+
+Keep loaders lean — return a promise and resolve once your page-specific assets are ready.
+
 ---
 
 ## 🔧 How It Detects Videos
@@ -237,6 +274,8 @@ The preloader:
 2. Extracts all `vimeoId` values
 3. Preloads them using prefetch hints (lightweight) or prebuffers (aggressive)
 
+**Default routing only runs this Vimeo workflow on `/`**. Add a custom page loader if another page needs the same treatment.
+
 **No manual tagging needed** - it's automatic based on project data!
 
 ---
@@ -250,7 +289,7 @@ The preloader:
    - Uses `video.load()` and `canplaythrough` event
    - Shows progress (0% → 100%)
 
-2. **Vimeo Videos:**
+2. **Vimeo Videos (homepage loader):**
    - All videos from `project-data.json`
    - Strategy: `prefetch` (lightweight) or `prebuffer` (aggressive)
    - Shows in progress but doesn't block completion
@@ -326,7 +365,7 @@ The preloader:
 
 **Check:**
 1. CSS file loading?
-2. Console shows `[PRELOADER] Animation: Jitter mode`?
+2. Console shows `[PRELOADER] ✓ Pulse animation (CSS-driven) configured`?
 3. No JavaScript errors?
 4. `prefers-reduced-motion` disabled? (check in DevTools)
 

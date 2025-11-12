@@ -11,7 +11,6 @@ import { initAccordion } from './modules/accordion.js';
 import { initSlides } from './modules/slides.js';
 import { initLightbox } from './modules/lightbox.js';
 import { initWebflowScrollTriggers } from './modules/webflow-scrolltrigger.js';
-import { initSmoothScroll } from './modules/smooth-scroll.js';
 import { initNavTransition } from './modules/nav-transition.js';
 import { initLocations } from './modules/locations.js';
 
@@ -43,9 +42,6 @@ function patchVimeoAllowTokens() {
 function init(options = {}) {
   const {
     lightboxRoot = '#lightbox',
-    lerp = 0.1,
-    snapLerp = 0.15,
-    smoothScroll = {},
     preloader = {}
   } = options;
 
@@ -61,18 +57,6 @@ function init(options = {}) {
   };
   
   initPreloader(preloaderConfig);
-
-  // Enable smooth scroll only on non-homepage pages (homepage has .perspective-wrapper)
-  const isHomepage = document.querySelector('.perspective-wrapper') !== null;
-  if (!isHomepage) {
-    initSmoothScroll({
-      lerp,
-      snapLerp,
-      ...smoothScroll
-    });
-  } else {
-    console.log('[APP] Homepage detected - using native scrolling');
-  }
 
   // Build locations accordion from JSON FIRST (before accordion initializes)
   initLocations({

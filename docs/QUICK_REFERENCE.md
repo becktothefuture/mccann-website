@@ -1,457 +1,91 @@
 # McCann Website — Quick Reference
 
-**Purpose:** Developer cheat sheet for common patterns, troubleshooting, and quick lookups.
-
-**Last Updated:** 2025-11-10
+> Fast lookup for day-to-day development. For orientation read [`docs/DEV_ONBOARDING.md`](./DEV_ONBOARDING.md).
 
 ---
 
-## Module Overview
+## Module Cheat Sheet
 
-| Module | Purpose | Key Selector | Dependencies |
-|--------|---------|--------------|--------------|
-| `accordion.js` | Two-level accordion with ARIA | `.accordeon` | GSAP (Webflow IX) |
-| `lightbox.js` | Modal lightbox with Vimeo | `#lightbox` | Scroll lock, Vimeo helper |
-| `nav-transition.js` | Navigation overlay for page transitions | `.nav a.nav__link` | Preloader module |
-| `slides.js` | Builds slides from JSON | `.perspective-wrapper .slide` | Vimeo helper |
-| `smooth-scroll.js` | Lenis momentum scrolling | Auto-detects | Lenis library |
-| `webflow-scrolltrigger.js` | Logo animation (legacy) | `.perspective-wrapper` | GSAP ScrollTrigger |
+| Module | Purpose | Auto init? | Status |
+|--------|---------|------------|--------|
+| `preloader.js` | Prefetch autoplay media, gate page reveal, emit page events | Yes (`app.js`) | ✅ Active |
+| `accordion.js` | ARIA accordion behaviour on `.accordeon` | Yes | ✅ Active |
+| `locations.js` | Hydrates office accordion from JSON | Yes (runs before accordion) | ✅ Active |
+| `slides.js` | Builds `.slide` cards from project JSON | Yes (runs before lightbox) | ✅ Active |
+| `lightbox.js` | Vimeo modal + state machine + details overlay | Yes | ✅ Active (`debug` option) |
+| `nav-transition.js` | Shows preloader overlay during nav changes | Yes | ✅ Active |
+| `webflow-scrolltrigger.js` | Emits logo appear/hide from ScrollTrigger | Yes | ✅ Active |
 
----
-
-## Navigation Overlay
-
-The navigation transition module intercepts clicks on navigation links and shows the preloader overlay during page transitions.
-
-### Behavior
-
-- Shows preloader overlay when clicking nav links (`a.nav__link`)
-- Excludes: anchors (`#`), `mailto:`, `tel:`, downloads, external links, same-page links
-- Respects `prefers-reduced-motion` (instant navigation if enabled)
-- Emits `navigation:start` event via Webflow IX and window
-- Guards against concurrent navigations
-- Aborts on browser back/forward navigation
-
-### Configuration
-
-```javascript
-initNavTransition({
-  containerSelector: '.nav',       // Navigation container
-  linkSelector: 'a.nav__link',    // Navigation link selector
-  transitionDelay: 300            // Delay before navigation (ms)
-});
-```
-
-### Opt-out
-
-Add `data-no-transition` attribute to any link to skip the overlay:
-
-```html
-<a href="/page" class="nav__link" data-no-transition>Instant Navigation</a>
-```
+Need full context or debug tips? See [`docs/DEV_ONBOARDING.md`](./DEV_ONBOARDING.md).
 
 ---
 
-## Common Patterns Cheat Sheet
+## Custom Events (JS → Webflow)
 
-### Module Structure Template
+| Event | Emitted by | When | Notes |
+|-------|------------|------|-------|
+| `lb:open` / `lb:close` | `lightbox.js` | Modal open/close | Drives Webflow IX timelines |
+| `details:show` / `details:hide` | `lightbox.js` | Details overlay toggle | Targets `.lightbox__overlay` |
+| `acc-open` / `acc-close` | `accordion.js` | Panel expand/collapse | Make sure Webflow listens to the same casing |
+| `load-completed` | `preloader.js` | `eventLeadMs` before hide | Use to kick entrance animations |
+| `preloader:complete` | `preloader.js` | After preloader fully hidden | Safe to start scroll interactions |
+| `navigation:start` | `nav-transition.js` | Before SPA navigation | Hooks the preloader overlay |
+| `logo-appear` / `logo-hide` | `webflow-scrolltrigger.js` | ScrollTrigger callbacks | Coordinates persistent logo |
+| `slides:built` | `slides.js` | After slides render | Useful for analytics hooks |
 
-```javascript
-/**
- * ==================================================
- *  McCann Website — Module Name
- *  Purpose: Brief description
- *  Date: YYYY-MM-DD
- * ==================================================
- */
-
-import { dependency } from './dependency.js';
-
-export function initModule(options = {}) {
-  const { selector = '.default' } = options;
-  
-  // Early return for missing elements
-  const el = document.querySelector(selector);
-  if (!el) {
-    console.log('[MODULE] Element not found');
-    return;
-  }
-  
-  // ============================================================
-  // STATE
-  // ============================================================
-  
-  let state = false;
-  
-  // ============================================================
-  // HELPER FUNCTIONS
-  // ============================================================
-  
-  function doSomething() {
-    // Implementation
-  }
-  
-  // ============================================================
-  // EVENT LISTENERS
-  // ============================================================
-  
-  el.addEventListener('click', doSomething);
-}
-```
-
-### Console Logging Patterns
-
-```javascript
-// Standard log
-console.log('[MODULE] message');
-
-// Success
-console.log('✓ Element found');
-
-// Warning
-console.warn('[MODULE] ⚠️  Warning message');
-
-// Error
-console.error('[MODULE] ❌ Error message');
-
-// Validation block
-console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log('🔍 VALIDATION');
-console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-```
-
-### Options with Defaults
-
-```javascript
-export function initModule(options = {}) {
-  const {
-    selector = '.default',
-    delay = 1000,
-    enabled = true
-  } = options;
-  
-  // Use options...
-}
-```
-
-### Early Returns
-
-```javascript
-function doSomething(element) {
-  if (!element) return;           // Guard clause
-  if (!element.dataset.value) return; // Guard clause
-  
-  // Main logic here
-}
-```
-
-### Throttle High-Frequency Events
-
-```javascript
-let rafId = null;
-
-function handleMouseMove(e) {
-  // Update immediately
-  targetX = e.clientX;
-  
-  // Throttle expensive operations
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = requestAnimationFrame(() => {
-    expensiveOperation();
-  });
-}
-```
-
-### Webflow IX Event Emission
-
-```javascript
-const wfIx = (window.Webflow && window.Webflow.require)
-  ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
-  : null;
-
-function emitWebflowEvent(name) {
-  try {
-    if (wfIx && typeof wfIx.emit === 'function') {
-      wfIx.emit(name);
-    }
-  } catch(err) {
-    console.warn(`[MODULE] Cannot emit "${name}"`, err);
-  }
-  
-  // Also emit window event for JS listeners
-  try {
-    window.dispatchEvent(new CustomEvent(name));
-  } catch(err) {
-    console.error(`[MODULE] Cannot emit window event "${name}"`, err);
-  }
-}
-```
+All events also bubble as `CustomEvent`s on `window`.
 
 ---
 
-## Troubleshooting Checklist
+## DOM Selectors (Most Used)
 
-### Module Not Initializing
+```
+.accordeon              # Accordion root
+.acc-trigger            # Toggle buttons
+.acc-list               # Accordion panels
+#lightbox               # Lightbox container
+.lightbox__overlay      # Details overlay
+.slide[data-project]    # Lightbox triggers
+#preloader              # Preloader / resize cover
+.video-area             # Lightbox video mount target
+```
 
-- [ ] Check console for `[MODULE] Element not found`
-- [ ] Verify selector matches Webflow element
-- [ ] Check if element exists in DOM (use DevTools)
-- [ ] Ensure module is imported in `app.js`
-- [ ] Verify `initModule()` is called in `app.js`
-
-### GSAP Animation Not Playing
-
-- [ ] Check Webflow IX is available: `console.log(!!window.Webflow?.require('ix3'))`
-- [ ] Verify event name matches exactly (case-sensitive)
-- [ ] Check Webflow Interactions panel for custom event
-- [ ] Ensure event target is correct element
-- [ ] Try emitting window event as fallback
-
-### Performance Issues
-
-- [ ] Check for unthrottled `mousemove`/`scroll` listeners
-- [ ] Look for excessive DOM queries (cache selectors)
-- [ ] Verify `requestAnimationFrame` is used for animations
-- [ ] Check for memory leaks (event listeners not removed)
-- [ ] Profile with Chrome DevTools Performance tab
-
-### Accessibility Issues
-
-- [ ] Verify ARIA attributes are set
-- [ ] Test keyboard navigation (Tab, Enter, Escape)
-- [ ] Check focus management in modals
-- [ ] Verify `prefers-reduced-motion` is respected
-- [ ] Test with screen reader
-
-### Scroll Lock Not Working
-
-- [ ] Check iOS Safari specifically (different behavior)
-- [ ] Verify `lockScroll()` is called before modal opens
-- [ ] Ensure `unlockScroll()` is called after modal closes
-- [ ] Check if Lenis smooth scroll is interfering
-- [ ] Verify no CSS `overflow: hidden` conflicts
+Data sources:
+- `src/data/project-data.json`
+- `src/data/mccann-locations.json`
 
 ---
 
-## Performance Tips
+## Common Tasks
 
-### DO ✅
-
-- Cache DOM selectors
-- Use `requestAnimationFrame` for animations
-- Throttle `mousemove`, `scroll`, `resize` events
-- Use CSS transitions when possible
-- Early returns for missing elements
-- Debounce resize handlers
-
-### DON'T ❌
-
-- Query DOM in loops
-- Use `setTimeout` for animations (use RAF)
-- Attach listeners without cleanup
-- Run expensive operations on every frame
-- Use `display: none` for GSAP animations (use `visibility`)
-- Skip `prefers-reduced-motion` checks
+| Task | Steps |
+|------|-------|
+| Add a new module | Copy Swiss-grid header + section layout from existing module, export named `initX`, wire it inside `src/app.js`. |
+| Emit Webflow event | Import `emit` from `src/core/events.js`, dispatch `emit('event-name', target)` and configure Webflow interaction with the exact event name. |
+| Debug preloader timing | Pass `{ preloader: { debug: true } }` to `window.App.init()` and watch `[PRELOADER]` logs. |
+| Toggle lightbox verbose logs | Call `initLightbox({ debug: true })` or set `window.App.init({ lightbox: { debug: true } })` if you expose a wrapper. |
+| Inject custom page loader logic | Provide `pageLoaders` map to `initPreloader` (see `preloader.js` for helper signatures). |
 
 ---
 
-## Webflow Gotchas
+## Debug Snippets
 
-### Common Issues
-
-**1. Element Not Found**
-- Webflow adds classes dynamically
-- Use class selectors, not IDs (IDs can change)
-- Wait for `DOMContentLoaded` or `window.load`
-
-**2. GSAP Animations Not Triggering**
-- Event names are case-sensitive
-- Must use exact event name from Webflow Interactions
-- Check Webflow IX version (ix3 preferred, fallback ix2)
-
-**3. Inline Styles Override CSS**
-- Webflow sets inline styles on elements
-- Use `!important` or `setProperty()` with `important` flag
-- Or remove inline styles: `element.style.removeProperty('property')`
-
-**4. Scroll Snap Conflicts**
-- Smooth scroll disabled on pages with `.perspective-wrapper`
-- Use native CSS scroll-snap instead of JS
-- Don't mix Lenis with scroll-snap containers
-
-**5. Designer vs Published Behavior**
-- Designer runs in iframe (different origin)
-- Some features disabled in Designer (autoplay, etc.)
-- Always test on published site
-
-### Required Webflow Setup
-
-**Accordion:**
-- Root: `.accordeon`
-- Items: `.acc-item`
-- Triggers: `.acc-trigger`
-- Panels: `.acc-list`
-- Custom events: `acc-open`, `acc-close`
-
-**Lightbox:**
-- Container: `#lightbox`
-- Inner: `.lightbox__inner`
-- Video area: `.video-area`
-- Close button: `#close-btn`
-- Triggers: `.slide` with `data-video`
-- Custom events: `lb:open`, `lb:close`
-
-**Lightbox:**
-- Container: `#lightbox`
-- Inner: `.lightbox__inner`
-- Video area: `.video-area`
-- Data attribute: `data-video` (Vimeo ID)
-
----
-
-## Quick Debugging
-
-### Enable Debug Logging
-
-```javascript
-// In console
-window._accordionDebug = true;
-window._moduleDebug = true;
-```
-
-### Check Module Status
-
-```javascript
-// Lightbox
-console.log(window.App?.lightbox);
-
-// Smooth scroll
-console.log(window.App?.smoothScroll?.instance);
-```
-
-### Test Webflow IX
-
-```javascript
-const wfIx = window.Webflow?.require('ix3') || window.Webflow?.require('ix2');
-console.log('Webflow IX:', !!wfIx);
-console.log('Version:', window.Webflow?.require('ix3') ? 'IX3' : 'IX2');
-```
-
-### Check Element Existence
-
-```javascript
-// In console
+```js
+// Check bundle status
 document.querySelector('#lightbox');
-document.querySelectorAll('.slide').length;
+window.App?.init?.({ lightboxRoot: '#lightbox', lightbox: { debug: true } });
+
+// Listen for modal lifecycle
+window.addEventListener('LIGHTBOX_OPEN', (e) => console.log('Lightbox opened:', e.detail));
+window.addEventListener('preloader:complete', () => console.log('Preloader done'));
+
+// Force rebuild slides
+window.App?.slides?.rebuild?.();
 ```
 
 ---
 
-## Common Selectors Reference
+## Console Prefixes
 
-```javascript
-// Accordion
-'.accordeon'           // Root
-'.acc-item'            // Items
-'.acc-trigger'         // Triggers
-'.acc-list'            // Panels
-
-// Lightbox
-'#lightbox'            // Container
-'.lightbox__inner'     // Inner wrapper
-'.video-area'          // Video container
-'#close-btn'           // Close button
-'.slide'               // Triggers
-
-// Logo animation
-'.perspective-wrapper' // Scroll container
-'#intro-slide'         // Target slide
-```
-
----
-
-## Event Names Reference
-
-**Accordion:**
-- `acc-open` (primary)
-- `acc-close` (primary)
-- `accordeon-open` (legacy alias)
-- `accordeon-close` (legacy alias)
-
-**Lightbox:**
-- `LIGHTBOX_OPEN` (window event)
-- `LIGHTBOX_CLOSE` (window event)
-- `LIGHTBOX_CLOSED_DONE` (window event)
-- `lb:open` (Webflow IX)
-- `lb:close` (Webflow IX)
-
-**Slides:**
-- `slides:built` (window + container)
-
-**Logo Animation:**
-- `logo-appear` (IntersectionObserver)
-- `logo-disappear` (IntersectionObserver)
-- `logo-shrink` (ScrollTrigger legacy)
-- `logo-grow` (ScrollTrigger legacy)
-- `logo-start` (ScrollTrigger legacy)
-
----
-
-## File Structure Quick Reference
-
-```
-src/
-├── app.js                      # Entry point, wires modules
-├── core/
-│   ├── events.js              # Event emitter utility
-│   └── scrolllock.js          # Scroll lock utility
-└── modules/
-    ├── accordion.js           # Accordion component
-    ├── lightbox.js            # Lightbox/modal
-    ├── nav-transition.js      # Navigation overlay
-    ├── preloader.js           # Preloader controller
-    ├── slides.js              # Slide generation from JSON
-    ├── smooth-scroll.js       # Lenis smooth scroll
-    ├── vimeo.js               # Vimeo helper
-    └── webflow-scrolltrigger.js      # Logo animation (legacy)
-
-docs/
-├── CODING_RULES.md           # Complete coding standards
-├── QUICK_REFERENCE.md        # This file
-├── ACCORDION_WEBFLOW_SETUP.md
-└── CURSOR_WEBFLOW_SETUP.md
-```
-
----
-
-## Key Decisions Explained
-
-**Why `visibility` not `display:none`?**
-- GSAP needs element in DOM flow to animate
-- `display:none` removes element from layout
-- `visibility:hidden` keeps it in layout but hidden
-
-**Why `position:fixed` for scroll lock?**
-- `overflow:hidden` doesn't work on iOS Safari
-- Fixed positioning prevents rubber-band scrolling
-- Only reliable cross-platform solution
-
-**Why throttle with `requestAnimationFrame`?**
-- Synced to browser repaint (~60fps)
-- Automatically pauses when tab hidden
-- Higher priority than `setTimeout`
-
-**Why traverse DOM for labels?**
-- Hovering child elements need parent's data attribute
-- Without traversal, only exact element works
-- Creates better UX for nested structures
-
-**Why dual event system (Webflow + window)?**
-- Webflow IX for GSAP timelines
-- Window events for JS listeners
-- Fallback ensures compatibility
-
----
-
-**Remember:** When in doubt, check `CODING_RULES.md` for detailed explanations.
-
+- `[PRELOADER]`, `[LIGHTBOX]`, `[ACCORDION]`, `[SLIDES]`, `[NAV-TRANSITION]`, `[WEBFLOW-SCROLLTRIGGER]`
+- Success → `✓`, warnings → `

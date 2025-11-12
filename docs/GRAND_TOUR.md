@@ -1,474 +1,96 @@
-# McCann Website — Grand Tour 🚀
+# McCann Website — Grand Tour
 
-**How JavaScript, Webflow, and GSAP Work Together**
-
----
-
-## The Big Picture
-
-This project is a **hybrid architecture** where:
-- **Webflow** handles all visual design, layout, and GSAP animations
-- **JavaScript** provides functionality, behavior, and state management
-- **GSAP** (via Webflow Interactions) creates smooth, timeline-based animations
-
-Think of it as:
-```
-Webflow (Design) + JavaScript (Behavior) + GSAP (Motion) = Complete Experience
-```
+> High-level architecture snapshot. For module-by-module detail, start with [`docs/DEV_ONBOARDING.md`](./DEV_ONBOARDING.md).
 
 ---
 
-## System Architecture
+## 1. Three-Layer Model
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         WEBFLOW                              │
-│  • Visual Design (colors, typography, spacing)               │
-│  • Layout & Responsive Design                                │
-│  • GSAP Animations (Interactions panel)                      │
-│  • CMS Content                                               │
-└──────────────────┬──────────────────────────────────────────┘
-                   │
-                   │ Custom Events
-                   ↓
-┌─────────────────────────────────────────────────────────────┐
-│                     JAVASCRIPT (Our Code)                    │
-│  • Module Initialization                                     │
-│  • Event Handling & State Management                         │
-│  • Accessibility (ARIA, Focus, Keyboard)                    │
-│  • Performance Optimizations                                 │
-└─────────────────────────────────────────────────────────────┘
-```
+| Layer | Owned by | Responsibilities |
+|-------|----------|------------------|
+| Visual & Motion | **Webflow** | Layout, styling, GSAP timelines configured as Custom Event triggers |
+| Behaviour | **Our bundle** | DOM wiring, data hydration, accessibility, event emission |
+| Data | **JSON + Webflow CMS** | Project metadata, office locations, background videos |
+
+Communication happens through:
+- Custom events (`lb:open`, `acc-open`, etc.) → Webflow animations
+- DOM state (classes, data attributes) → CSS hooks
+- JSON hydration → Modules inject content before animations run
 
 ---
 
-## How It Starts: Initialization Flow
-
-### 1. Page Load Sequence
-
-```javascript
-Browser loads page
-  ↓
-Webflow initializes (layout, styles, interactions)
-  ↓
-DOMContentLoaded fires
-  ↓
-app.js runs initialization:
-  1. Patch YouTube iframes (add missing permissions)
-  2. Initialize Smooth Scroll (if not on snap page)
-  3. Initialize Accordion
-  4. Initialize Lightbox
-  5. Initialize Logo Animation
-```
-
-### 2. Console Output (What You See)
+## 2. Boot Sequence (DOMContentLoaded)
 
 ```
-╔══════════════════════════════════════════════════════╗
-║     McCann Website - Initialization Starting        ║
-╚══════════════════════════════════════════════════════╝
-
-[SMOOTH-SCROLL] Module loaded
-[ACCORDION] Module loaded
-[LIGHTBOX] Module loaded
-[VIMEO] Module loaded
-[SLIDE-OBSERVER] Module loaded
-
-[SMOOTH-SCROLL] ⚠️ Skipped - page has scroll-snap container
-[ACCORDION] ✓ Root element found: .accordeon
-[LIGHTBOX] ✓ Element found: #lightbox
-[SLIDE-OBSERVER] ✓ Observer initialized
-
-╔══════════════════════════════════════════════════════╗
-║     ✅ All Systems Initialized Successfully         ║
-╚══════════════════════════════════════════════════════╝
+patchVimeoAllowTokens()
+initPreloader()            // blocks page until loader finishes
+initLocations()            // JSON → accordion scaffold
+initAccordion()
+initSlides()               // JSON → slides (before lightbox)
+initLightbox()
+initWebflowScrollTriggers()
+initNavTransition()
 ```
+
+Every module no-ops if it cannot find its root element, keeping templates resilient.
 
 ---
 
-## Module Deep Dive
+## 3. Key Responsibilities
 
-### 🎬 Lightbox Module
+| Module | Why it exists | Notes |
+|--------|----------------|-------|
+| `preloader.js` | Guarantees autoplay media is ready, exposes per-page loader hooks, doubles as resize cover | Emits `load-completed` (pre animation) and `preloader:complete` (post animation) |
+| `slides.js` → `lightbox.js` | Slides populate from JSON first, lightbox reads the same data to avoid duplication | Lightbox now supports `{ debug: true }` to toggle rich logging |
+| `locations.js` → `accordion.js` | Locations JSON hydrates markup; accordion handles ARIA + animations | Accordion emits `acc-open` / `acc-close` to Webflow |
+| `nav-transition.js` | Re-uses the preloader overlay for page transitions | Respects `prefers-reduced-motion` |
+| `webflow-scrolltrigger.js` | Bridges ScrollTrigger to custom events for persistent logo | Works with native scrolling (no extra library required) |
 
-**What it does:**
-- Modal overlay for Vimeo videos
-- Focus trapping for accessibility
-- Scroll lock (iOS-safe)
-- Keyboard navigation (Escape to close)
-
-**How it works with Webflow:**
-
-1. **Webflow provides:**
-   - `#lightbox` container with backdrop
-   - `.lightbox__inner` for content
-   - GSAP animations via custom events:
-     - `lb:open` → Fade in animation
-     - `lb:close` → Fade out animation
-
-2. **JavaScript provides:**
-   - Click handlers on `.slide` triggers
-   - Vimeo iframe mounting
-   - Focus management (trap, restore)
-   - Scroll locking
-   - Event coordination
-
-**Animation timing coordination:**
-```
-User clicks slide
-       ↓
-JS makes lightbox visible (removes inline styles)
-       ↓
-JS emits 'lb:open' event
-       ↓
-Webflow IX triggers GSAP animation (1000ms)
-       ↓
-Lightbox fully open
-
-Close button clicked
-       ↓
-JS emits 'lb:close' event
-       ↓
-Webflow IX triggers GSAP animation
-       ↓
-JS waits 1000ms (animation duration)
-       ↓
-JS hides lightbox & cleans up
-```
-
-**Critical timing:** JS must wait for GSAP animation to complete before hiding element.
+See the onboarding doc for the full table including optional/internal utilities.
 
 ---
 
-### 🎨 Accordion Module
+## 4. Event Flow (JS → Webflow)
 
-**What it does:**
-- Two-level expandable content
-- ARIA-compliant keyboard navigation
-- Smooth height transitions
-- Sibling auto-close
+| Event | Purpose | Triggered when |
+|-------|---------|----------------|
+| `lb:open` / `lb:close` | Run modal open/close timelines | Lightbox state machine changes state |
+| `details:show` / `details:hide` | Animate the details overlay | Lightbox details button / overlay handler |
+| `acc-open` / `acc-close` | Animate accordion children | Panel expands/collapses |
+| `navigation:start` | Run page transition overlay | Navigation intercept passes validation |
+| `load-completed` | Kick hero entrance animations | Preloader is about to hide (`eventLeadMs` before) |
+| `preloader:complete` | Safe to enable scroll interactions | Preloader fully hidden |
+| `logo-appear` / `logo-hide` | Persistent logo choreography | ScrollTrigger callbacks |
 
-**How it works with Webflow:**
-
-1. **Webflow provides:**
-   - `.accordeon` structure
-   - `.acc-item` styling
-   - GSAP stagger animations:
-     - `acc-open` → Items fade in with stagger
-     - `acc-close` → Items fade out
-
-2. **JavaScript provides:**
-   - Click/keyboard handlers
-   - Height calculations (ResizeObserver)
-   - ARIA attributes management
-   - State tracking
-   - Class marking for animation targets
-
-**Animation targeting system:**
-```javascript
-Panel opens
-    ↓
-JS adds .acc-animate-target to child items
-    ↓
-JS emits 'acc-open' event
-    ↓
-Webflow IX animates ONLY elements with .acc-animate-target
-    ↓
-Staggered fade-in animation plays
-```
-
-This selective targeting prevents all accordions from animating when one opens.
+Each custom event is mirrored as a `CustomEvent` on `window` for analytics or debug tooling.
 
 ---
 
-### 🌊 Smooth Scroll Module (Lenis)
+## 5. Data Flow
 
-**What it does:**
-- Momentum scrolling with "weight"
-- Configurable lerp (linear interpolation)
-- GSAP ScrollTrigger integration
-- Auto-disabled on scroll-snap pages
-
-**Smart detection:**
-```javascript
-if (document.querySelector('.perspective-wrapper')) {
-  // This is a scroll-snap page
-  // Disable Lenis, use native scrolling
-} else {
-  // Regular page
-  // Enable Lenis for smooth scrolling
-}
-```
-
-**Why disable on snap pages?**
-- Scroll-snap containers have their own scroll physics
-- Mixing Lenis with snap creates conflicts
-- Native snap is smoother and more reliable
+1. `project-data.json` → `slides.js` builds `.slide[data-project]`.  
+   `lightbox.js` reads the same JSON to mount Vimeo, copy text, render awards.
+2. `mccann-locations.json` → `locations.js` creates accordion markup before `accordion.js` initialises.
+3. Preloader receives both datasets to decide which Vimeo IDs to preload (now via page-loader map in `preloader.js`).
 
 ---
 
-### 🎭 Logo Animation System
+## 6. Webflow Touchpoints Checklist
 
-**Two implementations available:**
-
-#### Option 1: IntersectionObserver (New, Recommended)
-```javascript
-Observer watches #intro-slide
-    ↓
-Slide leaves viewport (scrolled past)
-    ↓
-Emit 'logo-appear' event
-    ↓
-Webflow IX animates logo to visible state
-```
-
-#### Option 2: GSAP ScrollTrigger (Legacy)
-```javascript
-ScrollTrigger monitors scroll position
-    ↓
-Calculates percentage scrolled
-    ↓
-Emits events at thresholds:
-- 'logo-start' (initialize)
-- 'logo-shrink' (scroll down)
-- 'logo-grow' (scroll up)
-```
+- Custom events configured: `lb:open`, `lb:close`, `details:show`, `details:hide`, `acc-open`, `acc-close`, `logo-appear`, `logo-hide`, `navigation:start`, `load-completed`.
+- `#preloader` HTML embed inserted at the very top of `<body>`.
+- `.accordeon` root present wherever accordion behaviour is required.
+- `.slide` elements are optional in Designer; JSON rebuilds them on load.
+- Functional CSS from `docs/webflow-custom-css-snippet.html` loaded in project head.
 
 ---
 
-## Event Communication
+## 7. Observability
 
-### The Bridge Pattern
-
-JavaScript and Webflow communicate via **Custom Events**:
-
-```javascript
-// JavaScript emits event
-wfIx.emit('accordion-open');
-
-// Webflow Interactions listens
-Trigger: Custom Event → "accordion-open"
-Animation: Your GSAP timeline
-```
-
-### Dual Event System
-
-We emit events in two ways for maximum compatibility:
-
-```javascript
-// 1. Webflow IX (for GSAP animations)
-wfIx.emit('event-name');
-
-// 2. Window events (for JS listeners)
-window.dispatchEvent(new CustomEvent('event-name'));
-```
-
-This ensures:
-- Webflow animations always trigger
-- JavaScript modules can listen to each other
-- Fallback if Webflow IX unavailable
+- Emoji-prefixed console logs surface validation and guard-rail checks (`[LIGHTBOX] 🎯 …`, `[PRELOADER] ✓ …`).
+- `{ debug: true }` options on preloader/lightbox unlock richer traces without touching source.
+- Missing elements are logged as warnings (`❌ Element not found`) but never throw.
 
 ---
 
-## Performance Optimizations
-
-### 1. Throttled Updates
-```javascript
-// Bad: Updates on every mousemove (60+ times/sec)
-document.addEventListener('mousemove', updateLabel);
-
-// Good: Throttled with RAF (max once per frame)
-let rafId;
-document.addEventListener('mousemove', (e) => {
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = requestAnimationFrame(() => updateLabel(e));
-});
-```
-
-### 2. CSS-Driven Animations
-```css
-/* JavaScript sets state */
-.acc-item.is-open { }
-
-/* CSS handles animation */
-.acc-item {
-  transition: max-height 280ms cubic-bezier(...);
-}
-```
-
-### 3. Early Returns
-```javascript
-// Check requirements upfront
-if (!element) return;
-if (!element.dataset.value) return;
-
-// Expensive operations only if needed
-performExpensiveOperation();
-```
-
----
-
-## Accessibility Features
-
-### Built into every module:
-
-1. **ARIA Attributes**
-   - `role="dialog"` on lightbox
-   - `aria-expanded` on accordion triggers
-   - `aria-hidden` on hidden content
-
-2. **Keyboard Support**
-   - Tab: Navigate focusable elements
-   - Enter/Space: Activate buttons
-   - Escape: Close modals
-   - Focus trapping in lightbox
-
-3. **Screen Reader Support**
-   - Proper focus management
-   - Focus restoration after modal close
-   - Inert background content
-
-4. **Reduced Motion**
-   ```javascript
-   const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-   if (prefersReduced) {
-     // Disable or reduce animations
-   }
-   ```
-
----
-
-## Webflow Integration Points
-
-### 1. Custom Events in Interactions Panel
-
-Create these in Webflow → Interactions → Custom:
-
-**Accordion:**
-- `acc-open` → Play timeline
-- `acc-close` → Reverse timeline
-
-**Lightbox:**
-- `lb:open` → Fade in animation
-- `lb:close` → Fade out animation
-
-**Logo:**
-- `logo-appear` → Show logo
-- `logo-disappear` → Hide logo
-
-### 2. Data Attributes
-
-Add these in Webflow Designer:
-
-**For lightbox triggers:**
-```html
-data-video="123456789"  <!-- Vimeo ID -->
-data-title="Video Title"
-```
-
-### 3. CSS Variables
-
-Webflow can override these:
-```css
---lightbox-opacity: 0;
---lightbox-scale: 0.95;
-```
-
----
-
-## Debugging & Testing
-
-### Check Module Status
-
-```javascript
-// In browser console
-
-// Check if modules loaded
-window.App.smoothScroll    // Smooth scroll instance
-window._accordionRoot       // Accordion root element
-
-// Test Webflow IX
-const wfIx = window.Webflow?.require('ix3');
-wfIx.emit('test-event');   // Should trigger animation
-
-// Check for elements
-document.querySelector('#lightbox');      // ✓ Lightbox exists
-document.querySelector('.accordeon');     // ✓ Accordion exists
-```
-
-### Performance Profiling
-
-1. Open Chrome DevTools → Performance
-2. Start recording
-3. Interact with page
-4. Stop recording
-5. Look for:
-   - Long tasks (> 50ms)
-   - Dropped frames
-   - Excessive repaints
-
----
-
-## Common Issues & Solutions
-
-### GSAP animation not playing
-**Solution:** Check event name matches exactly (case-sensitive)
-
-### Accordion not animating correct items
-**Solution:** Verify `.acc-animate-target` class is being added
-
-### Lightbox video not loading
-**Solution:** Check `data-video` has valid Vimeo ID
-
-### Smooth scroll conflicting with snap
-**Solution:** It auto-disables on snap pages (check console)
-
----
-
-## The Development Workflow
-
-### 1. Local Development
-```bash
-npm run dev
-# Serves at http://127.0.0.1:3000/app.js
-```
-
-### 2. Webflow Integration
-- Add script tag in Webflow footer
-- Create Interactions in Webflow
-- Add data attributes in Designer
-- Style elements in Designer
-
-### 3. Testing
-- Check console for initialization logs
-- Verify all ✓ checks pass
-- Test keyboard navigation
-- Check mobile/touch behavior
-- Verify animations trigger
-
-### 4. Production Build
-```bash
-npm run build
-# Outputs minified dist/app.js
-```
-
----
-
-## Summary
-
-This architecture separates concerns perfectly:
-
-- **Webflow** = Visual Layer (what users see)
-- **JavaScript** = Behavior Layer (what users do)
-- **GSAP** = Motion Layer (how things move)
-
-Each layer communicates via:
-- Custom Events (JS → Webflow)
-- Data Attributes (Webflow → JS)
-- CSS Classes (JS → CSS)
-- CSS Variables (JS → CSS)
-
-The result: A maintainable, performant, accessible website where designers can work in Webflow without touching code, and developers can add functionality without breaking designs.
-
----
-
-**Remember:** The code provides the skeleton and muscles, Webflow provides the skin and clothes, GSAP provides the graceful movement. Together, they create a living, breathing website. 🎨✨🚀
+That’s the tour—combine this mental model with the onboarding doc and the module-specific setup guides for deeper dives.

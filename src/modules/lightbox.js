@@ -9,7 +9,6 @@
 import { emit } from '../core/events.js';
 import { lockScroll, unlockScroll } from '../core/scrolllock.js';
 import { mountVimeo } from './vimeo.js';
-import { initContainerScroll } from './smooth-scroll.js';
 import projectDataJson from '../data/project-data.json';
 
 console.log('[LIGHTBOX] Module loaded');
@@ -32,22 +31,32 @@ const STATE = {
 let currentState = STATE.IDLE;
 let projectData = null;
 let lastFocus = null;
-let overlayLenis = null;
 let detailsOpen = false; // Track details overlay state
 let overlayHideTimeout = null; // Fallback timer to hide overlay if Webflow animation misses
+let isDebugEnabled = false;
+
+const debugLog = (...args) => {
+  if (!isDebugEnabled) {
+    return;
+  }
+  console.log(...args);
+};
 
 export function initLightbox({ 
   root = '#lightbox',
   openDuration = 1500,
-  closeDuration = 1500
+  closeDuration = 1500,
+  debug = false
 } = {}) {
   // ============================================================
   // SETUP & DOM REFERENCES
   // ============================================================
   
+  isDebugEnabled = Boolean(debug);
+  
   const lb = document.querySelector(root);
   if (!lb) { 
-    console.log('[LIGHTBOX] ❌ Element not found');
+    console.error('[LIGHTBOX] ❌ Element not found');
     return;
   }
 
@@ -111,49 +120,49 @@ export function initLightbox({
   projectData = (window.App?.slides?.getProjectData?.()) || projectDataJson;
   const projectCount = Object.keys(projectData).length;
   const dataSource = window.App?.slides?.getProjectData ? 'slides module' : 'bundled JSON';
-  console.log(`[LIGHTBOX] ✓ Loaded ${projectCount} project${projectCount !== 1 ? 's' : ''} from ${dataSource}`);
+  debugLog(`[LIGHTBOX] ✓ Loaded ${projectCount} project${projectCount !== 1 ? 's' : ''} from ${dataSource}`);
 
   // ============================================================
   // VALIDATION
   // ============================================================
   
-  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🔍 LIGHTBOX SETUP VALIDATION');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  debugLog('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  debugLog('🔍 LIGHTBOX SETUP VALIDATION');
+  debugLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   // Track validation status
   let validationErrors = [];
   let validationWarnings = [];
 
-  console.log('1️⃣  Main Container & Structure');
-  console.log(`   ✓ Found: ${root}`);
-  console.log(`   ✓ State machine initialized: ${currentState}`);
-  console.log(`   ⏱️  Open duration: ${openDuration}ms (must match Webflow 'lb:show' animation)`);
-  console.log(`   ⏱️  Close duration: ${closeDuration}ms (must match Webflow 'lb:hide' animation)`);
+  debugLog('1️⃣  Main Container & Structure');
+  debugLog(`   ✓ Found: ${root}`);
+  debugLog(`   ✓ State machine initialized: ${currentState}`);
+  debugLog(`   ⏱️  Open duration: ${openDuration}ms (must match Webflow 'lb:show' animation)`);
+  debugLog(`   ⏱️  Close duration: ${closeDuration}ms (must match Webflow 'lb:hide' animation)`);
   
   // Check critical structure elements
   if (inner) {
-    console.log(`   ✓ .lightbox__inner found`);
+    debugLog(`   ✓ .lightbox__inner found`);
   } else {
-    console.log(`   ❌ .lightbox__inner NOT found`);
+    debugLog(`   ❌ .lightbox__inner NOT found`);
     validationErrors.push('.lightbox__inner missing');
   }
   
   if (overlay) {
-    console.log(`   ✓ .lightbox__overlay found (smooth scroll container)`);
+    debugLog(`   ✓ .lightbox__overlay found (details overlay container)`);
   } else {
-    console.log(`   ⚠️  .lightbox__overlay NOT found (smooth scroll will be skipped)`);
+    debugLog(`   ⚠️  .lightbox__overlay NOT found (details overlay disabled)`);
     validationWarnings.push('.lightbox__overlay missing');
   }
   
   if (videoArea) {
-    console.log(`   ✓ .video-area found`);
+    debugLog(`   ✓ .video-area found`);
   } else {
-    console.log(`   ❌ .video-area NOT found`);
+    debugLog(`   ❌ .video-area NOT found`);
     validationErrors.push('.video-area missing');
   }
   
-  console.log('\n2️⃣  Content Injection Targets');
+  debugLog('\n2️⃣  Content Injection Targets');
   const contentTargets = [
     { el: clientEl, id: '[data-field="lightbox-client"]', required: true },
     { el: titleEl, id: '[data-field="lightbox-title"]', required: true },
@@ -166,27 +175,27 @@ export function initLightbox({
   
   contentTargets.forEach(({ el, id, required }) => {
     if (el) {
-      console.log(`   ✓ ${id}`);
+      debugLog(`   ✓ ${id}`);
     } else if (required) {
-      console.log(`   ❌ ${id} NOT found (REQUIRED)`);
+      debugLog(`   ❌ ${id} NOT found (REQUIRED)`);
       validationErrors.push(`${id} missing`);
     } else {
-      console.log(`   ⚠️  ${id} NOT found (optional)`);
+      debugLog(`   ⚠️  ${id} NOT found (optional)`);
       validationWarnings.push(`${id} missing`);
     }
   });
   
-  console.log('\n3️⃣  Interactive Elements');
+  debugLog('\n3️⃣  Interactive Elements');
   if (closeBtn) {
-    console.log(`   ✓ #close-btn found`);
+    debugLog(`   ✓ #close-btn found`);
   } else {
-    console.log(`   ❌ #close-btn NOT found`);
+    debugLog(`   ❌ #close-btn NOT found`);
     validationErrors.push('#close-btn missing');
   }
   
-  console.log(`\n4️⃣  Slide Triggers`);
+  debugLog(`\n4️⃣  Slide Triggers`);
   const currentSlides = getSlides();
-  console.log(`   ${currentSlides.length > 0 ? '✓' : '❌'} Found: ${currentSlides.length} .slide element${currentSlides.length !== 1 ? 's' : ''}`);
+  debugLog(`   ${currentSlides.length > 0 ? '✓' : '❌'} Found: ${currentSlides.length} .slide element${currentSlides.length !== 1 ? 's' : ''}`);
   
   if (currentSlides.length === 0) {
     validationErrors.push('No .slide elements found');
@@ -203,54 +212,54 @@ export function initLightbox({
       }
     });
     
-    console.log(`   ${slidesWithData === currentSlides.length ? '✓' : '⚠️'} ${slidesWithData}/${currentSlides.length} slides have data-project attribute`);
+    debugLog(`   ${slidesWithData === currentSlides.length ? '✓' : '⚠️'} ${slidesWithData}/${currentSlides.length} slides have data-project attribute`);
     
     if (slidesWithoutData.length > 0) {
-      console.log(`   ⚠️  Missing data-project in slide indices: ${slidesWithoutData.join(', ')}`);
+      debugLog(`   ⚠️  Missing data-project in slide indices: ${slidesWithoutData.join(', ')}`);
       validationWarnings.push(`${slidesWithoutData.length} slides missing data-project attribute`);
     }
     
-    console.log(`   ℹ️  Entire .slide element is clickable (not just .slide__link)`);
+    debugLog(`   ℹ️  Entire .slide element is clickable (not just .slide__link)`);
   }
   
   // Validate slide data immediately (data is already loaded)
   validateSlideData();
   
-  console.log('\n5️⃣  Webflow IX Setup');
+  debugLog('\n5️⃣  Webflow IX Setup');
   const wfIx = (window.Webflow && window.Webflow.require)
     ? (window.Webflow.require('ix3') || window.Webflow.require('ix2'))
     : null;
   
   if (wfIx) {
     const version = window.Webflow.require('ix3') ? 'IX3' : 'IX2';
-    console.log(`   ✓ Webflow ${version} detected`);
+    debugLog(`   ✓ Webflow ${version} detected`);
   } else {
-    console.log('   ⚠️  Webflow IX NOT detected');
+    debugLog('   ⚠️  Webflow IX NOT detected');
     validationWarnings.push('Webflow IX not detected');
   }
   
-  console.log('\n   📋 Required Custom Events in Webflow:');
-  console.log('      • "lb:show" → triggers open animation');
-  console.log('      • "lb:hide" → triggers close animation');
-  console.log(`      • Durations MUST match: open=${openDuration}ms, close=${closeDuration}ms`);
+  debugLog('\n   📋 Required Custom Events in Webflow:');
+  debugLog('      • "lb:show" → triggers open animation');
+  debugLog('      • "lb:hide" → triggers close animation');
+  debugLog(`      • Durations MUST match: open=${openDuration}ms, close=${closeDuration}ms`);
   
-  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  debugLog('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   
   // Summary
   if (validationErrors.length > 0) {
-    console.log('❌ VALIDATION FAILED');
-    console.log(`   ${validationErrors.length} critical error${validationErrors.length !== 1 ? 's' : ''}:`);
-    validationErrors.forEach(err => console.log(`   • ${err}`));
+    debugLog('❌ VALIDATION FAILED');
+    debugLog(`   ${validationErrors.length} critical error${validationErrors.length !== 1 ? 's' : ''}:`);
+    validationErrors.forEach(err => debugLog(`   • ${err}`));
   } else {
-    console.log('✅ VALIDATION COMPLETE - All critical elements found');
+    debugLog('✅ VALIDATION COMPLETE - All critical elements found');
   }
   
   if (validationWarnings.length > 0) {
-    console.log(`\n⚠️  ${validationWarnings.length} warning${validationWarnings.length !== 1 ? 's' : ''}:`);
-    validationWarnings.forEach(warn => console.log(`   • ${warn}`));
+    debugLog(`\n⚠️  ${validationWarnings.length} warning${validationWarnings.length !== 1 ? 's' : ''}:`);
+    validationWarnings.forEach(warn => debugLog(`   • ${warn}`));
   }
   
-  console.log('');
+  debugLog('');
 
   // ============================================================
   // HELPER FUNCTIONS
@@ -282,7 +291,7 @@ export function initLightbox({
       }
     });
     
-    console.log(`[LIGHTBOX] ✓ Valid slides: ${validSlides}/${currentSlides.length}`);
+    debugLog(`[LIGHTBOX] ✓ Valid slides: ${validSlides}/${currentSlides.length}`);
     if (missingData.length > 0) {
       console.warn('[LIGHTBOX] ⚠️  Issues found:');
       missingData.forEach(msg => console.warn(`   - ${msg}`));
@@ -295,12 +304,12 @@ export function initLightbox({
         const wfIx = window.Webflow.require('ix3') || window.Webflow.require('ix2');
         if (wfIx && typeof wfIx.emit === 'function') {
           wfIx.emit(name);
-          console.log(`🎬 [LIGHTBOX] Triggered animation: "${name}"`);
+          debugLog(`🎬 [LIGHTBOX] Triggered animation: "${name}"`);
         } else {
           console.warn(`⚠️  [LIGHTBOX] Cannot emit "${name}" - wfIx.emit not available`);
         }
       } else {
-        console.warn(`⚠️  [LIGHTBOX] Cannot emit "${name}" - Webflow IX not available`);
+      console.warn(`⚠️  [LIGHTBOX] Cannot emit "${name}" - Webflow IX not available`);
       }
     } catch(err) {
       console.error(`❌ [LIGHTBOX] Error emitting "${name}":`, err);
@@ -325,7 +334,7 @@ export function initLightbox({
           console.warn('[LIGHTBOX] Error setting inert:', err);
         }
       });
-      console.log(`[LIGHTBOX] 🚫 Inert applied to ${inertTargets.size} element${inertTargets.size === 1 ? '' : 's'}`);
+      debugLog(`[LIGHTBOX] 🚫 Inert applied to ${inertTargets.size} element${inertTargets.size === 1 ? '' : 's'}`);
       return;
     }
 
@@ -361,7 +370,7 @@ export function initLightbox({
     });
 
     inertTargets.clear();
-    console.log(`[LIGHTBOX] ✓ Inert removed (${removedFromTracked} tracked, ${sweepCount} swept)`);
+    debugLog(`[LIGHTBOX] ✓ Inert removed (${removedFromTracked} tracked, ${sweepCount} swept)`);
 
     // Final verification on next frame → catches late mutations from Webflow/GSAP
     requestAnimationFrame(() => {
@@ -377,7 +386,7 @@ export function initLightbox({
           }
         });
       } else {
-        console.log('[LIGHTBOX] ✓ Verified no lingering inert attributes');
+        debugLog('[LIGHTBOX] ✓ Verified no lingering inert attributes');
       }
     });
   }
@@ -387,7 +396,7 @@ export function initLightbox({
     const overlayOverflow = overlay ? (overlay.style.overflowY || '(unset)') : 'n/a';
     const overlayDisplay = overlay ? (overlay.style.display || '(unset)') : 'n/a';
     const lbPointer = lb ? (lb.style.pointerEvents || '(unset)') : 'n/a';
-    console.log(`[LIGHTBOX] 🧪 ${label} → state=${currentState} detailsOpen=${detailsOpen} overlay.display=${overlayDisplay} overlay.pointerEvents=${overlayPointer} overlay.overflowY=${overlayOverflow} lb.pointerEvents=${lbPointer}`);
+    debugLog(`[LIGHTBOX] 🧪 ${label} → state=${currentState} detailsOpen=${detailsOpen} overlay.display=${overlayDisplay} overlay.pointerEvents=${overlayPointer} overlay.overflowY=${overlayOverflow} lb.pointerEvents=${lbPointer}`);
   }
 
   function clearOverlayHideTimeout() {
@@ -435,7 +444,7 @@ export function initLightbox({
   }
 
   function renderAwards(awardsData) {
-    console.log(`[LIGHTBOX] 🏆 Rendering awards: ${awardsData?.length || 0} awards`);
+    debugLog(`[LIGHTBOX] 🏆 Rendering awards: ${awardsData?.length || 0} awards`);
     
     // First hide all award elements (check both new data attributes and old ID pattern)
     const allAwards = [...lb.querySelectorAll('[data-award-type]'), ...document.querySelectorAll('[id^="award-"]')];
@@ -445,7 +454,7 @@ export function initLightbox({
     
     // If no awards data, we're done
     if (!awardsData || awardsData.length === 0) {
-      console.log('[LIGHTBOX] No awards to display');
+      debugLog('[LIGHTBOX] No awards to display');
       return;
     }
     
@@ -470,14 +479,14 @@ export function initLightbox({
         console.warn(`[LIGHTBOX] ⚠️  Label element not found for [data-award-type="${award.type}"] or #award-${award.type}`);
       }
       
-      console.log(`[LIGHTBOX] ✓ Award ${index + 1}: ${award.type} displayed`);
+        debugLog(`[LIGHTBOX] ✓ Award ${index + 1}: ${award.type} displayed`);
     });
   }
 
   async function waitForImages(imageUrls) {
     if (!imageUrls || imageUrls.length === 0) return;
     
-    console.log(`[LIGHTBOX] ⏳ Loading ${imageUrls.length} images...`);
+    debugLog(`[LIGHTBOX] ⏳ Loading ${imageUrls.length} images...`);
     
     const promises = imageUrls.map(url => {
       return new Promise((resolve, reject) => {
@@ -496,11 +505,11 @@ export function initLightbox({
     });
     
     await Promise.all(promises);
-    console.log(`[LIGHTBOX] ✓ All images loaded`);
+    debugLog(`[LIGHTBOX] ✓ All images loaded`);
   }
 
   async function injectContent(project) {
-    console.log(`[LIGHTBOX] 📝 Injecting content for: ${project.title}`);
+    debugLog(`[LIGHTBOX] 📝 Injecting content for: ${project.title}`);
     
     // Inject text content
     if (clientEl) clientEl.textContent = project.client || '';
@@ -544,13 +553,13 @@ export function initLightbox({
     // No need to wait for award images - they're already in the DOM from Webflow
     // The renderAwards function just shows/hides existing elements
     
-    console.log(`[LIGHTBOX] ✓ Content injected`);
+    debugLog(`[LIGHTBOX] ✓ Content injected`);
   }
 
   function setState(newState) {
     currentState = newState;
     lb.setAttribute('data-state', newState);
-    console.log(`[LIGHTBOX] State: ${newState}`);
+    debugLog(`[LIGHTBOX] State: ${newState}`);
   }
 
   function disableSlideInteractions() {
@@ -559,7 +568,7 @@ export function initLightbox({
       slide.style.pointerEvents = 'none';
       slide.setAttribute('aria-disabled', 'true');
     });
-    console.log('[LIGHTBOX] 🚫 Slide interactions disabled');
+    debugLog('[LIGHTBOX] 🚫 Slide interactions disabled');
   }
 
   function enableSlideInteractions() {
@@ -567,7 +576,7 @@ export function initLightbox({
       slide.style.pointerEvents = '';
       slide.removeAttribute('aria-disabled');
     });
-    console.log('[LIGHTBOX] ✓ Slide interactions re-enabled');
+    debugLog('[LIGHTBOX] ✓ Slide interactions re-enabled');
   }
 
   // ============================================================
@@ -577,7 +586,7 @@ export function initLightbox({
   async function openFromSlide(slide) {
     // Guard: only open from IDLE state
     if (currentState !== STATE.IDLE) {
-      console.log('[LIGHTBOX] ⚠️  Cannot open - already opening/open/closing');
+      debugLog('[LIGHTBOX] ⚠️  Cannot open - already opening/open/closing');
       return;
     }
     
@@ -612,8 +621,6 @@ export function initLightbox({
       setPageInert(true);
       lockScroll();
       
-      // DISABLED: Smooth scroll stop disabled (Lenis is disabled globally)
-      
       // Update ARIA
       lb.setAttribute('aria-hidden', 'false');
       
@@ -642,7 +649,7 @@ export function initLightbox({
   }
 
   function finishOpen() {
-    console.log('[LIGHTBOX] ✓ Open animation complete');
+    debugLog('[LIGHTBOX] ✓ Open animation complete');
     
     // Change state to OPEN → allow closing
     setState(STATE.OPEN);
@@ -650,20 +657,12 @@ export function initLightbox({
     // Enable native scrolling for overlay if it exists
     // CRITICAL: Ensure overlay is scrollable independently of locked body
     if (overlay) {
-      // Enable native scrolling on overlay - it should scroll independently of locked body
-      // The overlay needs explicit overflow and height to enable scrolling
       overlay.style.overflow = 'auto';
       overlay.style.overflowY = 'auto';
       overlay.style.height = '100%';
       overlay.style.maxHeight = '100vh';
-      
-      // Pointer events: always enable when overlay exists and lightbox is open
-      // This allows scrolling to work. Click handlers manage interaction behavior.
       overlay.style.pointerEvents = 'auto';
-      
-      // DISABLED: Lenis container scroll disabled for debugging
-      // Using native scrolling instead
-      console.log('[LIGHTBOX] ✓ Overlay native scrolling enabled (Lenis disabled)');
+      debugLog('[LIGHTBOX] ✓ Overlay native scrolling enabled');
     }
     
     // Set focus to lightbox for keyboard navigation
@@ -678,7 +677,7 @@ export function initLightbox({
   function requestClose() {
     // Guard: only close from OPEN state
     if (currentState !== STATE.OPEN) {
-      console.log('[LIGHTBOX] ⚠️  Cannot close - not open');
+      debugLog('[LIGHTBOX] ⚠️  Cannot close - not open');
       return;
     }
     
@@ -686,7 +685,7 @@ export function initLightbox({
     setState(STATE.CLOSING);
 
     if (detailsOpen) {
-      console.log('[LIGHTBOX] ⚠️  Details open during close request → forcing hide');
+      debugLog('[LIGHTBOX] ⚠️  Details open during close request → forcing hide');
       closeDetails({ resetOverlay: true });
     } else {
       emitWebflowEvent('details:hide');
@@ -721,7 +720,7 @@ export function initLightbox({
   }
 
   function finishClose() {
-    console.log('[LIGHTBOX] ✓ Close animation complete');
+    debugLog('[LIGHTBOX] ✓ Close animation complete');
     
     lb.setAttribute('aria-hidden', 'true');
     
@@ -794,11 +793,11 @@ export function initLightbox({
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('[LIGHTBOX] 🎯 Slide clicked:', slide.dataset.project);
+    debugLog('[LIGHTBOX] 🎯 Slide clicked:', slide.dataset.project);
     
     // Guard against interactions during transitions
     if (currentState !== STATE.IDLE) {
-      console.log('[LIGHTBOX] ⚠️  Click ignored - lightbox not idle');
+      debugLog('[LIGHTBOX] ⚠️  Click ignored - lightbox not idle');
       return;
     }
     
@@ -814,7 +813,7 @@ export function initLightbox({
     e.preventDefault();
     e.stopPropagation();
     if (currentState === STATE.OPEN) {
-      console.log('[LIGHTBOX] 🎯 Close button clicked');
+      debugLog('[LIGHTBOX] 🎯 Close button clicked');
       requestClose();
     }
   }
@@ -823,10 +822,10 @@ export function initLightbox({
     if (currentState === STATE.OPEN) {
       if (e.key === 'Escape') {
         if (detailsOpen) {
-          console.log('[LIGHTBOX] 🎯 Escape key pressed - closing details overlay');
+          debugLog('[LIGHTBOX] 🎯 Escape key pressed - closing details overlay');
           closeDetails();
         } else {
-          console.log('[LIGHTBOX] 🎯 Escape key pressed - closing lightbox');
+          debugLog('[LIGHTBOX] 🎯 Escape key pressed - closing lightbox');
           requestClose();
         }
       }
@@ -840,7 +839,7 @@ export function initLightbox({
     if (detailsOpen || currentState !== STATE.OPEN) return;
 
     detailsOpen = true;
-    console.log('[LIGHTBOX] 🎯 Details overlay opening');
+    debugLog('[LIGHTBOX] 🎯 Details overlay opening');
     emitWebflowEvent('details:show');
     clearOverlayHideTimeout();
     if (overlay) {
@@ -848,7 +847,7 @@ export function initLightbox({
       debugPointerSnapshot('openDetails → display set to block');
     }
 
-    // Enable overlay scrolling → native scrolling (Lenis disabled)
+    // Enable overlay scrolling with native behaviour
     requestAnimationFrame(() => {
       if (overlay) {
         overlay.style.pointerEvents = 'auto';
@@ -894,7 +893,7 @@ export function initLightbox({
     }
 
     detailsOpen = false;
-    console.log('[LIGHTBOX] 🎯 Details overlay closing');
+    debugLog('[LIGHTBOX] 🎯 Details overlay closing');
 
     if (!silent) {
       emitWebflowEvent('details:hide');
@@ -940,15 +939,15 @@ export function initLightbox({
     e.stopPropagation();
 
     if (currentState !== STATE.OPEN) {
-      console.log('[LIGHTBOX] ⚠️  Details button clicked but lightbox not open');
+      debugLog('[LIGHTBOX] ⚠️  Details button clicked but lightbox not open');
       return;
     }
 
     if (detailsOpen) {
-      console.log('[LIGHTBOX] 🧪 handleDetailsClick → toggling OFF');
+      debugLog('[LIGHTBOX] 🧪 handleDetailsClick → toggling OFF');
       closeDetails();
     } else {
-      console.log('[LIGHTBOX] 🧪 handleDetailsClick → toggling ON');
+      debugLog('[LIGHTBOX] 🧪 handleDetailsClick → toggling ON');
       openDetails();
     }
   }
@@ -961,17 +960,17 @@ export function initLightbox({
 
     e.preventDefault();
     e.stopPropagation();
-    console.log('[LIGHTBOX] 🧪 handleDetailsOverlayClick → closing details');
+    debugLog('[LIGHTBOX] 🧪 handleDetailsOverlayClick → closing details');
     closeDetails();
   }
   
   // Attach delegated listener to slides container
   const slideCount = getSlides().length;
-  console.log(`[LIGHTBOX] 🔍 Found ${slideCount} slide${slideCount !== 1 ? 's' : ''}, container:`, slidesContainer?.tagName || 'null');
+  debugLog(`[LIGHTBOX] 🔍 Found ${slideCount} slide${slideCount !== 1 ? 's' : ''}, container:`, slidesContainer?.tagName || 'null');
   
   if (slidesContainer) {
     slidesContainer.addEventListener('click', handleSlideClick, { passive: false });
-    console.log(`[LIGHTBOX] ✓ Delegated click handler attached to ${slidesContainer.tagName} (${slideCount} slide${slideCount !== 1 ? 's' : ''})`);
+    debugLog(`[LIGHTBOX] ✓ Delegated click handler attached to ${slidesContainer.tagName} (${slideCount} slide${slideCount !== 1 ? 's' : ''})`);
   } else {
     console.error('[LIGHTBOX] ❌ Could not find slides container for event delegation');
   }
@@ -979,20 +978,20 @@ export function initLightbox({
   function handleLightboxClick(e) {
     const closeTarget = e.target.closest('#close-btn');
     if (closeTarget) {
-      console.log('[LIGHTBOX] 🧪 Delegated click → close-btn');
+      debugLog('[LIGHTBOX] 🧪 Delegated click → close-btn');
       handleCloseBtnClick(e);
       return;
     }
 
     const detailsTarget = e.target.closest('#details-btn');
     if (detailsTarget) {
-      console.log('[LIGHTBOX] 🧪 Delegated click → details-btn');
+      debugLog('[LIGHTBOX] 🧪 Delegated click → details-btn');
       handleDetailsClick(e);
     }
   }
 
   lb.addEventListener('click', handleLightboxClick, { passive: false });
-  console.log('[LIGHTBOX] ✓ Delegated handlers attached for close/details buttons');
+  debugLog('[LIGHTBOX] ✓ Delegated handlers attached for close/details buttons');
 
   if (!closeBtn) {
     console.warn('[LIGHTBOX] ⚠️  #close-btn not found - only Escape key will close');
@@ -1001,20 +1000,20 @@ export function initLightbox({
   if (!detailsBtn) {
     console.warn('[LIGHTBOX] ⚠️  Details button (#details-btn) not found');
   } else {
-    console.log('[LIGHTBOX] ✓ Details button detected in DOM');
+    debugLog('[LIGHTBOX] ✓ Details button detected in DOM');
   }
   
   if (overlay) {
     overlay.style.pointerEvents = 'none';
     overlay.addEventListener('click', handleDetailsOverlayClick, { passive: false });
-    console.log('[LIGHTBOX] ✓ Overlay click handler attached (click background to close details)');
+    debugLog('[LIGHTBOX] ✓ Overlay click handler attached (click background to close details)');
   } else {
     console.warn('[LIGHTBOX] ⚠️  Overlay not found - details close-on-click disabled');
   }
 
   document.addEventListener('keydown', handleKeydown);
   
-  console.log('[LIGHTBOX] ✓ Initialized and ready\n');
+  debugLog('[LIGHTBOX] ✓ Initialized and ready\n');
   
   // ============================================================
   // CLEANUP & API EXPOSURE
@@ -1036,15 +1035,13 @@ export function initLightbox({
     // Reset state
     detailsOpen = false;
     
-    // DISABLED: Overlay scroll cleanup disabled (Lenis is disabled globally)
-    
     // Unlock scroll and reset state
     unlockScroll({ delayMs: 0 });
     setPageInert(false);
     enableSlideInteractions();
     currentState = STATE.IDLE;
     
-    console.log('[LIGHTBOX] ✓ Cleanup complete');
+    debugLog('[LIGHTBOX] ✓ Cleanup complete');
   }
   
   function openProjectById(projectId) {
