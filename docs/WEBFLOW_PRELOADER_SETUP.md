@@ -193,7 +193,6 @@ By default, preloader uses **jitter animation** (60Hz micro-movement). To change
       jitterDistance: 1.5,     // Movement distance (px)
       jitterPattern: 'circular', // 'circular', 'figure8', 'orbital', etc.
       minLoadTime: 1000,       // Minimum display time (ms)
-      showDebugLog: false,     // Hide debug log (default: true)
       vimeoPreload: 'prefetch' // 'none', 'prefetch', 'prebuffer'
     }
   });

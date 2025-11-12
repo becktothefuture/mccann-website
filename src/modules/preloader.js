@@ -18,8 +18,6 @@ import { lockScroll, unlockScroll } from '../core/scrolllock.js';
 let preloaderEl = null;
 let signetEl = null;
 let progressEl = null;
-let logEl = null;
-let showDebugLog = true; // Toggle to show/hide real-time log
 let resizeTimeoutId = null;
 let isResizing = false;
 let resizeFadeDuration = 75; // Quick fade-out (ms)
@@ -55,7 +53,6 @@ const wfIx = (window.Webflow && window.Webflow.require)
  * @param {number} options.vimeoBufferLimit - Max Vimeo videos to prebuffer (default: 5)
  * @param {Object} options.projectData - Project data with vimeoId fields
  * @param {number} options.minLoadTime - Minimum time to show preloader (ms)
- * @param {boolean} options.showDebugLog - Show real-time debug log (default: true)
  * @param {number} options.pulseDuration - Pulse cycle duration in ms (default: 2400)
  * @param {number} options.pulseOpacity - Legacy amplitude setting (0-1, default: 0.42)
  * @param {number} options.pulseMinOpacity - Minimum opacity for CSS pulse (0-1, default: 0.4)
@@ -71,7 +68,6 @@ export function initPreloader({
   vimeoBufferLimit = 5,
   projectData = projectDataJson,
   minLoadTime = 1000,
-  showDebugLog: debugLogOption = true,
   pulseDuration = 2400,
   pulseOpacity = 0.42,
   pulseMinOpacity = 0.4,
@@ -81,7 +77,6 @@ export function initPreloader({
   eventLeadMs: leadMs = 100
 } = {}) {
 
-  showDebugLog = debugLogOption;
   resizeFadeDuration = fadeDuration;
   resizeShowDelay = showDelay;
   eventLeadMs = leadMs;
@@ -118,11 +113,6 @@ export function initPreloader({
   if (!signetEl) {
     console.error('[PRELOADER] ❌ Signet element not found');
     return;
-  }
-
-  // Create debug log element if enabled
-  if (showDebugLog) {
-    createLogElement();
   }
 
   log('✓ Elements found', 'success');
@@ -190,38 +180,15 @@ export function hidePreloaderManually() {
 }
 
 // ============================================================
-// LOGGING (Real-time UI feedback)
+// LOGGING
 // ============================================================
 
 /**
- * Create log element in bottom left corner
- */
-function createLogElement() {
-  if (!preloaderEl || logEl) return;
-
-  logEl = document.createElement('div');
-  logEl.className = 'preloader__log';
-  logEl.setAttribute('aria-live', 'polite');
-  logEl.setAttribute('aria-atomic', 'false');
-  preloaderEl.appendChild(logEl);
-  
-  log('Debug log initialized', 'info');
-}
-
-/**
- * Add log entry to UI and console
+ * Add log entry to console with consistent formatting
  * @param {string} message - Log message
  * @param {string} type - Log type: 'info', 'success', 'warning', 'error'
  */
 function log(message, type = 'info') {
-  const timestamp = new Date().toLocaleTimeString('en-US', { 
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit', 
-    second: '2-digit',
-    fractionalSecondDigits: 3
-  });
-  
   const consoleMessage = `[PRELOADER] ${message}`;
   
   // Console output
@@ -236,24 +203,6 @@ function log(message, type = 'info') {
     case 'info':
     default:
       console.log(consoleMessage);
-  }
-  
-  // UI output (if debug log enabled)
-  if (!showDebugLog || !logEl) return;
-  
-  const entry = document.createElement('div');
-  entry.className = `preloader__log-entry preloader__log-entry--${type}`;
-  entry.textContent = `${timestamp} ${message}`;
-  
-  logEl.appendChild(entry);
-  
-  // Auto-scroll to bottom
-  logEl.scrollTop = logEl.scrollHeight;
-  
-  // Limit to last 20 entries (performance)
-  const entries = logEl.querySelectorAll('.preloader__log-entry');
-  if (entries.length > 20) {
-    entries[0].remove();
   }
 }
 
@@ -1124,7 +1073,6 @@ export function cleanupPreloader() {
   preloaderEl = null;
   signetEl = null;
   progressEl = null;
-  logEl = null;
   isResizing = false;
   lastResizeCoverHideTime = 0;
   
