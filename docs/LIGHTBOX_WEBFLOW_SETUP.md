@@ -56,7 +56,7 @@ Add these `data-field` attributes to elements inside the lightbox:
 | Truth | `data-field="lightbox-truth"` | Inside overlay content |
 | Truth Well Told | `data-field="lightbox-truthwelltold"` | Inside overlay content |
 | Description | `data-field="lightbox-description"` | Inside overlay content |
-| Impact | `data-field="lightbox-impact"` | Inside overlay content |
+| Impact | `data-field="lightbox-impact"` (wrap element in `#lightbox-impact`) | Inside overlay content |
 | Awards Container | `data-field="lightbox-awards"` | Inside overlay content (container for awards) |
 | Video Area | `.video-area` | Already exists ✓ (class, not data attribute) |
 
@@ -70,7 +70,9 @@ Add these `data-field` attributes to elements inside the lightbox:
       <p data-field="lightbox-truth">Truth goes here</p>
       <p data-field="lightbox-truthwelltold">Truth well told goes here</p>
       <p data-field="lightbox-description">Description goes here</p>
-      <p data-field="lightbox-impact">Impact goes here</p>
+      <div id="lightbox-impact">
+        <p data-field="lightbox-impact">Impact goes here</p>
+      </div>
       <div data-field="lightbox-awards">
         <!-- Award elements will be shown/hidden here -->
       </div>
@@ -79,7 +81,7 @@ Add these `data-field` attributes to elements inside the lightbox:
 </div>
 ```
 
-**Important:** These are `data-field` attributes, not IDs or classes!
+**Important:** These are `data-field` attributes, not IDs or classes! The impact copy should live inside an element with `id="lightbox-impact"`—the script automatically hides this wrapper when the JSON field is empty.
 
 ### 2a. **Awards Structure** 🏆
 

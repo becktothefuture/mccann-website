@@ -1,549 +1,533 @@
 {
   "meta": {
     "version": "2025-11-11",
-    "continentOrder": ["africa", "asia", "europe", "northAmerica", "southAmerica"],
+    "continentOrder": [
+      "africa",
+      "asiaPacific",
+      "europe",
+      "latinAmerica",
+      "middleEast",
+      "northAmerica"
+    ],
     "notes": "Locations grouped for Offices accordion generation"
   },
   "continents": {
     "africa": {
       "label": "Africa",
-      "countryOrder": ["cameroon", "ghana", "guinea", "kenya", "morocco", "nigeria", "senegal", "southAfrica", "tunisia", "uganda", "zimbabwe"],
+      "countryOrder": [
+        "Algeria",
+        "Cameroun",
+        "Cote D'Ivoire",
+        "Egypt",
+        "Guinea",
+        "Kenya",
+        "Morocco",
+        "Nigeria",
+        "Senegal",
+        "South Africa",
+        "Tunisia",
+        "Uganda",
+        "Zimbabwe"
+      ],
       "countries": {
-        "cameroon": {
-          "label": "Cameroon",
-          "iso2": "CM",
+        "Algeria": {
+          "label": "Algeria",
+          "locations": [
+            {
+              "id": "fp7-/-alg",
+              "name": "FP7 / ALG",
+              "city": "Alger",
+              "address": "31 rue Mohamed el Khoudi El Biar Alger Alger, Algeria, 16030",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/fp7-mccann-algiers/",
+              "contactEmail": null,
+              "phone": "+213 21 79 22 42/43/45/46"
+            }
+          ]
+        },
+        "Cameroun": {
+          "label": "Cameroun",
           "locations": [
             {
               "id": "mccann-douala",
               "name": "McCann Douala",
               "city": "Douala",
-              "address": "Rue Prince Bell, BP 12516, Douala, Cameroon",
-              "instagram": null,
-              "contactEmail": null
+              "address": "1.132 Rue Bertaut, BP 12516 Douala, Cameroun, BP 12516",
+              "instagram": "https://www.instagram.com/mccanndouala/",
+              "facebook": "https://www.facebook.com/mccanndouala",
+              "linkedin": "https://www.linkedin.com/company/mccann-douala/",
+              "contactEmail": "bonjour.douala@mccann.com",
+              "phone": "+237 6 99 68 53 05"
             }
           ]
         },
-        "ghana": {
-          "label": "Ghana",
-          "iso2": "GH",
+        "Cote D'Ivoire": {
+          "label": "Cote D'Ivoire",
           "locations": [
             {
-              "id": "stb-mccann-accra",
-              "name": "STB McCann Accra",
-              "city": "Accra",
-              "address": "#A540 Dr. Hutton Mills Street, Zoti Area, Laterbiokorshie, Accra, Ghana",
+              "id": "mccann-abidjan",
+              "name": "McCann Abidjan",
+              "city": "Abidjan",
+              "address": "Cocody Riviera Cite Verdoyante Lots 203-264 Abidjan, Cote d'Ivoire",
               "instagram": null,
-              "contactEmail": null
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "bonjour.abidjan@mccann.com",
+              "phone": "+225 27 22 4 01717"
             }
           ]
         },
-        "guinea": {
+        "Egypt": {
+          "label": "Egypt",
+          "locations": [
+            {
+              "id": "fp7-/-cai",
+              "name": "FP7 / CAI",
+              "city": "Cairo",
+              "address": "12 Al Esraa Street Off Lebanon St Mohandessin Cairo, Egypt",
+              "instagram": "https://www.instagram.com/fp7mccanncairo/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/fp7mccann-cairo/",
+              "contactEmail": null,
+              "phone": "+20 2 33446545"
+            }
+          ]
+        },
+        "Guinea": {
           "label": "Guinea",
-          "iso2": "GN",
           "locations": [
             {
               "id": "mccann-conakry",
               "name": "McCann Conakry",
-              "city": "Conakry",
-              "address": "Atlantic View Hotel, T2 Kipé Centre Émetteur, Commune de Ratoma, Conakry, Guinea",
-              "instagram": null,
-              "contactEmail": null
+              "city": "Conkary",
+              "address": "Siege Social Domicilie au Cabinet Epsilone Conkary, Guinee",
+              "instagram": "https://www.instagram.com/mccannconakry/",
+              "facebook": "https://www.facebook.com/mccann.conakry/",
+              "linkedin": "https://www.linkedin.com/company/mccann-conakry",
+              "contactEmail": "bonjour.conakry@mccann.com",
+              "phone": "+224 621 89 38 66"
             }
           ]
         },
-        "kenya": {
+        "Kenya": {
           "label": "Kenya",
-          "iso2": "KE",
           "locations": [
             {
-              "id": "tmg-mccann-nairobi",
+              "id": "tmg-mccann",
               "name": "TMG McCann",
               "city": "Nairobi",
-              "address": "Royal Offices, 5th Floor, Mogotio Road, Off Chiromo Lane, Parklands, Nairobi, Kenya",
-              "instagram": null,
-              "contactEmail": null
+              "address": "Royal Offices, 5th Floor, Mogotio Rd, Off Chiromo Lane, Parklands Nairobi, Kenya",
+              "instagram": "https://www.instagram.com/transcendmediagroup/",
+              "facebook": "https://www.facebook.com/TranscendMediaGroup",
+              "linkedin": null,
+              "contactEmail": "hello.kenya@mccann.com",
+              "phone": "+254 20 3743248"
             }
           ]
         },
-        "morocco": {
+        "Morocco": {
           "label": "Morocco",
-          "iso2": "MA",
           "locations": [
             {
-              "id": "fp7-mccann-casablanca",
-              "name": "FP7 McCann Casablanca",
+              "id": "fp7-/-cas",
+              "name": "FP7 / CAS",
               "city": "Casablanca",
-              "address": "397 Route d'El Jadida, Oasis, Casablanca, Morocco",
-              "instagram": null,
-              "contactEmail": "rami.omran@promoseven.com"
+              "address": "397 Route d'El Jadida Oasis Casablanca, Morocco",
+              "instagram": "https://www.instagram.com/fp7cas/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": null,
+              "phone": "+212 5227 75200"
             }
           ]
         },
-        "nigeria": {
+        "Nigeria": {
           "label": "Nigeria",
-          "iso2": "NG",
           "locations": [
             {
               "id": "stb-mccann-lagos",
               "name": "STB McCann Lagos",
               "city": "Lagos",
-              "address": "1 Oyetola Street, Off Ajanaku Street, Awuse Estate, Opebi, Ikeja, Lagos, Nigeria",
-              "instagram": null,
-              "contactEmail": null
+              "address": "1 Oyetola Street Off Ajanaku Street Awuse Estate Opebi, Ikeja Lagos, Nigeria",
+              "instagram": "https://www.instagram.com/stbmccannlagos/",
+              "facebook": "https://www.facebook.com/STBMcCannLagos/",
+              "linkedin": "https://www.linkedin.com/company/stb-mccann-lagos",
+              "contactEmail": "hello.nigeria@mccann.com",
+              "phone": "+234 818 539 2464"
             }
           ]
         },
-        "senegal": {
+        "Senegal": {
           "label": "Senegal",
-          "iso2": "SN",
           "locations": [
             {
               "id": "mccann-dakar",
               "name": "McCann Dakar",
               "city": "Dakar",
-              "address": "Extension Liberté VI, 150 Cité des Cadres Lébous, Dakar, Senegal",
-              "instagram": null,
-              "contactEmail": null
+              "address": "Extension Liberte VI, 150 Cite des Cadres Lebous. Dakar, Senegal",
+              "instagram": "https://www.instagram.com/mccanndakar/",
+              "facebook": "https://za.linkedin.com/company/mccann-erickson-senegal",
+              "linkedin": "https://www.linkedin.com/company/mccann-erickson-senegal/",
+              "contactEmail": "bonjour.dakar@mccann.com",
+              "phone": "+221 33 869 26 26"
             }
           ]
         },
-        "southAfrica": {
+        "South Africa": {
           "label": "South Africa",
-          "iso2": "ZA",
           "locations": [
             {
-              "id": "mccann-johannesburg",
-              "name": "McCann Joburg",
+              "id": "mccann-joburg-",
+              "name": "McCann Joburg ",
               "city": "Johannesburg",
-              "address": "Block B, The Main Straight Office Park, Main Road, Bryanston, Johannesburg 2021, South Africa",
-              "instagram": null,
-              "contactEmail": null
+              "address": "A Block B, The Main Straight Office Park, Main Road,Bryanston Johannesburg, South Africa, 2021",
+              "instagram": "https://www.instagram.com/mccannjoburg/",
+              "facebook": "https://www.facebook.com/mccannjoburg/",
+              "linkedin": "https://www.linkedin.com/company/mccannjoburg/",
+              "contactEmail": "hello.southafrica@mccann.com",
+              "phone": "+27 11 258 4000"
             }
           ]
         },
-        "tunisia": {
+        "Tunisia": {
           "label": "Tunisia",
-          "iso2": "TN",
           "locations": [
             {
-              "id": "fp7-mccann-tunis",
-              "name": "FP7 McCann Tunis",
+              "id": "fp7-/-tun",
+              "name": "FP7 / TUN",
               "city": "Tunis",
-              "address": "Immeuble Astrée, Rue du Lac d'Annecy, Les Berges du Lac, Tunis 1053, Tunisia",
+              "address": "Immeuble Astree Rue du Lac D'Annecy 1053 Tunis, Tunisia, 1053",
               "instagram": null,
-              "contactEmail": null
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": null,
+              "phone": "+216 71 861 841"
             }
           ]
         },
-        "uganda": {
+        "Uganda": {
           "label": "Uganda",
-          "iso2": "UG",
           "locations": [
             {
-              "id": "maad-mccann-kampala",
+              "id": "maad-mccann",
               "name": "MAAD McCann",
               "city": "Kampala",
-              "address": "Plot 2436 Ntinda, Kampala, Uganda",
-              "instagram": null,
-              "contactEmail": null
+              "address": "Plot 2436 Ntinda Kampala, Uganda",
+              "instagram": "https://www.instagram.com/maadmccann/",
+              "facebook": "https://www.facebook.com/MAADAdvertising/",
+              "linkedin": "https://www.linkedin.com/company/maad-mccann",
+              "contactEmail": "hello.uganda@mccann.com",
+              "phone": "+256 701 222522"
             }
           ]
         },
-        "zimbabwe": {
+        "Zimbabwe": {
           "label": "Zimbabwe",
-          "iso2": "ZW",
           "locations": [
             {
-              "id": "dicomm-mccann-harare",
+              "id": "dicomm-mccann",
               "name": "Dicomm McCann",
               "city": "Harare",
-              "address": "21 Lawson Avenue, Milton Park, Harare, Zimbabwe",
-              "instagram": null,
-              "contactEmail": null
+              "address": "21 Lawson Avenue Milton Park Harare, Zimbabwe",
+              "instagram": "https://www.instagram.com/dicommmccann/",
+              "facebook": "https://www.facebook.com/DicommMcCann",
+              "linkedin": "https://za.linkedin.com/company/dicomm-mccann",
+              "contactEmail": "hello.zimbabwe@mccann.com",
+              "phone": "+263 24 2795153"
             }
           ]
         }
       }
     },
-    "asia": {
-      "label": "Asia",
-      "countryOrder": ["azerbaijan", "china", "georgia", "hongKong", "india", "indonesia", "iraq", "israel", "japan", "jordan", "kazakhstan", "kuwait", "lebanon", "malaysia", "philippines", "qatar", "saudiArabia", "singapore", "southKorea", "taiwan", "thailand", "unitedArabEmirates", "uzbekistan"],
+    "asiaPacific": {
+      "label": "Asia Pacific",
+      "countryOrder": [
+        "Australia",
+        "Bangladesh",
+        "China",
+        "India",
+        "Indonesia",
+        "Japan",
+        "Korea",
+        "Malaysia",
+        "Philippines",
+        "Singapore",
+        "Thailand"
+      ],
       "countries": {
-        "azerbaijan": {
-          "label": "Azerbaijan",
-          "iso2": "AZ",
+        "Australia": {
+          "label": "Australia",
           "locations": [
             {
-              "id": "mccann-baku",
-              "name": "McCann Baku",
-              "city": "Baku",
-              "address": "42 Zahid Khalilov Street, Baku, Azerbaijan",
+              "id": "mccann-brisbane",
+              "name": "McCann Brisbane",
+              "city": "Brisbane",
+              "address": "Level 4, 500 Creek Street, Brisbane, Queensland 4000, Australia",
+              "instagram": "https://www.instagram.com/mccann_australia/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-australia/",
+              "contactEmail": "hello.australia@mccann.com.au",
+              "phone": "+61 7 3099 1750"
+            },
+            {
+              "id": "mccann-gold-coast",
+              "name": "McCann Gold Coast",
+              "city": "Queensland",
+              "address": "Level 9, 50 Cavill Avenue Surfers Paradise,  Queensland 4217, Australia",
               "instagram": null,
-              "contactEmail": "Geray Yusifov CEO"
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.australia@mccann.com.au",
+              "phone": "+61 7 5512 1050"
+            },
+            {
+              "id": "mccann-melbourne",
+              "name": "McCann Melbourne",
+              "city": "Melbourne",
+              "address": "26 King Street, Prahran, Melbourne, Victoria 3181, Australia",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.australia@mccann.com.au",
+              "phone": "+61 3 9993 9333"
+            },
+            {
+              "id": "mccann-sydney",
+              "name": "McCann Sydney",
+              "city": "Sydney",
+              "address": "Level 14, 6 O'Connell Street Sydney, NSW 2000, Australia",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.australia@mccann.com.au",
+              "phone": "+61 2 9994 4000"
             }
           ]
         },
-        "china": {
+        "Bangladesh": {
+          "label": "Bangladesh",
+          "locations": [
+            {
+              "id": "mccann-dhaka",
+              "name": "McCann Dhaka",
+              "city": "Dhaka",
+              "address": "31/A Western Road, 1st Floor DOHS Banani,  Dhaka 1206, Bangladesh",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": null,
+              "phone": "+880 2 9896660"
+            }
+          ]
+        },
+        "China": {
           "label": "China",
-          "iso2": "CN",
-          "locations": [
-            {
-              "id": "mccann-beijing",
-              "name": "McCann Beijing",
-              "city": "Beijing",
-              "address": "Unit 1709B, 17F, Building 1, No. 16 Chaowai Street, Beijing, China",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mccann-guangzhou",
-              "name": "McCann Guangzhou",
-              "city": "Guangzhou",
-              "address": "Room 1807-08, The CenterPoint, 374-2 Beijing Road, Guangzhou 510030, China",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mccann-shanghai",
-              "name": "McCann Shanghai",
-              "city": "Shanghai",
-              "address": "22/F Huaihai Plaza, 1045 Huaihai Road, Shanghai 200031, China",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "georgia": {
-          "label": "Georgia",
-          "iso2": "GE",
-          "locations": [
-            {
-              "id": "mccann-tbilisi",
-              "name": "McCann Tbilisi",
-              "city": "Tbilisi",
-              "address": "71 Vazha Pshavela Avenue, 4th Floor, BCV Office 26, Tbilisi 0160, Georgia",
-              "instagram": null,
-              "contactEmail": "gaa@gaaholding.com.ge"
-            }
-          ]
-        },
-        "hongKong": {
-          "label": "Hong Kong",
-          "iso2": "HK",
-          "locations": [
-            {
-              "id": "mccann-worldgroup-hong-kong",
-              "name": "McCann Worldgroup Hong Kong",
-              "city": "Hong Kong",
-              "address": "Unit 1901, 19/F, Kodak House II, 39 Healthy Street East, Quarry Bay, Hong Kong",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "india": {
-          "label": "India",
-          "iso2": "IN",
-          "locations": [
-            {
-              "id": "mccann-worldgroup-india-delhi",
-              "name": "McCann Worldgroup India",
-              "city": "New Delhi",
-              "address": "34 Sudarshan Munjal Marg, Balaji Estate, New Delhi 110019, India",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mccann-chennai",
-              "name": "McCann Chennai",
-              "city": "Chennai",
-              "address": "No. 6, Ground Floor, Balaiah Avenue, Luz, Mylapore, Chennai 600004, India",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mccann-bengaluru",
-              "name": "McCann Bangalore",
-              "city": "Bengaluru",
-              "address": "Rajashree Saroja Plaza, 34/1 Andree Road, Shanti Nagar, Bengaluru 560027, India",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mccann-worldgroup-gurugram",
-              "name": "McCann Worldgroup Gurugram",
-              "city": "Gurugram",
-              "address": "5th Floor, Good Earth Business Bay, Golf Course Extension Road, Sector 58, Gurugram 122011, India",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mccann-mumbai",
-              "name": "McCann Mumbai",
-              "city": "Mumbai",
-              "address": "Valencia, 5th–6th Floor, Rajkamal Marg, off Dr. S S Rao Road, Parel, Mumbai 400012, India",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "indonesia": {
-          "label": "Indonesia",
-          "iso2": "ID",
-          "locations": [
-            {
-              "id": "mccann-jakarta",
-              "name": "McCann Jakarta",
-              "city": "Jakarta",
-              "address": "10th Floor, Menara Standard Chartered, Jl. Prof. Dr. Satrio No. 164, Jakarta 12930, Indonesia",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "iraq": {
-          "label": "Iraq",
-          "iso2": "IQ",
-          "locations": [
-            {
-              "id": "fp7-mccann-erbil",
-              "name": "FP7 McCann Erbil",
-              "city": "Erbil",
-              "address": "English Village, Villa 241, Erbil, Iraq",
-              "instagram": null,
-              "contactEmail": "emile.atallah@fp7.com"
-            }
-          ]
-        },
-        "israel": {
-          "label": "Israel",
-          "iso2": "IL",
-          "locations": [
-            {
-              "id": "mccann-tel-aviv",
-              "name": "McCann Tel Aviv",
-              "city": "Tel Aviv",
-              "address": "Kesher Barel, 2A Raoul Wallenberg Street, Tel Aviv 69719, Israel",
-              "instagram": null,
-              "contactEmail": "Amit@mccann.co.il"
-            }
-          ]
-        },
-        "japan": {
-          "label": "Japan",
-          "iso2": "JP",
-          "locations": [
-            {
-              "id": "mccann-osaka",
-              "name": "McCann Osaka",
-              "city": "Osaka",
-              "address": "19F Aqua Dojima West, 1-4-16 Dojimahama, Kita-ku, Osaka 530-0004, Japan",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mccann-tokyo",
-              "name": "McCann Tokyo",
-              "city": "Tokyo",
-              "address": "Shin-Aoyama Building East, 1-1-1 Minami-Aoyama, Minato-ku, Tokyo 107-8679, Japan",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "jordan": {
-          "label": "Jordan",
-          "iso2": "JO",
-          "locations": [
-            {
-              "id": "fp7-mccann-amman",
-              "name": "FP7 McCann Amman",
-              "city": "Amman",
-              "address": "Al Hijaz Towers, Office 505, Mecca Street, P.O. Box 2927, Amman 11181, Jordan",
-              "instagram": null,
-              "contactEmail": "rami.omran@promoseven.com"
-            }
-          ]
-        },
-        "kazakhstan": {
-          "label": "Kazakhstan",
-          "iso2": "KZ",
-          "locations": [
-            {
-              "id": "mccann-almaty",
-              "name": "McCann Almaty",
-              "city": "Almaty",
-              "address": "157 Zhumaliev Street, Almaty, Kazakhstan",
-              "instagram": null,
-              "contactEmail": "m.zhanispayev@advgroup.kz"
-            }
-          ]
-        },
-        "kuwait": {
-          "label": "Kuwait",
-          "iso2": "KW",
-          "locations": [
-            {
-              "id": "fp7-mccann-kuwait",
-              "name": "FP7 McCann Kuwait City",
-              "city": "Kuwait City",
-              "address": "Ahmad Al-Jaber Street, Mostathmer 1 Tower, Block 2 Sector 52, Floor 3, Sharq, P.O. Box 24084, Kuwait City 13101, Kuwait",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "lebanon": {
-          "label": "Lebanon",
-          "iso2": "LB",
-          "locations": [
-            {
-              "id": "fp7-mccann-beirut",
-              "name": "FP7 McCann Beirut",
-              "city": "Beirut",
-              "address": "1st Floor, Ashrafieh 784 Building, Sodeco, P.O. Box 116-5288, Beirut, Lebanon",
-              "instagram": null,
-              "contactEmail": "george.jabbour@mcnmena.com"
-            }
-          ]
-        },
-        "malaysia": {
-          "label": "Malaysia",
-          "iso2": "MY",
-          "locations": [
-            {
-              "id": "mccann-kuala-lumpur",
-              "name": "McCann Kuala Lumpur",
-              "city": "Kuala Lumpur",
-              "address": "22 Jalan Bruas, Bukit Damansara, Kuala Lumpur 50490, Malaysia",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "philippines": {
-          "label": "Philippines",
-          "iso2": "PH",
-          "locations": [
-            {
-              "id": "mccann-taguig",
-              "name": "McCann Taguig",
-              "city": "Taguig",
-              "address": "5F Active Fun Building, 9th Avenue corner 28th Street, Bonifacio Global City, Taguig 1634, Philippines",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "qatar": {
-          "label": "Qatar",
-          "iso2": "QA",
-          "locations": [
-            {
-              "id": "fp7-mccann-doha",
-              "name": "FP7 McCann Doha",
-              "city": "Doha",
-              "address": "Barwa Al Sadd Tower 1, 9th Floor, Suhaim Bin Hamad Street, P.O. Box 13645, Doha, Qatar",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "saudiArabia": {
-          "label": "Saudi Arabia",
-          "iso2": "SA",
-          "locations": [
-            {
-              "id": "fp7-mccann-riyadh",
-              "name": "FP7 McCann Riyadh",
-              "city": "Riyadh",
-              "address": "Mawhiba Centre, Floor 2 Suite 4, Olaya Street, P.O. Box 53034, Riyadh 11583, Saudi Arabia",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "singapore": {
-          "label": "Singapore",
-          "iso2": "SG",
-          "locations": [
-            {
-              "id": "mccann-worldgroup-singapore",
-              "name": "McCann Worldgroup Singapore",
-              "city": "Singapore",
-              "address": "40A Orchard Road, #09-01 The MacDonald House, Singapore 238838",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "southKorea": {
-          "label": "South Korea",
-          "iso2": "KR",
-          "locations": [
-            {
-              "id": "mccann-seoul",
-              "name": "McCann Seoul",
-              "city": "Seoul",
-              "address": "7F, 31 Bongeunsa-ro 2-gil, Gangnam-gu, Seoul 06123, South Korea",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "taiwan": {
-          "label": "Taiwan",
-          "iso2": "TW",
           "locations": [
             {
               "id": "mccann-taipei",
               "name": "McCann Taipei",
               "city": "Taipei",
-              "address": "7F, No. 29, Sec. 1 Anhe Road, Da'an District, Taipei, Taiwan",
+              "address": "7F, No. 29, Sec. 1. Anhe Rd., Daan District, Taipei 106, Taiwan",
               "instagram": null,
-              "contactEmail": null
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.taiwan@mccann.com.tw",
+              "phone": "+886 2 2758 5000"
+            },
+            {
+              "id": "mccann-beijing",
+              "name": "McCann Beijing",
+              "city": "Beijing",
+              "address": "Unit 09B, 17F, Building 1, No. 16 Chaowai Street, Chaoyang District, Beijing 100020, China",
+              "instagram": "https://www.instagram.com/mccann_hongkong/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.china@mccann.com",
+              "phone": "+86 21 2411 1050"
+            },
+            {
+              "id": "mccann-guangzhou",
+              "name": "McCann Guangzhou",
+              "city": "Guangzhou",
+              "address": "Room 1807, The CenterPoint, 374-2 Beijing Road, Guangzhou 510030, China",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.china@mccann.com",
+              "phone": "+86 21 2411 1596"
+            },
+            {
+              "id": "mccann-shanghai",
+              "name": "McCann Shanghai",
+              "city": "Shanghai",
+              "address": "22/F Huaihai Plaza, 1045 Central Huaihai Road,  Shanghai 200031, China",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.china@mccann.com",
+              "phone": "+86 21 2411 1000"
             }
           ]
         },
-        "thailand": {
+        "India": {
+          "label": "India",
+          "locations": [
+            {
+              "id": "mccann-chennai",
+              "name": "McCann Chennai",
+              "city": "Chennai",
+              "address": "B-13, 305, Mahadevan Apartment, TTK Road, Alwarpet, Chennai 600018, Tamil Nadu, India",
+              "instagram": "https://www.instagram.com/mccann_india/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.india@mccann.com",
+              "phone": "+91 44 4340 4840"
+            },
+            {
+              "id": "mccann-bangalore",
+              "name": "McCann Bangalore",
+              "city": "Bangalore",
+              "address": "2nd Floor, Tower A, Diamond District, HAL Airport Road, Bangalore 560008, Karnataka, India",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.india@mccann.com",
+              "phone": "+91 80 4243 0400"
+            },
+            {
+              "id": "mccann-mumbai",
+              "name": "McCann Mumbai",
+              "city": "Mumbai",
+              "address": "Valencia 5th - 6th Flr Rajkamal Marg Off. Dr. S S Rao Road, Parel, Mumbai 400012, India",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.india@mccann.com",
+              "phone": "+91 22 4230 6600"
+            }
+          ]
+        },
+        "Indonesia": {
+          "label": "Indonesia",
+          "locations": [
+            {
+              "id": "mccann-jakarta",
+              "name": "McCann Jakarta",
+              "city": "Jakarta",
+              "address": "9th Floor, Graha Binakarsa Jl Rasuna Said, Kota Jakarta Selatan, Jakarta 12940, Indonesia",
+              "instagram": "https://www.instagram.com/mccannindonesia/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.indonesia@mccann.com.id",
+              "phone": "+62 815 1498 7832"
+            }
+          ]
+        },
+        "Japan": {
+          "label": "Japan",
+          "locations": [
+            {
+              "id": "mccann-osaka",
+              "name": "McCann Osaka",
+              "city": "Osaka",
+              "address": "Hilton Plaza West Office Tower, 19th Floor, 2-2-2 Umeda, Kita-ku, Osaka 530-0001, Japan",
+              "instagram": "https://www.instagram.com/mccannworldgroupjapan/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-worldgroup-japan/",
+              "contactEmail": "hello.japan@mccann.com",
+              "phone": "+81 6 6133 0045"
+            },
+            {
+              "id": "mccann-tokyo",
+              "name": "McCann Tokyo",
+              "city": "Tokyo",
+              "address": "Shin-Aoyama Building East 1-1-1 Minami-Aoyama, Minato-ku, Tokyo 107-8679, Japan",
+              "instagram": "https://www.instagram.com/mccann_tokyo/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.japan@mccann.com",
+              "phone": "+81 3 3746 8111"
+            }
+          ]
+        },
+        "Korea": {
+          "label": "Korea",
+          "locations": [
+            {
+              "id": "mccann-seoul",
+              "name": "McCann Seoul",
+              "city": "Seoul",
+              "address": "7F, 31 Bongenusa-ro 2-gil, Gangnam-gu, Seoul 06123, Korea",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.korea@mccann.co.kr",
+              "phone": "+82 2 2186 9700"
+            }
+          ]
+        },
+        "Malaysia": {
+          "label": "Malaysia",
+          "locations": [
+            {
+              "id": "mccann-kuala-lumpur",
+              "name": "McCann Kuala Lumpur",
+              "city": "Kuala",
+              "address": "22 Jalan Bruas, Bukit Damansara, Kuala Lumpur 50490, Malaysia",
+              "instagram": "https://www.instagram.com/mccann_kl/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-kl-m-sdn-bhd/",
+              "contactEmail": "hello.malaysia@mccann.com.my",
+              "phone": "+60 3 2779 1738"
+            }
+          ]
+        },
+        "Philippines": {
+          "label": "Philippines",
+          "locations": [
+            {
+              "id": "mccann-manila",
+              "name": "McCann Manila",
+              "city": "Taguig",
+              "address": "5/F Active Fun Building, 9th Avenue Corner, 28th Street, City Centre, Bonifacio Global City, Taguig 1634, Philippines",
+              "instagram": "https://www.instagram.com/mccannworldgroupph/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannworldgroupph/",
+              "contactEmail": "hello.philippines@mccann.com",
+              "phone": "+63 2 8548 6200"
+            }
+          ]
+        },
+        "Singapore": {
+          "label": "Singapore",
+          "locations": [
+            {
+              "id": "mccann-singapore",
+              "name": "McCann Singapore",
+              "city": "Singapore",
+              "address": "40A Orchard Road, Level 9, MacDonald House,  Singapore 238838",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-worldgroup-singapore/",
+              "contactEmail": "hello.singapore@mccann.com",
+              "phone": "+65 6681 3219"
+            }
+          ]
+        },
+        "Thailand": {
           "label": "Thailand",
-          "iso2": "TH",
           "locations": [
             {
               "id": "mccann-bangkok",
               "name": "McCann Bangkok",
               "city": "Bangkok",
-              "address": "98 Sathorn Square Office Tower, 25th–26th Floors (North), North Sathorn Road, Silom, Bangrak, Bangkok 10500, Thailand",
+              "address": "98 Sathorn Square Office Tower, 25th Floor, North Sathorn Road, Silom, Bangkok 10500, Thailand",
               "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "unitedArabEmirates": {
-          "label": "United Arab Emirates",
-          "iso2": "AE",
-          "locations": [
-            {
-              "id": "fp7-mccann-dubai",
-              "name": "FP7 McCann Dubai",
-              "city": "Dubai",
-              "address": "14th Floor, MCN Hive, Al Barsha Heights, Dubai, United Arab Emirates",
-              "instagram": null,
-              "contactEmail": "ghassan.harfouche@mcnholding.com"
-            }
-          ]
-        },
-        "uzbekistan": {
-          "label": "Uzbekistan",
-          "iso2": "UZ",
-          "locations": [
-            {
-              "id": "mccann-tashkent",
-              "name": "McCann Tashkent",
-              "city": "Tashkent",
-              "address": "16/2 Glinka Street, Tashkent, Uzbekistan",
-              "instagram": null,
-              "contactEmail": "elyar.kaldjanov@mccann.uz"
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-worldgroup-thailand/",
+              "contactEmail": "hello.thailand@mccann.com",
+              "phone": "+66 2 343 6000"
             }
           ]
         }
@@ -551,503 +535,1221 @@
     },
     "europe": {
       "label": "Europe",
-      "countryOrder": ["austria", "belgium", "bosniaHerzegovina", "bulgaria", "croatia", "cyprus", "czechRepublic", "france", "germany", "greece", "hungary", "italy", "latvia", "montenegro", "northMacedonia", "poland", "portugal", "romania", "russia", "serbia", "slovakia", "slovenia", "spain", "sweden", "turkey", "ukraine", "unitedKingdom"],
+      "countryOrder": [
+        "Albania",
+        "Armenia",
+        "Austria",
+        "Azerbaijan",
+        "Belgium",
+        "Bosnia-Herzegovina",
+        "Croatia",
+        "Cyprus",
+        "Czech Republic",
+        "France",
+        "Georgia",
+        "Germany",
+        "Greece",
+        "Hungary",
+        "Israel",
+        "Italy",
+        "Kazakhstan",
+        "Latvia",
+        "Montenegro",
+        "North Macedonia",
+        "Poland",
+        "Portugal",
+        "Romania",
+        "Serbia",
+        "Slovakia",
+        "Slovenia",
+        "Spain",
+        "NORDIC",
+        "Turkey",
+        "Ukraine",
+        "United Kingdom",
+        "Uzbekistan"
+      ],
       "countries": {
-        "austria": {
+        "Albania": {
+          "label": "Albania",
+          "locations": [
+            {
+              "id": "rruga-themistokli-germenji,-pallati-frasheri,-shk.-1,-ap.-13",
+              "name": "Rruga Themistokli Germenji, Pallati Frasheri, Shk. 1, Ap. 13",
+              "city": "Tirana",
+              "address": "Pallati Frasheri, Shk. 1, Ap. 13 Tirana 1010, Albania",
+              "instagram": "https://www.instagram.com/mccann_tirana/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccanntirana/",
+              "contactEmail": "info@mccann.al ",
+              "phone": "+355 4 225 8808"
+            }
+          ]
+        },
+        "Armenia": {
+          "label": "Armenia",
+          "locations": [
+            {
+              "id": "mccann-yerevan",
+              "name": "McCann Yerevan",
+              "city": "Yerevan",
+              "address": "1/21 Azatutyan Ave. Suite 3 Yerevan, Armenia",
+              "instagram": "https://www.instagram.com/mccann_yerevan/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-yerevan/",
+              "contactEmail": null,
+              "phone": "+374 10 264527"
+            }
+          ]
+        },
+        "Austria": {
           "label": "Austria",
-          "iso2": "AT",
           "locations": [
             {
-              "id": "mccann-vienna",
-              "name": "McCann Vienna",
-              "city": "Vienna",
-              "address": "Stolberggasse 26, 1050 Vienna, Austria",
+              "id": "mccann-gmbh",
+              "name": "McCann GmbH",
+              "city": "Wien",
+              "address": "Stolberggasse 26, 4OG A-1050 Wien",
               "instagram": null,
-              "contactEmail": null
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": " office@mccann.at",
+              "phone": "+43 1 360550"
             }
           ]
         },
-        "belgium": {
+        "Azerbaijan": {
+          "label": "Azerbaijan",
+          "locations": [
+            {
+              "id": "nigar-rafibeyli-12/14,-passage-1901.-sabail,-baku,-azerbaijan",
+              "name": "Nigar Rafibeyli 12/14, Passage 1901. Sabail, Baku, Azerbaijan",
+              "city": "",
+              "address": "",
+              "instagram": "https://www.instagram.com/mccann.baku",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-baku/",
+              "contactEmail": "info@mccann.az",
+              "phone": "+994 12 492 35 35"
+            }
+          ]
+        },
+        "Belgium": {
           "label": "Belgium",
-          "iso2": "BE",
           "locations": [
             {
-              "id": "air-brussels",
+              "id": "air",
               "name": "Air",
-              "city": "Brussels",
-              "address": "Chaussée de la Hulpe 185, Brussels 1170, Belgium",
+              "city": "Boitsfort",
+              "address": "Chaussee de la Hulpe 185 1170 Boitsfort Belgium",
               "instagram": null,
-              "contactEmail": "s.buisseret@aironair.com"
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/air-nv/",
+              "contactEmail": "p.heraly@air.be",
+              "phone": "+32 468 41 10 89"
             }
           ]
         },
-        "bosniaHerzegovina": {
-          "label": "Bosnia and Herzegovina",
-          "iso2": "BA",
+        "Bosnia-Herzegovina": {
+          "label": "Bosnia-Herzegovina",
           "locations": [
             {
               "id": "mccann-sarajevo",
               "name": "McCann Sarajevo",
               "city": "Sarajevo",
-              "address": "Gabrielle Moreno Locatelli 21, Sarajevo 71000, Bosnia and Herzegovina",
-              "instagram": null,
-              "contactEmail": "vesna.vlasic@mccann.ba"
+              "address": "Marka Marulica 2  Sarajevo, Bosnia-Herzegovina, 71000",
+              "instagram": "https://www.instagram.com/mccannsarajevo/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannsarajevo/",
+              "contactEmail": "mccann@mccann.ba",
+              "phone": "+387 33 267 110/111/120"
             }
           ]
         },
-        "bulgaria": {
-          "label": "Bulgaria",
-          "iso2": "BG",
-          "locations": [
-            {
-              "id": "mccann-sofia",
-              "name": "McCann Sofia",
-              "city": "Sofia",
-              "address": "63 Shipchenski Prohod Blvd., Sofia 1574, Bulgaria",
-              "instagram": null,
-              "contactEmail": "alexander_toromanov@mccann.bg"
-            }
-          ]
-        },
-        "croatia": {
+        "Croatia": {
           "label": "Croatia",
-          "iso2": "HR",
           "locations": [
             {
               "id": "mccann-zagreb",
               "name": "McCann Zagreb",
               "city": "Zagreb",
-              "address": "Heinzelova 33A, Zagreb 10000, Croatia",
-              "instagram": null,
-              "contactEmail": "mario.fraculj@mccann.hr"
+              "address": "Heinzelova 33a 10000 Zagreb, Croatia, 10000",
+              "instagram": "https://www.instagram.com/mccannzagreb/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannzagreb/",
+              "contactEmail": null,
+              "phone": "+385 1 5555 102"
             }
           ]
         },
-        "cyprus": {
+        "Cyprus": {
           "label": "Cyprus",
-          "iso2": "CY",
           "locations": [
             {
-              "id": "delema-mccann-nicosia",
-              "name": "DeLeMa McCann Cyprus",
+              "id": "36,-griva-digeni-avenue,-8th-floor,-nicosia,-1066,-cyprus",
+              "name": "36, Griva Digeni Avenue, 8th floor, Nicosia, 1066, Cyprus",
               "city": "Nicosia",
-              "address": "36 Grivas Dighenis Avenue, P.O. Box 21674, Nicosia 1512, Cyprus",
-              "instagram": null,
-              "contactEmail": "Despo@delema.com"
+              "address": "36, Griva Digeni Avenue, 8th floor, Nicosia, 1066, Cyprus",
+              "instagram": "https://www.linkedin.com/company/delemacyprus",
+              "facebook": null,
+              "linkedin": "https://www.instagram.com/delemamccann/",
+              "contactEmail": "info@delema.com",
+              "phone": "+357 22 660300"
             }
           ]
         },
-        "czechRepublic": {
+        "Czech Republic": {
           "label": "Czech Republic",
-          "iso2": "CZ",
           "locations": [
             {
               "id": "mccann-prague",
               "name": "McCann Prague",
               "city": "Prague",
-              "address": "Riegrovy sady 28, Prague 120 00, Czech Republic",
-              "instagram": null,
-              "contactEmail": "jan.binar@mccann.cz"
+              "address": "Riegrovy sady 28, Praha 2 Prague, Czech Republic, 120 00",
+              "instagram": "https://www.instagram.com/mccannprague/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-prague/",
+              "contactEmail": "hello.czechrepublic@mccann.com.",
+              "phone": "+420 222 910 101"
             }
           ]
         },
-        "france": {
+        "France": {
           "label": "France",
-          "iso2": "FR",
           "locations": [
             {
               "id": "mccann-paris",
               "name": "McCann Paris",
               "city": "Paris",
-              "address": "9 Boulevard du Général Leclerc, Clichy Cedex 92110, France",
-              "instagram": null,
-              "contactEmail": "Pierre.lafont@mccann.com, mccannparis@webershandwick.com, recrutement@mccann.com"
+              "address": "34 Boulevard du Parc 92200 Neuilly-sur-Seine Paris, France ",
+              "instagram": "https://www.instagram.com/mccann_paris/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannparis/",
+              "contactEmail": "Hello.paris@mccann.com",
+              "phone": "+33 1 47 59 34 56"
             }
           ]
         },
-        "germany": {
+        "Georgia": {
+          "label": "Georgia",
+          "locations": [
+            {
+              "id": "mccann-tbilisi",
+              "name": "McCann Tbilisi",
+              "city": "Tbilisi",
+              "address": "71 Vazha Pshavela Ave. 4th floor BCV office #26 0186 Tbilisi, Georgia, 0160",
+              "instagram": "https://www.instagram.com/mccanntbilisi/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-tbilisi/",
+              "contactEmail": null,
+              "phone": "+995 32 220 73 55"
+            }
+          ]
+        },
+        "Germany": {
           "label": "Germany",
-          "iso2": "DE",
           "locations": [
             {
               "id": "mccann-berlin",
-              "name": "McCann Berlin & MRM Berlin",
+              "name": "McCann Berlin",
               "city": "Berlin",
-              "address": "Mindspace, Münzstraße 12, Berlin 10178, Germany",
-              "instagram": null,
-              "contactEmail": "Ruber.Iglesias@mccann.de"
+              "address": "Monbijouplatz 4 Berlin, Germany, 10178",
+              "instagram": "https://www.instagram.com/mccann_germany/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccanngermany/",
+              "contactEmail": "hello.germany@mccann.com",
+              "phone": "+49 30 203510"
             },
             {
               "id": "mccann-dusseldorf",
-              "name": "McCann Düsseldorf",
-              "city": "Düsseldorf",
-              "address": "Broadway Office, Breite Strasse 29-31, Düsseldorf 40213, Germany",
+              "name": "McCann Dusseldorf",
+              "city": "Dusseldorf",
+              "address": "Fichtenstr. 103 Dusseldorf, Germany, 40233",
               "instagram": null,
-              "contactEmail": "Ruber.Iglesias@mccann.de"
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.germany@mccann.com",
+              "phone": "+49 4902 11495540"
             },
             {
               "id": "mccann-frankfurt",
-              "name": "McCann Frankfurt & MRM Frankfurt",
-              "city": "Frankfurt am Main",
-              "address": "Torhaus am Westhafen, Speicherstrasse 57-59, Frankfurt am Main 60327, Germany",
+              "name": "McCann Frankfurt",
+              "city": "Speicherstrasse",
+              "address": "Torhaus am Westhafen Speicherstrasse 57-59",
               "instagram": null,
-              "contactEmail": "Ruber.Iglesias@mccann.de"
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.germany@mccann.com",
+              "phone": "+49 69 60507560"
             }
           ]
         },
-        "greece": {
+        "Greece": {
           "label": "Greece",
-          "iso2": "GR",
           "locations": [
             {
               "id": "mccann-athens",
               "name": "McCann Athens",
               "city": "Athens",
-              "address": "2 Ydras Street & 280 Kifissias Avenue, Halandri 15232, Athens, Greece",
-              "instagram": null,
-              "contactEmail": "harry.parianos@mccann.gr"
+              "address": "2 Ydras Street & 280 Kifissias Ave Halandri Athens, Greece, 15232",
+              "instagram": "https://www.instagram.com/mccannathens/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-worldgroup-athens/",
+              "contactEmail": "mce.athens@mccann.gr",
+              "phone": "+30 21 0817 1100"
             }
           ]
         },
-        "hungary": {
+        "Hungary": {
           "label": "Hungary",
-          "iso2": "HU",
           "locations": [
             {
               "id": "mccann-budapest",
-              "name": "McCann Budapest",
-              "city": "Budapest",
-              "address": "Central Udvar, Wesselényi utca 16, Budapest 1077, Hungary",
-              "instagram": null,
-              "contactEmail": "andras.kubicsko@mccann.hu"
+              "name": "McCann Budapest ",
+              "city": "Hungary",
+              "address": "Oktogon Haz Offices, Aradi u. 8-10., 6th floor,  Budapest,  Hungary, 1062",
+              "instagram": "McCann Budapest",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-budapest/",
+              "contactEmail": "info@mccann.hu",
+              "phone": null
             }
           ]
         },
-        "italy": {
+        "Israel": {
+          "label": "Israel",
+          "locations": [
+            {
+              "id": "mccann-tel-aviv",
+              "name": "McCann Tel Aviv",
+              "city": "Tel Aviv",
+              "address": "McCANN House  2A Raoul Wallenberg St.  Tel Aviv  6971902 ",
+              "instagram": "https://www.instagram.com/mccann.tlv/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-erickson-israel/",
+              "contactEmail": null,
+              "phone": "+972 3 768 6450"
+            }
+          ]
+        },
+        "Italy": {
           "label": "Italy",
-          "iso2": "IT",
           "locations": [
             {
               "id": "mccann-rome",
               "name": "McCann Rome",
               "city": "Rome",
-              "address": "Via dell'Arte 19/A, Rome 00144, Italy",
-              "instagram": null,
-              "contactEmail": "giuseppe.caiazza@interpublic.com"
+              "address": "Via dellArte 19/A, 00144 Rome, Italy",
+              "instagram": "https://www.instagram.com/mccann_italy/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-worldgroup-italy/",
+              "contactEmail": "info.italy@mccann.com",
+              "phone": "+39 02 85291"
             },
             {
               "id": "mccann-milan",
               "name": "McCann Milan",
-              "city": "Milan",
-              "address": "Via Spadolini 7, Centro Leoni, Building B, Milan 20141, Italy",
+              "city": "Centro",
+              "address": "Via Giovanni Spadolini 7 Centro Leoni, Building B, 20141",
               "instagram": null,
-              "contactEmail": "giuseppe.caiazza@interpublic.com"
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "info.italy@mccann.com",
+              "phone": "+39 02 85291"
             }
           ]
         },
-        "latvia": {
+        "Kazakhstan": {
+          "label": "Kazakhstan",
+          "locations": [
+            {
+              "id": "48-rubinshtein-str.,-medeu-district,-a26t8f4,-almaty,-republic-of-kazakhstan",
+              "name": "48 Rubinshtein Str., Medeu District, A26T8F4, Almaty, Republic of Kazakhstan",
+              "city": "",
+              "address": "",
+              "instagram": "https://www.instagram.com/mccannalmaty/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "k.tassymbekova@mccann.kz ",
+              "phone": "+7 727 355 0089"
+            }
+          ]
+        },
+        "Latvia": {
           "label": "Latvia",
-          "iso2": "LV",
           "locations": [
             {
               "id": "mccann-riga",
               "name": "McCann Riga",
               "city": "Riga",
-              "address": "30 Tērbatas Street, Riga LV-1011, Latvia",
+              "address": "30 Terbatas Str. LV1011 Riga, Latvia",
               "instagram": null,
-              "contactEmail": "Kristaps.silins@mccann.lv"
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-riga/",
+              "contactEmail": null,
+              "phone": "+371 67 503 314"
             }
           ]
         },
-        "montenegro": {
+        "Montenegro": {
           "label": "Montenegro",
-          "iso2": "ME",
           "locations": [
             {
               "id": "mccann-podgorica",
               "name": "McCann Podgorica",
               "city": "Podgorica",
-              "address": "Podgorica, Montenegro",
-              "instagram": null,
-              "contactEmail": "marijana.kovacevic@universalmedia.me"
+              "address": "Podgorica, Montenegro 382-77-273-000",
+              "instagram": "https://www.instagram.com/mccannpodgorica/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannpodgorica/",
+              "contactEmail": null,
+              "phone": "+382 77 273 000"
             }
           ]
         },
-        "northMacedonia": {
+        "North Macedonia": {
           "label": "North Macedonia",
-          "iso2": "MK",
           "locations": [
             {
-              "id": "mccann-skopje",
-              "name": "McCann Skopje",
-              "city": "Skopje",
-              "address": "Blvd. 8-mi Septemvri 16, Skopje 1000, North Macedonia",
-              "instagram": null,
-              "contactEmail": "jelena.arsovska@mccann.com.mk"
+              "id": "hyperium-business-center,-blv.-8th-september-16,-2nd-floor,-",
+              "name": "Hyperium Business Center, Blv. 8th September 16, 2nd floor, ",
+              "city": "North",
+              "address": "Skopje,  North Macedonia",
+              "instagram": "https://www.instagram.com/mccannskopje ",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannskopje/",
+              "contactEmail": "mccann@mccann.com.mk",
+              "phone": "+389 78 410 073"
             }
           ]
         },
-        "poland": {
+        "Poland": {
           "label": "Poland",
-          "iso2": "PL",
           "locations": [
             {
-              "id": "mccann-warsaw",
+              "id": "mccann-poland",
               "name": "McCann Poland",
               "city": "Warsaw",
-              "address": "Cybernetyki 19, Warsaw 02-677, Poland",
-              "instagram": null,
-              "contactEmail": "Wojciech.Borowski@mccannworldgroup.pl"
+              "address": "Street. Cybernetyki 19 02-677 Warsaw, Poland",
+              "instagram": "https://www.instagram.com/mccann_poland/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-poland/",
+              "contactEmail": "office@mccann.pl",
+              "phone": "+48 22 607 61 00"
             }
           ]
         },
-        "portugal": {
+        "Portugal": {
           "label": "Portugal",
-          "iso2": "PT",
           "locations": [
             {
               "id": "mccann-lisbon",
               "name": "McCann Lisbon",
               "city": "Lisbon",
-              "address": "Rua Eng. Canto Resende 2, Lisbon 1050-253, Portugal",
-              "instagram": null,
-              "contactEmail": "Luis.P.Santos@mccann.pt"
+              "address": "R. Eng. Canto Resende no2 1050-253 Lisboa Lisbon, Portugal",
+              "instagram": "https://www.instagram.com/mccannlisbon/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-lisbon/",
+              "contactEmail": "hello.portugal@mccann.pt",
+              "phone": "+351 21 751 7500"
             }
           ]
         },
-        "romania": {
+        "Romania": {
           "label": "Romania",
-          "iso2": "RO",
           "locations": [
             {
-              "id": "mccann-bucharest",
-              "name": "McCann Bucharest",
-              "city": "Bucharest",
-              "address": "18 Jules Michelet Street, Bucharest 010463, Romania",
-              "instagram": null,
-              "contactEmail": "bogdan_enoiu@mccann.ro"
+              "id": "mccann-bucharest-&-mrm-romania",
+              "name": "McCann Bucharest & MRM Romania",
+              "city": "One",
+              "address": "Calea Floreasca 165 One Tower, 8th floor",
+              "instagram": "https://www.instagram.com/mccannbucharest/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannworldgroupromania/",
+              "contactEmail": null,
+              "phone": "+40 21 232 3727"
             }
           ]
         },
-        "russia": {
-          "label": "Russia",
-          "iso2": "RU",
-          "locations": [
-            {
-              "id": "mccann-moscow",
-              "name": "McCann Moscow",
-              "city": "Moscow",
-              "address": "Bolshoi Karetny Pereulok 11, Moscow 127051, Russia",
-              "instagram": null,
-              "contactEmail": "tatiana.doubinets@mccann.ru"
-            }
-          ]
-        },
-        "serbia": {
+        "Serbia": {
           "label": "Serbia",
-          "iso2": "RS",
           "locations": [
             {
-              "id": "mccann-belgrade",
+              "id": "mccann-beograd",
               "name": "McCann Beograd",
               "city": "Belgrade",
-              "address": "Terazije 7, Belgrade 11000, Serbia",
-              "instagram": null,
-              "contactEmail": "olivera.perkovic@mccann.co.rs"
+              "address": "Svetog Save 14 Belgrade, Serbia, 11000",
+              "instagram": "https://www.instagram.com/mccannbeograd/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannbeograd/",
+              "contactEmail": "office@mccann.co.rs",
+              "phone": "+381 11 3283255"
             }
           ]
         },
-        "slovakia": {
+        "Slovakia": {
           "label": "Slovakia",
-          "iso2": "SK",
           "locations": [
             {
-              "id": "mccann-bratislava",
-              "name": "McCann Bratislava",
-              "city": "Bratislava",
-              "address": "Viedenska Cesta 5, Bratislava 85101, Slovakia",
-              "instagram": null,
-              "contactEmail": "grohol@mccann.sk"
+              "id": "mayer/mccann-erickson-s.r.o.",
+              "name": "Mayer/McCann Erickson s.r.o.",
+              "city": "Einsteinova",
+              "address": "Digital Park II, Blok C Einsteinova 23",
+              "instagram": "https://www.instagram.com/mccannbeograd/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mayer-mccann-erickson/",
+              "contactEmail": "kozar@mccann.sk",
+              "phone": null
             }
           ]
         },
-        "slovenia": {
+        "Slovenia": {
           "label": "Slovenia",
-          "iso2": "SI",
           "locations": [
             {
               "id": "mccann-ljubljana",
               "name": "McCann Ljubljana",
               "city": "Ljubljana",
-              "address": "Dunajska cesta 151, Ljubljana 1000, Slovenia",
-              "instagram": null,
-              "contactEmail": "marko.majer@mayermccann.com"
+              "address": "Dunajska cesta 117 Ljubljana, Slovenia, 1000",
+              "instagram": "https://www.instagram.com/mccannljubljana/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello@mccann.si",
+              "phone": null
             }
           ]
         },
-        "spain": {
+        "Spain": {
           "label": "Spain",
-          "iso2": "ES",
           "locations": [
-            {
-              "id": "momentum-madrid",
-              "name": "Momentum Madrid",
-              "city": "Madrid",
-              "address": "Enrique Jardiel Poncela 6, Madrid 28016, Spain",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "afg-barcelona",
-              "name": "AFG Barcelona",
-              "city": "Barcelona",
-              "address": "Ciutat de Granada 123, Barcelona 08018, Spain",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "futurebrand-madrid",
-              "name": "FutureBrand Madrid",
-              "city": "Madrid",
-              "address": "Enrique Jardiel Poncela 6, Madrid 28016, Spain",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "craft-barcelona",
-              "name": "CRAFT Barcelona",
-              "city": "Barcelona",
-              "address": "Ciutat de Granada 123, Barcelona 08018, Spain",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "craft-madrid",
-              "name": "CRAFT Madrid",
-              "city": "Madrid",
-              "address": "Enrique Jardiel Poncela 6, Madrid 28016, Spain",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mrm-madrid",
-              "name": "MRM Madrid",
-              "city": "Madrid",
-              "address": "Enrique Jardiel Poncela 6, Madrid 28016, Spain",
-              "instagram": null,
-              "contactEmail": null
-            },
             {
               "id": "mccann-madrid",
               "name": "McCann Madrid",
               "city": "Madrid",
-              "address": "Enrique Jardiel Poncela 6, Madrid 28016, Spain",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mccann-worldgroup-espana",
-              "name": "McCann Worldgroup España",
-              "city": "Madrid",
-              "address": "Enrique Jardiel Poncela 6, Madrid 28016, Spain",
-              "instagram": null,
-              "contactEmail": "Felix.Vicente@mccann.com"
+              "address": "Enrique Jardiel Poncela, 6 Madrid, Spain, 28016",
+              "instagram": "https://www.instagram.com/mccannworldgroupspain/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannworldgroupspain/",
+              "contactEmail": "hola@mccann.es",
+              "phone": "+34 915 67 90 00"
             },
             {
               "id": "mccann-barcelona",
               "name": "McCann Barcelona",
               "city": "Barcelona",
-              "address": "Ciutat de Granada 123, Barcelona 08018, Spain",
-              "instagram": null,
-              "contactEmail": "enric.jove@mccann.es"
+              "address": "Carrer de la Ciutat de Granada, 123 Barcelona, Spain, 08018",
+              "instagram": "https://www.instagram.com/mccannworldgroupspain/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannworldgroupspain/",
+              "contactEmail": "hola@mccann.es",
+              "phone": "+34 932 52 04 00"
             }
           ]
         },
-        "sweden": {
-          "label": "Sweden",
-          "iso2": "SE",
+        "NORDIC": {
+          "label": "NORDIC",
           "locations": [
             {
-              "id": "mccann-worldgroup-nordic",
-              "name": "McCann Worldgroup Nordic",
+              "id": "mccann-nordic",
+              "name": "McCann Nordic",
               "city": "Stockholm",
-              "address": "Grev Turegatan 11A, Stockholm 114 46, Sweden",
-              "instagram": null,
-              "contactEmail": null
+              "address": "Grev Turegatan 11a 114 46  Stockholm, Sweden",
+              "instagram": "https://www.instagram.com/mccannstockholm/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannstockholm/",
+              "contactEmail": "hej@mccannnordic.com",
+              "phone": "+46 8 563 014 00"
             }
           ]
         },
-        "turkey": {
+        "Turkey": {
           "label": "Turkey",
-          "iso2": "TR",
           "locations": [
             {
               "id": "mccann-istanbul",
               "name": "McCann Istanbul",
               "city": "Istanbul",
-              "address": "Büyükdere Caddesi, Ecza Sokak No. 6, Levent 34330, Istanbul, Turkey",
-              "instagram": null,
-              "contactEmail": "Burak.Aldinc@mccann.com.tr"
+              "address": "Buyukdere Caddesi Ecza Sokak No 6 Levent 34330 Istanbul, Turkey",
+              "instagram": "https://www.instagram.com/mccannistanbul/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-erickson-istanbul/",
+              "contactEmail": null,
+              "phone": "+90 212 317 56 00"
             }
           ]
         },
-        "ukraine": {
+        "Ukraine": {
           "label": "Ukraine",
-          "iso2": "UA",
           "locations": [
             {
               "id": "mccann-kyiv",
               "name": "McCann Kyiv",
-              "city": "Kyiv",
-              "address": "13 Pymonenko Street, Business Center Forum 6A, 5th Floor, Kyiv 04050, Ukraine",
-              "instagram": null,
-              "contactEmail": "Serhiy.Uryn@think-mccann.com.ua"
+              "city": "Office",
+              "address": "30/39 Shchekavytska Street Office 318 ",
+              "instagram": "https://www.instagram.com/mccannkyiv/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-kyiv/",
+              "contactEmail": "reception@mccann-kyiv.com.ua",
+              "phone": "+380 67 464 2209"
             }
           ]
         },
-        "unitedKingdom": {
+        "United Kingdom": {
           "label": "United Kingdom",
-          "iso2": "GB",
           "locations": [
             {
-              "id": "mccann-synergy-bristol",
+              "id": "mccann-synergy",
               "name": "McCann Synergy",
-              "city": "Bristol",
-              "address": "5th Floor, Tower Wharf, Cheese Lane, Bristol BS2 0JJ, United Kingdom",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "craft-london",
-              "name": "Craft London",
-              "city": "London",
-              "address": "135 Bishopsgate, London EC2M 3TP, United Kingdom",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "futurebrand-london",
-              "name": "FutureBrand",
-              "city": "London",
-              "address": "135 Bishopsgate, London EC2M 3TP, United Kingdom",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mrm-london",
-              "name": "MRM London",
-              "city": "London",
-              "address": "135 Bishopsgate, London EC2M 3TP, United Kingdom",
-              "instagram": null,
-              "contactEmail": null
+              "city": "Cheese",
+              "address": "5th Floor, Tower Wharf, Cheese Lane,",
+              "instagram": "https://www.instagram.com/mccannsynergy/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-bristol/",
+              "contactEmail": "hello.bristol@mccann.com",
+              "phone": "+44 117 921 1764"
             },
             {
               "id": "mccann-leeds",
               "name": "McCann Leeds",
-              "city": "Leeds",
-              "address": "34 Boar Lane, Leeds, West Yorkshire LS1 5DA, United Kingdom",
+              "city": "West",
+              "address": "34 Boar Lane, Leeds, West Yorkshire, United Kingdom, LS1 5DA",
               "instagram": null,
-              "contactEmail": null
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-leeds/",
+              "contactEmail": "hello.leeds@mccann.com",
+              "phone": "+44 113 526 8020"
+            },
+            {
+              "id": "mccann-bristol",
+              "name": "McCann Bristol",
+              "city": "Bristol",
+              "address": "5th Floor, Tower Wharf, Cheese Lane, BS2 0JJ Bristol, United Kingdom",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-bristol/",
+              "contactEmail": "hello.bristol@mccann.com",
+              "phone": "+44 117 921 1764"
+            },
+            {
+              "id": "mccann-birmingham",
+              "name": "McCann Birmingham",
+              "city": "Birmingham",
+              "address": "Communications House, Highlands Road, Solihull Birmingham, United Kingdom, B90 4WE",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-birmingham/",
+              "contactEmail": "hello.birmingham@mccann.com",
+              "phone": "+44 121 713 3500"
+            },
+            {
+              "id": "mccann-manchester",
+              "name": "McCann Manchester",
+              "city": "Manchester",
+              "address": "Bonis Hall Bonis Hall Ln Manchester, United Kingdom, SK10 4EF",
+              "instagram": "https://www.instagram.com/mccann_manchester/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-manchester/",
+              "contactEmail": "hello.manchester@mccann.com",
+              "phone": "+44 1625 822200"
+            },
+            {
+              "id": "mccann-milton-keynes",
+              "name": "McCann Milton Keynes",
+              "city": "Wolverton",
+              "address": "The Reading Room Wolverton Park Road, Wolverton",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannmk/",
+              "contactEmail": "hello.miltonkeynes@mccann.com",
+              "phone": null
+            },
+            {
+              "id": "mccann-london",
+              "name": "McCann London",
+              "city": "London",
+              "address": "135 Bishopsgate London, United Kingdom, EC2M 3TP",
+              "instagram": "https://www.instagram.com/mccannlondon/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-london/",
+              "contactEmail": "hello.London@mccann.com",
+              "phone": "+44 20 7837 3737"
+            }
+          ]
+        },
+        "Uzbekistan": {
+          "label": "Uzbekistan",
+          "locations": [
+            {
+              "id": "mccann-uzbekistan",
+              "name": "McCann Uzbekistan",
+              "city": "Tashkent",
+              "address": "12, Shota Rustaveli street,  Tashkent city, Uzbekistan. NERO PLAZA, 5th floor",
+              "instagram": "https://www.instagram.com/mccann.tashkent/ ",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "elyar.kaldjanov@mccann.uz ",
+              "phone": "+998 90 370 28 37"
+            }
+          ]
+        }
+      }
+    },
+    "latinAmerica": {
+      "label": "Latin America",
+      "countryOrder": [
+        "Argentina",
+        "Bolivia",
+        "Brazil",
+        "Chile",
+        "Colombia",
+        "Costa Rica",
+        "Dominicana",
+        "Ecuador",
+        "Guatamala",
+        "Honduras",
+        "Mexico",
+        "Nicaragua",
+        "Panama",
+        "Paraguay",
+        "Peru",
+        "Puerto Rico",
+        "Trinidad",
+        "Uruguay",
+        "Venezuela"
+      ],
+      "countries": {
+        "Argentina": {
+          "label": "Argentina",
+          "locations": [
+            {
+              "id": "mercado--mccann",
+              "name": "Mercado  McCann",
+              "city": "Buenos Aires",
+              "address": "Angel J Carranza 1887 Palermo  Buenos Aires, Argentina",
+              "instagram": "https://www.instagram.com/mercadomccann/?hl=es",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mercado-mccann/",
+              "contactEmail": "silvia.molina@mercadomccann.com ",
+              "phone": null
+            },
+            {
+              "id": "mccann-buenos-aires",
+              "name": "McCann Buenos Aires",
+              "city": "Buenos Aires",
+              "address": "Costar Rica 6012 - Piso 3 Palermo Buenos Aires, Argentina",
+              "instagram": "https://www.instagram.com/mccannbuenosaires/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannbuenosaires/",
+              "contactEmail": "Hola.argentina@mccann.com ",
+              "phone": null
+            }
+          ]
+        },
+        "Bolivia": {
+          "label": "Bolivia",
+          "locations": [
+            {
+              "id": "mccann-bolivia",
+              "name": "McCann Bolivia",
+              "city": "Santa Cruz",
+              "address": "Centro empresarial Equipetrol Torre empresarial Alas 1 Nro. 100, piso 4, oficina norte  Calle tropical esquina calle ramplas Santa Cruz, Bolivia",
+              "instagram": "https://www.instagram.com/mccann.bolivia/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannbolivia/",
+              "contactEmail": "cecilia.ortega@mccann.com.bo",
+              "phone": "+591 76203907"
+            }
+          ]
+        },
+        "Brazil": {
+          "label": "Brazil",
+          "locations": [
+            {
+              "id": "wmccann-sao-paulo-",
+              "name": "WMcCANN Sao Paulo ",
+              "city": "Sao Paulo",
+              "address": "Av. Pres. Juscelino Kubitschek, 1909 South Tower  19th Floor",
+              "instagram": "https://www.instagram.com/wmccannbr/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/wmccann/",
+              "contactEmail": "hello.brazil@wmccann.com",
+              "phone": "+55 11 3775 3000"
+            },
+            {
+              "id": "wmccann-rio-de-janeiro",
+              "name": "WMcCANN Rio de Janeiro",
+              "city": "Rio de Janeiro",
+              "address": "Rua Visconde de Ouro Preto 05  12th Floor, Botafogo Rio de Janeiro, Brazil, 22250-180",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.brazil@wmccann.com",
+              "phone": "+55 11 3775 3023"
+            },
+            {
+              "id": "wmccann-brasilia-",
+              "name": "WMcCANN Brasilia ",
+              "city": "Brasilia",
+              "address": "QD SHN Block 01, Building E, Unit A, 14th Floor  Le Quartier Complex  CNP Brasil Headquarters Building ",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hello.brazil@wmccann.com",
+              "phone": null
+            }
+          ]
+        },
+        "Chile": {
+          "label": "Chile",
+          "locations": [
+            {
+              "id": "mccann-santiago",
+              "name": "McCann Santiago",
+              "city": "Santiago",
+              "address": "Andres Bello 2711 Piso 7 Las Condes Santiago, Chile",
+              "instagram": "https://www.instagram.com/mccann.santiago/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannsantiago/",
+              "contactEmail": "hello.chile@mccann.com",
+              "phone": null
+            },
+            {
+              "id": "dyu-",
+              "name": "DYU ",
+              "city": "Santiago",
+              "address": "Avenida Vitacura 2969, Piso 2, Las Condes Santiago Santiago, Chile",
+              "instagram": "https://www.instagram.com/estoesdyu/?hl=es",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/dyucl/",
+              "contactEmail": "hola.chile@dyu.cl",
+              "phone": null
+            },
+            {
+              "id": "berlin-",
+              "name": "Berlin ",
+              "city": "Santiago",
+              "address": "Avenida Vitacura 2969, Piso 2, Las Condes Santiago Santiago, Chile",
+              "instagram": "https://www.instagram.com/somosberlincl/?hl=es",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/berlinscl/posts/?feedView=all",
+              "contactEmail": "hola.chile@somosberlin.cl",
+              "phone": null
+            }
+          ]
+        },
+        "Colombia": {
+          "label": "Colombia",
+          "locations": [
+            {
+              "id": "mccann-medellin",
+              "name": "McCann Medellin",
+              "city": "Medellin",
+              "address": "Calle 7D #43A-40, Oficina 7-101 Medellin, Colombia",
+              "instagram": "https://www.instagram.com/mccann_mw_col/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannworldgroupcolombia/",
+              "contactEmail": "hola.colombia@mccann.com.co",
+              "phone": null
+            },
+            {
+              "id": "mccann-bogota",
+              "name": "McCann Bogota",
+              "city": "Bogota",
+              "address": "Calle 96 #13A-21 Bogota, Colombia",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hola.colombia@mccann.com.co ",
+              "phone": null
+            }
+          ]
+        },
+        "Costa Rica": {
+          "label": "Costa Rica",
+          "locations": [
+            {
+              "id": "mccann-san-jose",
+              "name": "McCann San Jose",
+              "city": "San Jose",
+              "address": "WeWork Escazu, C. 118B,  San Jose, San Rafael, Trejos Montealegre, 10203",
+              "instagram": "https://www.instagram.com/mccann_sjo/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-san-jos%C3%A9/",
+              "contactEmail": "administrativo.agencia@mccann.co.cr",
+              "phone": null
+            }
+          ]
+        },
+        "Dominicana": {
+          "label": "Dominicana",
+          "locations": [
+            {
+              "id": "mccann-santo-domingo",
+              "name": "McCann Santo Domingo",
+              "city": "Santo Domingo",
+              "address": "C. Prof. Emilio Aparicio 57, Santo Domingo 10130 ",
+              "instagram": "https://www.instagram.com/mccannsantodomingo/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannsantodomingo/",
+              "contactEmail": "m.fernandez@mccann.do",
+              "phone": "+1 809 848 0875"
+            }
+          ]
+        },
+        "Ecuador": {
+          "label": "Ecuador",
+          "locations": [
+            {
+              "id": "mccann-ecuador-",
+              "name": "McCann Ecuador ",
+              "city": "Guayaquil",
+              "address": "Puerto Santa Ana - Edificio Emporium Piso 15 Oficina 1505 Guayaquil, Ecuador",
+              "instagram": "https://www.instagram.com/mccannecuador/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-ecuador/",
+              "contactEmail": "hola.ecuador@mccann.com.ec",
+              "phone": null
+            },
+            {
+              "id": "mccann-ecuador",
+              "name": "McCann Ecuador",
+              "city": "Quito",
+              "address": "Av. Pampite -Edificio Yoo Piso 6 Quito, Ecuador",
+              "instagram": "https://www.instagram.com/mccannecuador/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "hola.ecuador@mccann.com.ec",
+              "phone": "+593 2 396 6800"
+            }
+          ]
+        },
+        "Guatamala": {
+          "label": "Guatamala",
+          "locations": [
+            {
+              "id": "d4-mccann",
+              "name": "d4 McCann",
+              "city": "Guatemala",
+              "address": "2a. Calle 24-00, zona 15 Vista Hermosa II Edificio Domani Nivel 14, of. 1410 Guatemala, Guatemala",
+              "instagram": "https://www.instagram.com/d4mccann/",
+              "facebook": null,
+              "linkedin": "https://gt.linkedin.com/company/d4-mccann",
+              "contactEmail": "info@d4mccann.com",
+              "phone": "+502 2427 0300"
+            }
+          ]
+        },
+        "Honduras": {
+          "label": "Honduras",
+          "locations": [
+            {
+              "id": "mccann-honduras",
+              "name": "McCann Honduras",
+              "city": "Tegucigalpa",
+              "address": "6to Piso Edificio Plaza Azul Lomas del Guijarro Tegucigalpa, Honduras",
+              "instagram": "https://www.instagram.com/domccannhn/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/do-mccann-honduras/",
+              "contactEmail": "info@do-mccann.com.hn",
+              "phone": "+504 2280 5900"
+            },
+            {
+              "id": "mccann-honduras",
+              "name": "McCann Honduras",
+              "city": "San Pedro Sula",
+              "address": "5to. Piso Edificio Corporativo 1908 Bo. Rio de Piedras San Pedro Sula, Honduras",
+              "instagram": "https://www.instagram.com/domccannhn/?hl=es",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/do-mccann-honduras/",
+              "contactEmail": "info@do-mccann.com.hn ",
+              "phone": "+504 2580 5900"
+            }
+          ]
+        },
+        "Mexico": {
+          "label": "Mexico",
+          "locations": [
+            {
+              "id": "mccann-mexico",
+              "name": "McCANN Mexico",
+              "city": "Mexico City",
+              "address": "Palo Santo 22, Colonia Lomas Altas, CP 11950, Alcaldia Miguel Hidalgo  Mexico City",
+              "instagram": "https://www.instagram.com/mccannmexico/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannworldgroupmexico/",
+              "contactEmail": "hola.mexico@mccann.com",
+              "phone": null
+            }
+          ]
+        },
+        "Nicaragua": {
+          "label": "Nicaragua",
+          "locations": [
+            {
+              "id": "cccp-mccann",
+              "name": "CCCP McCann",
+              "city": "Managua",
+              "address": "Altamira D'Este, Casa No 400 Managua, Nicaragua",
+              "instagram": "https://www.instagram.com/cccpmccann/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/cccp-mccann/",
+              "contactEmail": "publicidad@cccp.com.ni ",
+              "phone": "+505 2278 1255"
+            }
+          ]
+        },
+        "Panama": {
+          "label": "Panama",
+          "locations": [
+            {
+              "id": "mccann-panama-city",
+              "name": "McCann Panama City",
+              "city": "Panama City",
+              "address": "Av. Samuel Lewis con Calle 59 de Obarrio. Edificio Kenex Plaza, piso 8, oficina 804. Bella Vista. Panama.",
+              "instagram": "https://www.instagram.com/mccann_panama/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-panama/",
+              "contactEmail": null,
+              "phone": "+507 366 7000"
+            }
+          ]
+        },
+        "Paraguay": {
+          "label": "Paraguay",
+          "locations": [
+            {
+              "id": "biedermann-mccann-asuncion",
+              "name": "Biedermann McCann Asuncion",
+              "city": "Asuncion",
+              "address": "Alejo Garcia 2589 casi Rio de la Plata Asuncion, Paraguay",
+              "instagram": "https://www.instagram.com/biedermannpy/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/biedermannpy",
+              "contactEmail": null,
+              "phone": "+595 21 238 6200"
+            }
+          ]
+        },
+        "Peru": {
+          "label": "Peru",
+          "locations": [
+            {
+              "id": "mccann-lima",
+              "name": "McCann Lima",
+              "city": "Lima",
+              "address": "Calle Tripoli 102-Miraflores Lima, Peru",
+              "instagram": "https://www.instagram.com/mccann_lima/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-lima/",
+              "contactEmail": "hola.peru@mccann.com.pe",
+              "phone": null
+            }
+          ]
+        },
+        "Puerto Rico": {
+          "label": "Puerto Rico",
+          "locations": [
+            {
+              "id": "sajo//mccann",
+              "name": "Sajo//McCann",
+              "city": "San Juan",
+              "address": "#1555 Cll Francia San Juan, Puerto Rico, 00911",
+              "instagram": "https://www.instagram.com/sajomccann/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/sajo-mccann/",
+              "contactEmail": "info@sajomccann.com",
+              "phone": "+1 787 620 2033"
+            }
+          ]
+        },
+        "Trinidad": {
+          "label": "Trinidad",
+          "locations": [
+            {
+              "id": "mccann-port-of-spain",
+              "name": "McCann Port of Spain",
+              "city": "Port of Spain",
+              "address": "22-24 Victoria Avenue Albion Plaza Port of Spain, 100904  Trinidad & Tobago",
+              "instagram": "https://www.instagram.com/mccannportofspain/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannpos/",
+              "contactEmail": "hello.trinidad@mccann.com",
+              "phone": "+1 868 612 4646"
+            }
+          ]
+        },
+        "Uruguay": {
+          "label": "Uruguay",
+          "locations": [
+            {
+              "id": "amen-mccann",
+              "name": "Amen McCann",
+              "city": "Montevideo",
+              "address": "Dr Luis Piera 1921 CP11200 Montevideo, Uruguay, 11300",
+              "instagram": "https://www.instagram.com/amenmccann/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/amenmccan/",
+              "contactEmail": "hola.uruguay@amenmccann.com",
+              "phone": "+598 2418 5237"
+            }
+          ]
+        },
+        "Venezuela": {
+          "label": "Venezuela",
+          "locations": [
+            {
+              "id": "concept-mccann-caracas",
+              "name": "Concept McCann Caracas",
+              "city": "Caracas",
+              "address": "Av.Eugenio Mendoza, Edif.Torre la Castellana,Piso PH,Urb.La Castellana. Caracas, Venezuela",
+              "instagram": "https://www.instagram.com/conceptmccann/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/concept-mccann-erickson-c-a/",
+              "contactEmail": "info@concept-mccann.com.ve ",
+              "phone": "+58 212 2633660"
+            }
+          ]
+        }
+      }
+    },
+    "middleEast": {
+      "label": "Middle East",
+      "countryOrder": [
+        "Bahrain",
+        "Iraq",
+        "Jordan",
+        "Kuwait",
+        "Lebanon",
+        "Qatar",
+        "Saudi Arabia",
+        "United Arab Emirates"
+      ],
+      "countries": {
+        "Bahrain": {
+          "label": "Bahrain",
+          "locations": [
+            {
+              "id": "fp7-/-bah",
+              "name": "FP7 / BAH",
+              "city": "Manama",
+              "address": "609 City Centre Government Ave P.O. Box 5989 Manama, Bahrain",
+              "instagram": "https://www.instagram.com/fp7bah/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/fp7-bahrain/",
+              "contactEmail": null,
+              "phone": "+973 1750 0777"
+            }
+          ]
+        },
+        "Iraq": {
+          "label": "Iraq",
+          "locations": [
+            {
+              "id": "fp7-/-ebl",
+              "name": "FP7 / EBL",
+              "city": "Erbil",
+              "address": "English Village - Villa # 241 Erbil, Iraq",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": null,
+              "phone": "+964 750 775 2213"
+            }
+          ]
+        },
+        "Jordan": {
+          "label": "Jordan",
+          "locations": [
+            {
+              "id": "fp7-/-amm",
+              "name": "FP7 / AMM",
+              "city": "Amman",
+              "address": "Al Hijaz Towers Office 505 Mecca Street P.O.Box 2927 11181 Amman, Jordan, 11181",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": null,
+              "phone": "+962 6 554 4929"
+            }
+          ]
+        },
+        "Kuwait": {
+          "label": "Kuwait",
+          "locations": [
+            {
+              "id": "fp7-/-kwi",
+              "name": "FP7 / KWI",
+              "city": "Kuwait City",
+              "address": "Ahmad Al Jaber Street Mostathmer 1 Tower Block 2 Sector 52 Floor 3 Sharq P.O.Box 24084 13101 Kuwait City, Kuwait, 13101",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "info.kuwait@fp7mccann.com",
+              "phone": "+965 2249 7851/7852/7853"
+            }
+          ]
+        },
+        "Lebanon": {
+          "label": "Lebanon",
+          "locations": [
+            {
+              "id": "fp7-/-bey",
+              "name": "FP7 / BEY",
+              "city": "Beirut",
+              "address": "1st Floor Ashrafieh 784 Building Sodeco P.O.Box 116-5288 Beirut, Lebanon",
+              "instagram": null,
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": null,
+              "phone": "+961 1 428 428"
+            }
+          ]
+        },
+        "Qatar": {
+          "label": "Qatar",
+          "locations": [
+            {
+              "id": "fp7-/-doh",
+              "name": "FP7 / DOH",
+              "city": "Doha",
+              "address": "Barwa Al Sadd Tower 1 9th Floor Suhaim Bin Hamad Street P.O Box 13645 Doha, Qatar",
+              "instagram": "https://www.instagram.com/fp7doh/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "Info.doha@fp7mccann.com",
+              "phone": "+974 4042 1717"
+            }
+          ]
+        },
+        "Saudi Arabia": {
+          "label": "Saudi Arabia",
+          "locations": [
+            {
+              "id": "fp7-/-ruh",
+              "name": "FP7 / RUH",
+              "city": "Riyadh",
+              "address": "Mawhiba Centre Floor 2 Suite 4 Olaya Street P.O. Box 53034 11583 Riyadh, Saudi Arabia, 11583",
+              "instagram": "https://www.instagram.com/fp7_ruh/",
+              "facebook": null,
+              "linkedin": null,
+              "contactEmail": "info.ruh@fp7.com",
+              "phone": "+966 11 215 2211"
+            }
+          ]
+        },
+        "United Arab Emirates": {
+          "label": "United Arab Emirates",
+          "locations": [
+            {
+              "id": "fp7mccann",
+              "name": "FP7McCann",
+              "city": "Dubai",
+              "address": "7th Floor MCN Hive, Tecom Section Dubai, United Arab Emirates",
+              "instagram": "https://www.instagram.com/fp7mccann_menat/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/fp7mccann/",
+              "contactEmail": "info@fp7.com",
+              "phone": "+971 4 445 4006"
             }
           ]
         }
@@ -1055,231 +1757,84 @@
     },
     "northAmerica": {
       "label": "North America",
-      "countryOrder": ["dominicanRepublic", "guatemala", "honduras", "mexico", "nicaragua", "panama", "puertoRico", "trinidadAndTobago", "unitedStates"],
+      "countryOrder": [
+        "Canada",
+        "US"
+      ],
       "countries": {
-        "dominicanRepublic": {
-          "label": "Dominican Republic",
-          "iso2": "DO",
+        "Canada": {
+          "label": "Canada",
           "locations": [
             {
-              "id": "mccann-santo-domingo",
-              "name": "McCann Santo Domingo",
-              "city": "Santo Domingo",
-              "address": "Andrés Julio Aybar 204, Edif. Malaga II, 5to Piso, Santo Domingo, Dominican Republic",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "guatemala": {
-          "label": "Guatemala",
-          "iso2": "GT",
-          "locations": [
-            {
-              "id": "d4-mccann-guatemala",
-              "name": "d4 McCann",
-              "city": "Guatemala City",
-              "address": "2a Calle 24-00, Zona 15, Vista Hermosa II, Edificio Domani, Nivel 14, Oficina 1410, Guatemala City, Guatemala",
-              "instagram": null,
-              "contactEmail": "gabriel.castillo@d4mccann.com"
-            }
-          ]
-        },
-        "honduras": {
-          "label": "Honduras",
-          "iso2": "HN",
-          "locations": [
-            {
-              "id": "mccann-honduras-tegucigalpa",
-              "name": "McCann Honduras (Tegucigalpa)",
-              "city": "Tegucigalpa",
-              "address": "6to Piso, Edificio Plaza Azul, Lomas del Guijarro, Tegucigalpa, Honduras",
-              "instagram": null,
-              "contactEmail": null
+              "id": "mccann-toronto",
+              "name": "McCann Toronto",
+              "city": "Toronto",
+              "address": "200 Wellington Street West #1300  Toronto, ON M5V 0N6",
+              "instagram": "https://www.instagram.com/mccanncanada/?hl=en",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccanncanada/",
+              "contactEmail": "hello.canada@mccann.com",
+              "phone": "+1 416 594 6000"
             },
             {
-              "id": "mccann-honduras-san-pedro-sula",
-              "name": "McCann Honduras (San Pedro Sula)",
-              "city": "San Pedro Sula",
-              "address": "3er Piso, Torre Santa Monica, Boulevard del Norte hacia Puerto Cortés, San Pedro Sula, Honduras",
-              "instagram": null,
-              "contactEmail": null
+              "id": "mccann-calgary",
+              "name": "McCann Calgary",
+              "city": "Calgary",
+              "address": "150 9 Ave SW, Suite #2240, Calgary, AB T2P 3H9",
+              "instagram": "https://www.instagram.com/mccanncanada/?hl=en",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccanncanada/",
+              "contactEmail": "hello.canada@mccann.com ",
+              "phone": "+1 403 269 6120"
+            },
+            {
+              "id": "mccann-montreal",
+              "name": "McCann Montreal",
+              "city": "Montreal",
+              "address": "413, rue Saint-Jacques Ouest,10e etage, Montreal, QC H2Y 1N9",
+              "instagram": "https://www.instagram.com/mccanncanada/?hl=en",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccanncanada/",
+              "contactEmail": "hello.canada@mccann.com",
+              "phone": "+1 514 935 9445"
             }
           ]
         },
-        "mexico": {
-          "label": "Mexico",
-          "iso2": "MX",
+        "US": {
+          "label": "US",
           "locations": [
             {
-              "id": "mccann-mexico-city",
-              "name": "McCann Mexico",
-              "city": "Mexico City",
-              "address": "Palo Santo 22, Colonia Lomas Altas, Mexico City 11950, Mexico",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "nicaragua": {
-          "label": "Nicaragua",
-          "iso2": "NI",
-          "locations": [
+              "id": "mccann-detroit",
+              "name": "McCann Detroit",
+              "city": "Detroit",
+              "address": "360 West Maple Rd. 48009 Detroit, US, 48009",
+              "instagram": "https://www.instagram.com/mccanndetroit/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann_detroit/",
+              "contactEmail": "hello.detroit@mccann.com",
+              "phone": "+1 248 203 8000"
+            },
             {
-              "id": "cccp-mccann-managua",
-              "name": "CCCP McCann",
-              "city": "Managua",
-              "address": "Altamira D'Este, Casa No. 400, Managua, Nicaragua",
-              "instagram": null,
-              "contactEmail": "ccuadra@cccp.com.ni"
-            }
-          ]
-        },
-        "panama": {
-          "label": "Panama",
-          "iso2": "PA",
-          "locations": [
+              "id": "mccann-miami",
+              "name": "McCann Miami",
+              "city": "Miami",
+              "address": "800 Waterford Way, Suite 420 Miami, US, 33126",
+              "instagram": "https://www.instagram.com/mccannworldgroupmiami/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccann-miami/",
+              "contactEmail": " hola.miami@mccann.com",
+              "phone": "+1 305 269 3600"
+            },
             {
-              "id": "mccann-panama-city",
-              "name": "McCann Panama City",
-              "city": "Panama City",
-              "address": "Plaza Banco General, Calle 50 y Aquilino de la Guardia, Piso 19, Panama City, Panama",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "puertoRico": {
-          "label": "Puerto Rico",
-          "iso2": "PR",
-          "locations": [
-            {
-              "id": "sajo-mccann-san-juan",
-              "name": "Sajo//McCann",
-              "city": "San Juan",
-              "address": "#1555 Calle Francia, San Juan 00911, Puerto Rico",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "trinidadAndTobago": {
-          "label": "Trinidad and Tobago",
-          "iso2": "TT",
-          "locations": [
-            {
-              "id": "mccann-port-of-spain",
-              "name": "McCann Port of Spain",
-              "city": "Port of Spain",
-              "address": "8 Rapsey Street, St. Clair, Port of Spain, Trinidad and Tobago",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "unitedStates": {
-          "label": "United States",
-          "iso2": "US",
-          "locations": [
-            {
-              "id": "mccann-worldgroup-new-york",
-              "name": "McCann Worldgroup New York",
+              "id": "mccann-new-york",
+              "name": "McCann New York",
               "city": "New York",
-              "address": "622 3rd Avenue, New York, NY 10017, USA",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "casanova-mccann-costa-mesa",
-              "name": "Casanova//McCann",
-              "city": "Costa Mesa",
-              "address": "3337 Susan Street, Suite 200, Costa Mesa, CA 92626, USA",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        }
-      }
-    },
-    "southAmerica": {
-      "label": "South America",
-      "countryOrder": ["ecuador", "paraguay", "peru", "uruguay", "venezuela"],
-      "countries": {
-        "ecuador": {
-          "label": "Ecuador",
-          "iso2": "EC",
-          "locations": [
-            {
-              "id": "mccann-ecuador-guayaquil",
-              "name": "McCann Ecuador",
-              "city": "Guayaquil",
-              "address": "Miguel H. Alcivar y Nahim Isaias, Guayaquil, Ecuador",
-              "instagram": null,
-              "contactEmail": null
-            },
-            {
-              "id": "mccann-ecuador-quito",
-              "name": "McCann Ecuador",
-              "city": "Quito",
-              "address": "Finlandia N36-41 y Suecia, Quito, Ecuador",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "paraguay": {
-          "label": "Paraguay",
-          "iso2": "PY",
-          "locations": [
-            {
-              "id": "biedermann-mccann-asuncion",
-              "name": "Biedermann McCann Asunción",
-              "city": "Asunción",
-              "address": "Alejo García 2589, casi Río de la Plata, Asunción, Paraguay",
-              "instagram": null,
-              "contactEmail": "fperie@biedermann.com.py"
-            }
-          ]
-        },
-        "peru": {
-          "label": "Peru",
-          "iso2": "PE",
-          "locations": [
-            {
-              "id": "mccann-lima",
-              "name": "McCann Lima",
-              "city": "Lima",
-              "address": "Calle Trípoli 102, Miraflores, Lima, Peru",
-              "instagram": null,
-              "contactEmail": null
-            }
-          ]
-        },
-        "uruguay": {
-          "label": "Uruguay",
-          "iso2": "UY",
-          "locations": [
-            {
-              "id": "amen-mccann-montevideo",
-              "name": "Amén McCann",
-              "city": "Montevideo",
-              "address": "Dr. Luis Piera 1921, CP 11200, Montevideo 11300, Uruguay",
-              "instagram": null,
-              "contactEmail": "leandro.gomez@mccann.com.uy"
-            }
-          ]
-        },
-        "venezuela": {
-          "label": "Venezuela",
-          "iso2": "VE",
-          "locations": [
-            {
-              "id": "concept-mccann-caracas",
-              "name": "Concept McCann Caracas",
-              "city": "Caracas",
-              "address": "Calle Los Chaguaramos, Edificio Centro Denu, Piso 2, La Castellana, Caracas, Venezuela",
-              "instagram": null,
-              "contactEmail": "juan.quilici@concept-mccann.com.ve"
+              "address": "622 Third Avenue New York City, US, 10017",
+              "instagram": "https://www.instagram.com/mccannnewyork/",
+              "facebook": null,
+              "linkedin": "https://www.linkedin.com/company/mccannnewyork/",
+              "contactEmail": "hello.newyork@mccann.com",
+              "phone": "+1 646 865 2000"
             }
           ]
         }

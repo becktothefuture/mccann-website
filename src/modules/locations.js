@@ -9,8 +9,6 @@
 import locationsJson from '../data/mccann-locations.json';
 import { emit } from '../core/events.js';
 
-console.log('[LOCATIONS] Module loaded');
-
 // ============================================================
 // INITIALIZATION
 // ============================================================
@@ -23,7 +21,7 @@ export function initLocations(options = {}) {
 
   const root = document.querySelector(rootSelector);
   if (!root) {
-    console.log('[LOCATIONS] ❌ Root accordion not found:', rootSelector);
+    // No accordion root found → exit quietly to keep runtime clean in production
     return;
   }
 
@@ -33,14 +31,9 @@ export function initLocations(options = {}) {
   const locationTemplate = root.querySelector('[data-locations-template="location"]');
 
   if (!continentTemplate || !countryTemplate || !locationTemplate) {
-    console.log('[LOCATIONS] ❌ Missing required templates');
-    console.log('[LOCATIONS]   - Continent template:', !!continentTemplate);
-    console.log('[LOCATIONS]   - Country template:', !!countryTemplate);
-    console.log('[LOCATIONS]   - Location template:', !!locationTemplate);
+    // Template set incomplete → skip build to avoid half-rendered accordion
     return;
   }
-
-  console.log('[LOCATIONS] ✓ Found all templates');
 
   // Clone templates and strip IDs
   const continentBase = continentTemplate.cloneNode(true);
@@ -73,7 +66,7 @@ export function initLocations(options = {}) {
   continentOrder.forEach(continentKey => {
     const continent = continents[continentKey];
     if (!continent) {
-      console.warn(`[LOCATIONS] ⚠️ Missing continent data for "${continentKey}"`);
+      // Missing continent data → continue without emitting noisy console output
       return;
     }
 
@@ -96,7 +89,7 @@ export function initLocations(options = {}) {
     // Find countries container (prefer data-slot, fallback to .acc-list)
     const countriesContainer = continentEl.querySelector('[data-slot="countries"], .acc-list');
     if (!countriesContainer) {
-      console.warn(`[LOCATIONS] ⚠️ No countries container found in continent template`);
+      // No countries container → abort this continent to preserve accordion structure
       return;
     }
 
@@ -110,7 +103,7 @@ export function initLocations(options = {}) {
     countryOrder.forEach(countryKey => {
       const country = continent.countries[countryKey];
       if (!country) {
-        console.warn(`[LOCATIONS] ⚠️ Missing country data for "${countryKey}"`);
+        // Country data missing → skip entry while keeping rest intact
         return;
       }
 
@@ -133,7 +126,7 @@ export function initLocations(options = {}) {
       // Find locations container (prefer data-slot, fallback to .acc-list)
       const locationsContainer = countryEl.querySelector('[data-slot="locations"], .acc-list');
       if (!locationsContainer) {
-        console.warn(`[LOCATIONS] ⚠️ No locations container found in country template`);
+        // No locations container → skip country rather than rendering broken markup
         return;
       }
 
@@ -151,6 +144,8 @@ export function initLocations(options = {}) {
         const addressEl = locationEl.querySelector('[data-field="location-address"]');
         const emailEl = locationEl.querySelector('[data-field="location-email"]');
         const instagramEl = locationEl.querySelector('[data-field="location-instagram"]');
+        const phoneEl = locationEl.querySelector('[data-field="location-phone"]');
+        const facebookEl = locationEl.querySelector('[data-field="location-facebook"]');
         const linkedinEl = locationEl.querySelector('[data-field="location-linkedin"]');
 
         if (cityEl) cityEl.textContent = location.city || '';
@@ -167,18 +162,45 @@ export function initLocations(options = {}) {
           }
         }
 
-        // Handle Instagram link
+        if (phoneEl) {
+          if (location.phone) {
+            const phoneNumber = location.phone.toString().trim();
+            phoneEl.href = phoneNumber.startsWith('tel:')
+              ? phoneNumber
+              : `tel:${phoneNumber.replace(/[^+\\d]/g, '')}`;
+            phoneEl.textContent = location.phone;
+            phoneEl.setAttribute('aria-label', `Call ${location.city ?? location.name ?? 'office'}`);
+          } else {
+            phoneEl.remove();
+          }
+        }
+
+        // Social handles → remove anchors when empty so Webflow only shows valid links
         if (instagramEl) {
           if (location.instagram) {
             // Ensure URL is complete (add https:// if missing)
-            const instagramUrl = location.instagram.startsWith('http') 
-              ? location.instagram 
+            const instagramUrl = location.instagram.startsWith('http')
+              ? location.instagram
               : `https://instagram.com/${location.instagram.replace(/^@?/, '')}`;
             instagramEl.href = instagramUrl;
-            instagramEl.setAttribute('aria-label', `Instagram: ${location.city}`);
+            instagramEl.setAttribute('aria-label', `Instagram: ${location.city ?? location.name ?? ''}`);
           } else {
             // Remove Instagram element if no URL
             instagramEl.remove();
+          }
+        }
+
+        if (facebookEl) {
+          if (location.facebook) {
+            // Ensure URL is complete (add https:// if missing)
+            const facebookUrl = location.facebook.startsWith('http')
+              ? location.facebook
+              : `https://facebook.com/${location.facebook.replace(/^@?/, '')}`;
+            facebookEl.href = facebookUrl;
+            facebookEl.setAttribute('aria-label', `Facebook: ${location.city ?? location.name ?? ''}`);
+          } else {
+            // Remove Facebook element if no URL
+            facebookEl.remove();
           }
         }
 
@@ -186,11 +208,11 @@ export function initLocations(options = {}) {
         if (linkedinEl) {
           if (location.linkedin) {
             // Ensure URL is complete (add https:// if missing)
-            const linkedinUrl = location.linkedin.startsWith('http') 
-              ? location.linkedin 
+            const linkedinUrl = location.linkedin.startsWith('http')
+              ? location.linkedin
               : `https://linkedin.com/company/${location.linkedin.replace(/^\/?/, '')}`;
             linkedinEl.href = linkedinUrl;
-            linkedinEl.setAttribute('aria-label', `LinkedIn: ${location.city}`);
+            linkedinEl.setAttribute('aria-label', `LinkedIn: ${location.city ?? location.name ?? ''}`);
           } else {
             // Remove LinkedIn element if no URL
             linkedinEl.remove();
@@ -219,7 +241,6 @@ export function initLocations(options = {}) {
   // Insert all new content
   root.appendChild(fragment);
 
-  console.log(`[LOCATIONS] ✓ Built accordion with ${continentOrder.length} continents and ${totalLocations} locations`);
   emit('offices:built', root, { 
     continents: continentOrder.length,
     locations: totalLocations 

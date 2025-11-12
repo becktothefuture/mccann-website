@@ -70,6 +70,15 @@ export function initLightbox({
   const truthWellToldEl = lb.querySelector('[data-field="lightbox-truthwelltold"]') || document.querySelector('#lightbox-truthwelltold');
   const descriptionEl = lb.querySelector('[data-field="lightbox-description"]') || document.querySelector('#lightbox-description');
   const impactEl = lb.querySelector('[data-field="lightbox-impact"]') || document.querySelector('#lightbox-impact');
+  const impactWrapper = impactEl?.closest?.('#lightbox-impact')
+    || (impactEl?.id === 'lightbox-impact' ? impactEl : null)
+    || lb.querySelector('#lightbox-impact');
+
+  if (impactWrapper) {
+    // Hide impact block by default → revealed only when JSON provides content
+    impactWrapper.style.display = 'none';
+    impactWrapper.setAttribute('aria-hidden', 'true');
+  }
   const awardsContainer = lb.querySelector('[data-field="lightbox-awards"]') || document.querySelector('#lightbox-awards');
 
   // ============================================================
@@ -499,7 +508,14 @@ export function initLightbox({
     if (truthEl) truthEl.textContent = project.truth || '';
     if (truthWellToldEl) truthWellToldEl.textContent = project.truthWellTold || '';
     if (descriptionEl) descriptionEl.textContent = project.description || '';
-    if (impactEl) impactEl.textContent = project.impact || '';
+
+    const impactRaw = typeof project.impact === 'string' ? project.impact : '';
+    if (impactEl) impactEl.textContent = impactRaw;
+    if (impactWrapper) {
+      const hasImpact = impactRaw.trim().length > 0;
+      impactWrapper.style.display = hasImpact ? '' : 'none';
+      impactWrapper.setAttribute('aria-hidden', hasImpact ? 'false' : 'true');
+    }
     
     // Render awards
     renderAwards(project.awards || []);
@@ -727,6 +743,10 @@ export function initLightbox({
     if (truthWellToldEl) truthWellToldEl.textContent = '';
     if (descriptionEl) descriptionEl.textContent = '';
     if (impactEl) impactEl.textContent = '';
+    if (impactWrapper) {
+      impactWrapper.style.display = 'none';
+      impactWrapper.setAttribute('aria-hidden', 'true');
+    }
     
     // Reset overlay to initial state
     if (overlay) {

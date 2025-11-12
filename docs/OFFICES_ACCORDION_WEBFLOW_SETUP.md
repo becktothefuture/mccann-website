@@ -82,7 +82,9 @@ Create one `.acc-item` for individual office locations:
 - `data-field="location-city"` - City name text
 - `data-field="location-address"` - Full address text
 - `data-field="location-email"` - Email link (removed if no email)
+- `data-field="location-phone"` - Phone link (removed if no number)
 - `data-field="location-instagram"` - Instagram link (removed if no URL)
+- `data-field="location-facebook"` - Facebook link (removed if no URL)
 - `data-field="location-linkedin"` - LinkedIn link (removed if no URL)
 
 ## Important Notes
@@ -133,7 +135,9 @@ Create one `.acc-item` for individual office locations:
               <h4 class="office-city" data-field="location-city">Johannesburg</h4>
               <p class="office-address" data-field="location-address">Main Road, Bryanston</p>
               <a href="#" class="office-email" data-field="location-email">contact@mccann.co.za</a>
+              <a href="tel:+00" class="office-phone" data-field="location-phone">+00 0000 000</a>
               <a href="#" class="link--social" data-field="location-instagram">Instagram</a>
+              <a href="#" class="link--social" data-field="location-facebook">Facebook</a>
               <a href="#" class="link--social" data-field="location-linkedin">LinkedIn</a>
             </div>
           </div>
